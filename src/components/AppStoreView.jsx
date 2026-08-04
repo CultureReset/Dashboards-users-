@@ -97,14 +97,48 @@ export default function AppStoreView({
       .sort((a, b) => (a.key === 'other') - (b.key === 'other') || b.n - a.n)
   }, [tools, categories])
 
+  // ─── Searching ──────────────────────────────────────────────────────────
+  //
+  // Two things were wrong with the obvious version of this.
+  //
+  // It searched inside the selected category, so with a chip active you could
+  // type the exact name of a tool that exists and be told "Nothing matches" —
+  // true of that category, wildly untrue of the catalogue. Typing a name is a
+  // request to find that thing, wherever it is, so a query now searches
+  // everything and the chip steps aside while it runs.
+  //
+  // And it matched descriptions equally with names, which sounds generous and
+  // reads as broken: in a catalogue of a thousand tools, "to" appears in
+  // "tool", "automate" and "customer", so short queries excluded almost
+  // nothing and the list looked like it had ignored you. Names and ids are
+  // matched first; a description-only hit still counts, but sorts below.
   const matches = useMemo(() => {
-    const inCat = category === ALL ? tools : tools.filter((t) => (t.cat || 'other') === category)
     const q = query.trim().toLowerCase()
-    if (!q) return inCat
-    return inCat.filter((t) =>
-      [t.name, t.description, t.cat, t.tool_id].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
-    )
+
+    if (!q) {
+      return category === ALL ? tools : tools.filter((t) => (t.cat || 'other') === category)
+    }
+
+    const scored = []
+    for (const t of tools) {
+      const name = String(t.name || '').toLowerCase()
+      const id = String(t.tool_id || '').toLowerCase()
+
+      // 0 = starts with what you typed, 1 = contains it, 2 = only the blurb.
+      let rank
+      if (name.startsWith(q) || id.startsWith(q)) rank = 0
+      else if (name.includes(q) || id.includes(q)) rank = 1
+      else if (String(t.description || '').toLowerCase().includes(q)) rank = 2
+      else continue
+
+      scored.push({ t, rank, name })
+    }
+
+    scored.sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
+    return scored.map((s) => s.t)
   }, [tools, category, query])
+
+  const searching = query.trim().length > 0
 
   const pages = Math.max(1, Math.ceil(matches.length / perPage))
   const current = Math.min(page, pages)
@@ -167,29 +201,40 @@ export default function AppStoreView({
         aria-label="Search tools"
       />
 
-      <div className="as-chips" role="group" aria-label="Categories">
-        <button
-          className="as-chip"
-          aria-pressed={category === ALL}
-          onClick={() => setCategory(ALL)}
-        >
-          All <span>{tools.length}</span>
-        </button>
-        {catCounts.map((c) => (
+      {/* While a search is running the chips are inert: the query already
+          searched everything, so letting one look "selected" would claim a
+          filter that is not being applied. */}
+      {searching ? (
+        <p className="as-scope">
+          {matches.length === 1 ? '1 tool matches' : `${matches.length} tools match`} “{query}” across all
+          categories.{' '}
+          <button type="button" onClick={() => setQuery('')}>Clear search</button>
+        </p>
+      ) : (
+        <div className="as-chips" role="group" aria-label="Categories">
           <button
-            key={c.key}
             className="as-chip"
-            aria-pressed={category === c.key}
-            onClick={() => setCategory(c.key)}
+            aria-pressed={category === ALL}
+            onClick={() => setCategory(ALL)}
           >
-            {c.label} <span>{c.n}</span>
+            All <span>{tools.length}</span>
           </button>
-        ))}
-      </div>
+          {catCounts.map((c) => (
+            <button
+              key={c.key}
+              className="as-chip"
+              aria-pressed={category === c.key}
+              onClick={() => setCategory(c.key)}
+            >
+              {c.label} <span>{c.n}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {matches.length === 0 ? (
         <p className="as-empty">
-          Nothing matches “{query}”.{' '}
+          Nothing in the catalogue matches “{query}”.{' '}
           <button type="button" onClick={() => { setQuery(''); setCategory(ALL) }}>Clear</button>
         </p>
       ) : (
