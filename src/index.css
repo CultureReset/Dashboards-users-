@@ -1,13 +1,82 @@
+/*
+ * Colour tokens. Light is the base; dark is an override.
+ *
+ * Nothing below this block contains a colour literal, which is what makes the
+ * theme switch a change to this file alone. Two rules keep it honest:
+ *   - every surface pairs with a text token (--bg/--text, --panel/--text)
+ *   - anything sitting on --accent uses --on-accent, never a hardcoded white
+ *
+ * Resolution order, matching the admin console:
+ *   1. [data-theme='light'|'dark'] on <html> — the business's explicit choice,
+ *      set by src/lib/useTheme.js. Wins in BOTH directions, so picking light on
+ *      a phone in night mode really does give a white dashboard.
+ *   2. prefers-color-scheme — for anyone who has never touched the toggle.
+ *   3. The light values here.
+ */
+
 :root {
+  color-scheme: light;
+
   --bg: #f4f6f8;
   --panel: #ffffff;
+  --input-bg: #ffffff;
   --border: #dde3e8;
   --text: #16202a;
   --muted: #64748b;
   --accent: #17806f;
   --accent-bg: #e6f5f2;
+  --on-accent: #ffffff;
   --danger: #b3261e;
+  --star: #d69e2e;
+  --banner-bg: #1f2937;
+  --banner-text: #ffffff;
+  --banner-button: rgba(255, 255, 255, 0.14);
+  --menu-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* The dark values, defined once and applied by both rules below. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --bg: #0d1117;
+    --panel: #161d27;
+    --input-bg: #0f151d;
+    --border: #263041;
+    --text: #e6edf5;
+    --muted: #97a3b6;
+    --accent: #2fc2a8;
+    --accent-bg: rgba(47, 194, 168, 0.15);
+    --on-accent: #06231d;
+    --danger: #f87171;
+    --star: #f5c451;
+    --banner-bg: #232c3a;
+    --banner-text: #e6edf5;
+    --banner-button: rgba(255, 255, 255, 0.12);
+    --menu-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0d1117;
+  --panel: #161d27;
+  --input-bg: #0f151d;
+  --border: #263041;
+  --text: #e6edf5;
+  --muted: #97a3b6;
+  --accent: #2fc2a8;
+  --accent-bg: rgba(47, 194, 168, 0.15);
+  --on-accent: #06231d;
+  --danger: #f87171;
+  --star: #f5c451;
+  --banner-bg: #232c3a;
+  --banner-text: #e6edf5;
+  --banner-button: rgba(255, 255, 255, 0.12);
+  --menu-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 * { box-sizing: border-box; }
@@ -62,12 +131,14 @@ input { font: inherit; }
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
   font-size: 0.95rem;
 }
 .claim-card textarea { font-family: inherit; resize: vertical; }
 .auth-card button[type="submit"], .claim-card button[type="submit"], .claim-result button {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   border-radius: 10px;
   padding: 11px;
@@ -123,7 +194,7 @@ input { font: inherit; }
   align-items: center;
   justify-content: space-between;
 }
-.topbar-brand { font-weight: 800; font-size: 1rem; }
+.topbar-brand { font-weight: 800; font-size: 1rem; flex: 1; }
 .topbar-signout {
   background: none;
   border: 1px solid var(--border);
@@ -131,6 +202,113 @@ input { font: inherit; }
   padding: 6px 10px;
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* Hamburger + its dropdown. The panel is anchored to the bar rather than
+   overlaying the whole screen: on a phone it reads as a menu, not a new page,
+   and the content underneath stays visible. */
+.topbar-burger {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 7px 10px;
+  margin-right: 12px;
+  flex: none;
+}
+
+.topbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  right: 12px;
+  max-width: 340px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  z-index: 20;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--menu-shadow);
+  padding: 10px;
+}
+
+.topbar-menu-label {
+  margin: 6px 6px 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.topbar-menu-label:first-child { margin-top: 2px; }
+
+.topbar-menu-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.topbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.topbar-menu-item:hover { background: var(--bg); }
+.topbar-menu-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 700; }
+.topbar-menu-icon { font-size: 1rem; flex: none; }
+
+.topbar-menu-signout {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--muted);
+}
+
+/* Three-way appearance switch. Auto is a real option, not a footnote — most
+   businesses never open this and should get whatever their phone is set to. */
+.theme-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.theme-option {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.theme-option.active {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.topbar-menu-help {
+  margin: 8px 6px 2px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .bottom-nav {
@@ -236,7 +414,7 @@ input { font: inherit; }
 .catalog-label { overflow-wrap: anywhere; }
 .main-empty button.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   border-radius: 10px;
   padding: 11px 18px;
@@ -248,8 +426,8 @@ input { font: inherit; }
   position: sticky;
   top: 0;
   z-index: 11;
-  background: #1f2937;
-  color: #fff;
+  background: var(--banner-bg);
+  color: var(--banner-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -258,10 +436,10 @@ input { font: inherit; }
   font-weight: 700;
 }
 .admin-banner button {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--banner-button);
   border: none;
   border-radius: 7px;
-  color: #fff;
+  color: var(--banner-text);
   padding: 4px 10px;
   font-size: 0.72rem;
 }
@@ -273,6 +451,8 @@ input { font: inherit; }
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--text);
   font-size: 0.95rem;
   margin-bottom: 14px;
 }
@@ -337,7 +517,7 @@ input { font: inherit; }
 .list-row p { margin: 4px 0 0; font-size: 0.85rem; }
 
 .review-row { border-bottom: 1px solid var(--border); padding: 12px 0; }
-.stars { color: #d69e2e; letter-spacing: 1px; }
+.stars { color: var(--star); letter-spacing: 1px; }
 .review-row p { font-size: 0.85rem; margin: 6px 0 2px; }
 .review-row small { color: var(--muted); }
 
@@ -370,7 +550,7 @@ input { font: inherit; }
 .editor-actions button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 700;
 }
 .editor { display: flex; flex-direction: column; gap: 12px; }
@@ -383,7 +563,8 @@ input { font: inherit; }
   border: 1px solid var(--border);
   border-radius: 9px;
   font-size: 0.9rem;
-  background: var(--panel);
+  background: var(--input-bg);
+  color: var(--text);
   width: 100%;
 }
 .editor-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }

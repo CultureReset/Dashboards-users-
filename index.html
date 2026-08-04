@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
+    <script>
+      // Apply the saved theme before the first paint, so a business that chose
+      // dark doesn't get a white flash on the sign-in screen while React boots.
+      // Must stay in sync with the key and modes in src/lib/useTheme.js.
+      try {
+        var saved = localStorage.getItem('gcr_dashboard_theme')
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved)
+        }
+      } catch (e) {
+        // Storage blocked — the stylesheet's prefers-color-scheme rule covers it.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

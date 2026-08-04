@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { searchEntities } from '../lib/gcrApi'
+import TopBar from '../components/TopBar'
 
 // Admin landing screen: search every business and open its dashboard.
 //
@@ -8,7 +9,7 @@ import { searchEntities } from '../lib/gcrApi'
 // picker keeps working once the open anon grants are revoked and it stays on
 // the same is_active filtering the public site uses.
 export default function BusinessPicker() {
-  const { openBusiness, signOut } = useAuth()
+  const { openBusiness } = useAuth()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,12 +39,7 @@ export default function BusinessPicker() {
 
   return (
     <div className="picker-screen">
-      <header className="topbar">
-        <span className="topbar-brand">All businesses</span>
-        <button className="topbar-signout" onClick={signOut}>
-          Sign out
-        </button>
-      </header>
+      <TopBar businessName="All businesses" />
 
       <div className="picker-body">
         <input

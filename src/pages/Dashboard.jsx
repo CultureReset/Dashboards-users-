@@ -126,7 +126,15 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-shell">
-      <TopBar businessName={entity?.name} />
+      <TopBar
+        businessName={entity?.name}
+        sections={sections}
+        activeKey={adding ? null : activeKey}
+        onSelect={(key) => {
+          setAdding(false)
+          setActiveKey(key)
+        }}
+      />
       {sweep && (
         <div className="sweep-status">
           Checking your data… {sweep.done}/{sweep.total}
