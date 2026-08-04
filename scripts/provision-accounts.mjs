@@ -147,7 +147,7 @@ async function main() {
           if (found) {
             await db.from('entity_owners').upsert(
               { user_id: found.id, entity_id: biz.id, entity_slug: biz.slug, role: 'owner' },
-              { onConflict: 'user_id,entity_slug' }
+              { onConflict: 'user_id,entity_id' }
             )
             skipped++
             return
@@ -156,10 +156,16 @@ async function main() {
         throw userErr
       }
 
-      // 2. ownership — the part that makes editing safe
+      // 2. ownership — the part that makes editing safe.
+      //
+      // onConflict must name a real unique constraint. entity_owners has
+      // exactly one: UNIQUE (user_id, entity_id). Naming any other pair makes
+      // Postgres reject the statement outright ("no unique or exclusion
+      // constraint matching the ON CONFLICT specification"), which would fail
+      // every business rather than skipping the ones already linked.
       const { error: ownErr } = await db.from('entity_owners').upsert(
         { user_id: userRes.user.id, entity_id: biz.id, entity_slug: biz.slug, role: 'owner' },
-        { onConflict: 'user_id,entity_slug' }
+        { onConflict: 'user_id,entity_id' }
       )
       if (ownErr) throw ownErr
 
