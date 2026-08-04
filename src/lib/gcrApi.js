@@ -2,6 +2,54 @@ import { GCR_API_BASE } from './config'
 
 const GCR_API = `${GCR_API_BASE}/api/gcr`
 const AUTH_API = `${GCR_API_BASE}/api/auth`
+const BIZ_AUTH = `${GCR_API_BASE}/api/business-auth`
+
+async function post(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const err = new Error(data.error || `Request failed (${res.status})`)
+    Object.assign(err, data) // keeps claim_instead, hint, entity_slug
+    throw err
+  }
+  return data
+}
+
+/* ── Signing up a brand-new business ───────────────────────────────────────
+ *
+ * Separate from tourist sign-up on GCR Unified, which is a different product
+ * with a different account model. These call /api/business-auth/*.
+ */
+
+/** Text a six-digit code to a business phone number. */
+export const sendSignupCode = (phone) => post(`${BIZ_AUTH}/phone`, { phone })
+
+/** Check the code before asking for anything else. */
+export const verifySignupCode = (phone, code) => post(`${BIZ_AUTH}/verify`, { phone, code })
+
+/**
+ * Listings that already look like this name. Read-only and public — used to
+ * warn someone before they fill in a whole profile for a business that is
+ * already on GCR, so they claim it instead of duplicating it.
+ */
+export async function findSimilarBusinesses(name) {
+  const res = await fetch(`${BIZ_AUTH}/similar?name=${encodeURIComponent(name)}`)
+  if (!res.ok) return []
+  const data = await res.json().catch(() => ({}))
+  return data.matches || []
+}
+
+/**
+ * Create the account, the listing and the ownership row.
+ *
+ * The listing is created hidden and stays that way until an admin approves it.
+ * Throws with `claim_instead` attached when the business is already listed.
+ */
+export const registerBusiness = (payload) => post(`${BIZ_AUTH}/register`, payload)
 
 /**
  * What an invite token is for — GET /api/auth/invite/:token.

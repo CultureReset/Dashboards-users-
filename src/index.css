@@ -173,6 +173,55 @@ input { font: inherit; }
 .claim-result button { padding: 8px 12px; font-size: 0.8rem; white-space: nowrap; }
 .claim-empty { color: var(--muted); font-size: 0.85rem; }
 
+/* Sign-up — a new business from scratch */
+.signup-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.signup-dot {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.signup-dot.done { background: var(--accent); }
+
+.auth-card form { display: flex; flex-direction: column; gap: 14px; }
+
+/* The six-digit code. Wide tracking so it reads as digits being entered
+   rather than a word, which is what people are copying off a phone. */
+.code-input {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* "This might already be on GCR." Shown while they type, because finding out
+   after building a whole profile is how duplicate listings get made. */
+.similar-warning {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-bg);
+  padding: 11px 13px;
+  font-size: 0.82rem;
+}
+.similar-warning strong { display: block; margin-bottom: 3px; }
+.similar-warning p { margin: 0 0 7px; color: var(--muted); line-height: 1.45; }
+.similar-warning ul { margin: 0; padding-left: 17px; display: flex; flex-direction: column; gap: 3px; }
+.similar-warning li { font-weight: 600; }
+.similar-warning li span { font-weight: 400; color: var(--muted); }
+
+.signup-fineprint { margin-top: 2px; line-height: 1.45; }
+
 /* Invite setup — the industry picker.
    Wider than a sign-in card because the options need room to be read, and a
    grid rather than a select so the hints are visible while choosing. */

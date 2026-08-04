@@ -5,6 +5,7 @@ import Claim from './pages/Claim'
 import Dashboard from './pages/Dashboard'
 import BusinessPicker from './pages/BusinessPicker'
 import AcceptInvite from './pages/AcceptInvite'
+import SignUp from './pages/SignUp'
 
 function NoBusinessLinked() {
   const { signOut, user } = useAuth()
@@ -32,6 +33,7 @@ function inviteTokenFromUrl() {
 function Root() {
   const { loading, user, isAdmin, gcrSlug } = useAuth()
   const [claiming, setClaiming] = useState(false)
+  const [signingUp, setSigningUp] = useState(false)
   const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
 
   if (loading) {
@@ -60,10 +62,11 @@ function Root() {
   }
 
   if (!user) {
+    if (signingUp) return <SignUp onBack={() => setSigningUp(false)} />
     return claiming ? (
       <Claim onBack={() => setClaiming(false)} />
     ) : (
-      <Login onClaim={() => setClaiming(true)} />
+      <Login onClaim={() => setClaiming(true)} onSignUp={() => setSigningUp(true)} />
     )
   }
 

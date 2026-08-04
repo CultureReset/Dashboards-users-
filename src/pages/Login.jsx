@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 
-export default function Login({ onClaim }) {
+export default function Login({ onClaim, onSignUp }) {
   const { signIn } = useAuth()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -56,9 +56,18 @@ export default function Login({ onClaim }) {
         <button type="submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
+        {/* Two different situations, deliberately worded so people pick the
+            right one. Claim is for a business already on GCR — it keeps the
+            reviews and photos already there. Sign up is for one that isn't
+            listed at all. */}
         {onClaim && (
           <button type="button" className="auth-switch" onClick={onClaim}>
-            Don't have a login? Claim your business
+            Already on Gulf Coast Radar? Claim your business
+          </button>
+        )}
+        {onSignUp && (
+          <button type="button" className="auth-switch" onClick={onSignUp}>
+            New business? Add it in a couple of minutes
           </button>
         )}
       </form>

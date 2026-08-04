@@ -13,6 +13,14 @@ const toLoginEmail = (identifier) =>
     ? identifier.trim()
     : `${identifier.trim().toLowerCase()}@${LOGIN_DOMAIN}`
 
+/** E.164, assuming US when no country code is given — matches the API. */
+const toE164 = (raw) => {
+  const digits = String(raw || '').replace(/\D/g, '')
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits[0] === '1') return `+${digits}`
+  return `+${digits}`
+}
+
 /** Admins can open any business by slug: ?business=<slug> */
 function slugFromUrl() {
   return new URLSearchParams(location.search).get('business')
@@ -57,6 +65,11 @@ export function AuthProvider({ children }) {
   const signIn = (identifier, password) =>
     supabase.auth.signInWithPassword({ email: toLoginEmail(identifier), password })
 
+  // Businesses that signed themselves up have a phone account rather than a
+  // derived login address, so they sign in on the number they verified.
+  const signInWithPhone = (phone, password) =>
+    supabase.auth.signInWithPassword({ phone: toE164(phone), password })
+
   const signOut = () => supabase.auth.signOut()
 
   // An admin viewing a business wins over their own ownership row, so support
@@ -84,6 +97,7 @@ export function AuthProvider({ children }) {
       history.pushState({}, '', url)
     },
     signIn,
+    signInWithPhone,
     signOut,
   }
 
