@@ -46,10 +46,20 @@ export async function findSimilarBusinesses(name) {
 /**
  * Create the account, the listing and the ownership row.
  *
+ * No password anywhere: the response carries a one-time `session_secret` the
+ * browser signs in with immediately. The business never sees it and never
+ * needs it again — their phone number is the login.
+ *
  * The listing is created hidden and stays that way until an admin approves it.
  * Throws with `claim_instead` attached when the business is already listed.
  */
 export const registerBusiness = (payload) => post(`${BIZ_AUTH}/register`, payload)
+
+/** Text a code to a number that already has a business. */
+export const sendSigninCode = (phone) => post(`${BIZ_AUTH}/signin`, { phone })
+
+/** Check it, and get the one-time secret to sign in with. */
+export const verifySigninCode = (phone, code) => post(`${BIZ_AUTH}/signin-verify`, { phone, code })
 
 /**
  * What an invite token is for — GET /api/auth/invite/:token.

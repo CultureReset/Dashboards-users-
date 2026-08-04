@@ -31,7 +31,6 @@ export default function SignUp({ onBack }) {
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [website, setWebsite] = useState('')
-  const [password, setPassword] = useState('')
   const [industry, setIndustry] = useState('')
   const [similar, setSimilar] = useState([])
   const [busy, setBusy] = useState(false)
@@ -57,7 +56,8 @@ export default function SignUp({ onBack }) {
     e.preventDefault()
     setBusy(true); setError('')
     try {
-      await sendSignupCode(phone)
+      const sent = await sendSignupCode(phone)
+      if (sent?.phone) setPhone(sent.phone)
       go('code')
     } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
@@ -74,23 +74,23 @@ export default function SignUp({ onBack }) {
   function submitBusiness(e) {
     e.preventDefault()
     setError('')
-    if (password.length < 8) return setError('Use at least 8 characters for the password.')
     go('industry')
   }
 
   async function finish(chosen) {
     setBusy(true); setError(''); setAlreadyListed(null)
     try {
-      await registerBusiness({
+      const created = await registerBusiness({
         phone,
         code,
         business_name: name.trim(),
-        password,
         website: website.trim() || undefined,
         entity_type: chosen || undefined,
       })
-      // The account exists now — sign in and land in the dashboard.
-      const { error: signInError } = await signInWithPhone(phone, password)
+      // The account exists now. session_secret is a one-time value the server
+      // just set on it; signing in with it here is what mints the browser
+      // session. The business never sees it and never types a password.
+      const { error: signInError } = await signInWithPhone(phone, created.session_secret)
       if (signInError) throw signInError
     } catch (err) {
       if (err.claim_instead) setAlreadyListed(err.claim_instead)
@@ -207,18 +207,6 @@ export default function SignUp({ onBack }) {
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://"
                 inputMode="url"
-              />
-            </label>
-
-            <label>
-              Password
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError('') }}
-                autoComplete="new-password"
-                minLength={8}
-                required
               />
             </label>
 
