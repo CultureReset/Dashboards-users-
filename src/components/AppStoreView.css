@@ -1,0 +1,237 @@
+/* App Store.
+ *
+ * Every colour is a token, so this file is identical in the business dashboard
+ * and the admin console and simply picks up whichever palette the host defines.
+ *
+ * A list, not a grid, on a phone. At 390px a two-column grid gives each of a
+ * thousand tools a postage stamp and no room to say what it does — which is
+ * why phone app stores are rows. The grid arrives when there is width for it.
+ */
+
+.as-wrap { display: flex; flex-direction: column; gap: 13px; scroll-margin-top: 12px; }
+.as-head { display: flex; flex-direction: column; gap: 2px; }
+.as-title { margin: 0; font-size: 1.12rem; font-weight: 750; letter-spacing: -0.02em; }
+.as-sub { margin: 0; color: var(--muted); font-size: 0.83rem; }
+.as-sub b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.as-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 0; color: var(--muted); }
+.as-error { margin: 0; color: var(--danger); font-size: 0.85rem; }
+
+.as-notice {
+  margin: 0;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-bg);
+  font-size: 0.81rem;
+  line-height: 1.45;
+}
+
+.as-search {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.as-search::placeholder { color: var(--muted); }
+.as-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+.as-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 3px; scrollbar-width: none; }
+.as-chips::-webkit-scrollbar { display: none; }
+.as-chip {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit; font-size: 0.77rem; font-weight: 640;
+  white-space: nowrap;
+}
+.as-chip span { font-size: 0.67rem; font-weight: 700; opacity: 0.6; font-variant-numeric: tabular-nums; }
+.as-chip[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.as-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Rows */
+.as-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.as-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+}
+.as-row[data-picked='true'] { border-color: var(--accent); background: var(--accent-bg); }
+.as-row[data-state='connected'] { border-color: var(--accent); }
+
+.as-row-open {
+  flex: 1;
+  display: flex; align-items: center; gap: 12px;
+  min-width: 0;
+  padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left;
+}
+.as-row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 9px; }
+
+.as-logo {
+  width: 46px; height: 46px; flex: none;
+  border-radius: 11px;
+  object-fit: contain;
+  background: var(--bg);
+}
+.as-logo--mono {
+  display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em;
+}
+.as-logo--lg { width: 62px; height: 62px; border-radius: 15px; font-size: 1.6rem; }
+
+.as-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.as-row-name {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 0.9rem; font-weight: 700; line-height: 1.25;
+}
+.as-row-desc {
+  font-size: 0.77rem; line-height: 1.4; color: var(--muted);
+  /* One line on a row: the detail sheet is where the full text belongs. */
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.as-state { font-size: 0.62rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0.05em; }
+.as-state--connected { color: var(--accent); }
+.as-state--pending { color: var(--star); }
+
+.as-row-action { flex: none; }
+
+.as-btn {
+  padding: 8px 15px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit; font-size: 0.79rem; font-weight: 700;
+  white-space: nowrap;
+}
+.as-btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.as-btn--quiet { color: var(--muted); }
+.as-btn:disabled { opacity: 0.5; cursor: default; }
+.as-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Admin only: what appears in the business store */
+.as-switch {
+  position: relative;
+  width: 38px; height: 22px; flex: none;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--input-bg);
+  padding: 0;
+}
+.as-switch::after {
+  content: '';
+  position: absolute; inset: 2px auto 2px 2px;
+  width: 15px; border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.as-switch[aria-checked='true'] { background: var(--accent-bg); border-color: var(--accent); }
+.as-switch[aria-checked='true']::after { transform: translateX(16px); background: var(--accent); }
+.as-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .as-switch::after { transition: none; } }
+
+.as-empty { padding: 34px 8px; text-align: center; color: var(--muted); font-size: 0.86rem; }
+.as-empty button {
+  border: 0; background: none; color: var(--accent);
+  font: inherit; font-weight: 700; text-decoration: underline;
+}
+
+/* Paging */
+.as-pager {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap;
+  font-size: 0.78rem; color: var(--muted);
+}
+.as-pager-count { font-variant-numeric: tabular-nums; }
+.as-pages { display: flex; gap: 4px; }
+.as-pages button {
+  min-width: 32px; padding: 6px 9px;
+  border: 1px solid var(--border); border-radius: 9px;
+  background: var(--panel); color: var(--muted);
+  font: inherit; font-size: 0.76rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.as-pages button[aria-current='page'] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.as-pages button:disabled { opacity: 0.4; cursor: default; }
+.as-pages button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The tray. Sticky above the bottom nav, which is 64px tall. */
+.as-tray {
+  position: sticky;
+  bottom: 8px;
+  display: flex; align-items: center; gap: 11px;
+  margin-top: 6px;
+  padding: 11px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: var(--menu-shadow);
+}
+.as-tray-n { font-size: 0.84rem; font-weight: 650; }
+.as-tray-n b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.as-tray-clear {
+  border: 0; background: none; color: var(--muted);
+  font: inherit; font-size: 0.79rem; text-decoration: underline;
+}
+.as-tray-go { margin-left: auto; }
+
+/* Detail sheet — up from the bottom on a phone, centred on desktop. */
+.as-scrim {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgb(0 0 0 / 0.5);
+  padding: 0;
+}
+.as-sheet {
+  width: 100%; max-width: 540px;
+  max-height: 86vh; overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  background: var(--panel);
+  display: flex; flex-direction: column; gap: 13px;
+}
+.as-sheet-head { display: flex; align-items: flex-start; gap: 14px; }
+.as-sheet-id { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.as-sheet-id h3 { margin: 0; font-size: 1.18rem; font-weight: 750; letter-spacing: -0.02em; }
+.as-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.as-tag {
+  font-size: 0.67rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+}
+.as-sheet-close {
+  margin-left: auto; padding: 2px 7px;
+  border: 0; background: none; color: var(--muted); font-size: 1.15rem;
+}
+.as-sheet-body { margin: 0; font-size: 0.87rem; line-height: 1.6; color: var(--muted); }
+.as-sheet-actions { display: flex; gap: 8px; }
+.as-sheet-actions .as-btn { flex: 1; padding: 11px; }
+
+@media (min-width: 720px) {
+  /* Cards once there is width. The row layout stops earning its keep when a
+     line of text is 900px long. */
+  .as-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 9px;
+  }
+  .as-row { align-items: flex-start; }
+  .as-row-desc { -webkit-line-clamp: 2; }
+
+  .as-scrim { align-items: center; padding: 24px; }
+  .as-sheet { border-radius: 18px; }
+}
