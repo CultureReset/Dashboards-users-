@@ -13,9 +13,12 @@ const toLoginEmail = (identifier) =>
     ? identifier.trim()
     : `${identifier.trim().toLowerCase()}@${LOGIN_DOMAIN}`
 
-/** Must match loginEmailFor() in gcr-api-clean's routes/business-auth.js. */
+// The label Supabase files a phone-only account under. NOT a real email
+// address — nothing is sent to it and no mailbox exists. `.invalid` is
+// reserved by RFC 2606 so it can never be a real domain.
+// Must match loginEmailFor() in gcr-api-clean's routes/business-auth.js.
 const PHONE_LOGIN_DOMAIN =
-  import.meta.env?.VITE_PHONE_LOGIN_DOMAIN || 'phone.biz.gulfcoastradar.com'
+  import.meta.env?.VITE_PHONE_LOGIN_DOMAIN || 'business.invalid'
 
 const toPhoneLoginEmail = (raw) => {
   const digits = String(raw || '').replace(/\D/g, '')
