@@ -1,6 +1,40 @@
 import { GCR_API_BASE } from './config'
 
 const GCR_API = `${GCR_API_BASE}/api/gcr`
+const AUTH_API = `${GCR_API_BASE}/api/auth`
+
+/**
+ * What an invite token is for — GET /api/auth/invite/:token.
+ *
+ * Read before showing the setup form so an expired or already-used link says
+ * so instead of taking a password and failing on submit. Returns
+ * { email, entity_slug, business_name }.
+ */
+export async function readInvite(token) {
+  const res = await fetch(`${AUTH_API}/invite/${encodeURIComponent(token)}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `That link could not be checked (${res.status}).`)
+  return data
+}
+
+/**
+ * Accept an invite — POST /api/auth/accept-invite.
+ *
+ * Creates the Supabase Auth account, the ownership row the dashboard reads
+ * access from, and sets the industry if one was picked. The account exists
+ * after this, so the caller can sign straight in with the invite's email and
+ * the password just chosen.
+ */
+export async function acceptInvite({ token, password, entity_type }) {
+  const res = await fetch(`${AUTH_API}/accept-invite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password, entity_type }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `Setup failed (${res.status}).`)
+  return data
+}
 
 /**
  * Fetch one business by slug. Response is the flat entity object itself

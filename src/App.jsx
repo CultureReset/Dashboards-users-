@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Claim from './pages/Claim'
 import Dashboard from './pages/Dashboard'
 import BusinessPicker from './pages/BusinessPicker'
+import AcceptInvite from './pages/AcceptInvite'
 
 function NoBusinessLinked() {
   const { signOut, user } = useAuth()
@@ -23,15 +24,38 @@ function NoBusinessLinked() {
   )
 }
 
+/** ?token=… means the visitor followed an invite link. */
+function inviteTokenFromUrl() {
+  return new URLSearchParams(location.search).get('token')
+}
+
 function Root() {
   const { loading, user, isAdmin, gcrSlug } = useAuth()
   const [claiming, setClaiming] = useState(false)
+  const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
 
   if (loading) {
     return (
       <div className="dashboard-loading">
         <div className="spinner" />
       </div>
+    )
+  }
+
+  // An invite beats everything else, including an existing session: someone
+  // may open a link on a machine already signed in as another business.
+  if (inviteToken) {
+    return (
+      <AcceptInvite
+        token={inviteToken}
+        onDone={() => {
+          // Drop the token so a refresh doesn't replay a now-used invite.
+          const url = new URL(location.href)
+          url.searchParams.delete('token')
+          history.replaceState({}, '', url)
+          setInviteToken(null)
+        }}
+      />
     )
   }
 
