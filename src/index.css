@@ -707,3 +707,124 @@ input { font: inherit; }
   .main-content { padding: 24px 32px; max-width: 780px; margin: 0 auto; width: 100%; }
   .bottom-nav { justify-content: center; }
 }
+
+/* App Store — connect your tools.
+   Cards rather than a list: a logo and a name is how anyone recognises Gmail
+   or Square, and there are hundreds of them. */
+.store-cats {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.store-cats::-webkit-scrollbar { display: none; }
+
+.store-cat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.79rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.store-cat span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.65;
+}
+.store-cat.active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.store-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+}
+.store-card.connected { border-color: var(--accent); }
+
+.store-card-head { display: flex; align-items: center; gap: 10px; }
+
+.store-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--bg);
+  flex: none;
+}
+.store-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.store-card-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.store-card-title b { font-size: 0.88rem; overflow-wrap: anywhere; }
+
+.store-status {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.store-status.ok { color: var(--accent); }
+.store-status.pending { color: var(--star); }
+
+.store-desc {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--muted);
+  /* Descriptions from Composio vary wildly in length; cap them so the grid
+     stays even instead of one card stretching a whole row. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.store-card-foot { margin-top: auto; }
+
+.store-btn {
+  width: 100%;
+  padding: 8px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.store-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.store-btn.off { color: var(--muted); }
+.store-btn:disabled { opacity: 0.5; }

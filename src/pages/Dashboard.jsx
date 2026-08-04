@@ -12,6 +12,7 @@ import TopBar from '../components/TopBar'
 import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
+import AppStore from './AppStore'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [reloadKey, setReloadKey] = useState(0) // bumped after an edit saves
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
+  const [showApps, setShowApps] = useState(false)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -132,6 +134,7 @@ export default function Dashboard() {
         activeKey={adding ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
+          setShowApps(false)
           setActiveKey(key)
         }}
       />
@@ -140,8 +143,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && sections.length === 0} onAdd={() => setAdding(true)}>
-        {adding ? (
+      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showApps ? (
+          <AppStore />
+        ) : adding ? (
           <AddSection
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
@@ -173,13 +178,16 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={activeKey}
+        activeKey={showApps ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
+          setShowApps(false)
           setActiveKey(key)
         }}
-        onAdd={() => setAdding(true)}
+        onAdd={() => { setShowApps(false); setAdding(true) }}
         adding={adding}
+        onApps={() => { setAdding(false); setShowApps(true) }}
+        apps={showApps}
       />
     </div>
   )
