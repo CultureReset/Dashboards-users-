@@ -65,6 +65,16 @@ export const endpoints = {
     industries: () => `${BUSINESS}/industries`,
   },
 
+  // ------------------------------------------------------- the App Store ---
+  // Scoped to one business. The API resolves which one from the session via
+  // entity_owners, so no path here carries a slug either.
+  connections: {
+    list: () => '/api/connections',
+    connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,
+    refresh: (toolId) => `/api/connections/${seg(toolId)}/refresh`,
+    disconnect: (toolId) => `/api/connections/${seg(toolId)}`,
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,
