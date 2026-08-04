@@ -90,7 +90,7 @@ export default function SignUp({ onBack }) {
       // The account exists now. session_secret is a one-time value the server
       // just set on it; signing in with it here is what mints the browser
       // session. The business never sees it and never types a password.
-      const { error: signInError } = await signInWithPhone(phone, created.session_secret)
+      const { error: signInError } = await signInWithPhone(phone, created.session_secret, created.login_email)
       if (signInError) throw signInError
     } catch (err) {
       if (err.claim_instead) setAlreadyListed(err.claim_instead)
