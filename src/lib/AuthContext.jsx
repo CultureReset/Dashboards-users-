@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api, onAuthFailure } from './apiClient'
 import { endpoints } from './endpoints'
-import { getSession, setSession, clearSession, onSessionChange } from './authStore'
+import { getSession, setSession, clearSession, onSessionChange, setActingSlug } from './authStore'
 import { LOGIN_DOMAIN } from './config'
 
 const AuthContext = createContext(null)
@@ -132,6 +132,13 @@ export function AuthProvider({ children }) {
   // can jump straight into any dashboard.
   const isAdmin = !!access?.isAdmin
   const gcrSlug = (isAdmin && adminSlug) || access?.slug || null
+
+  // Tell the API client which business to name on every call. Only an admin
+  // has one to name: an owner's slug comes from entity_owners server-side and
+  // this stays null for them.
+  useEffect(() => {
+    setActingSlug(isAdmin && adminSlug ? adminSlug : null)
+  }, [isAdmin, adminSlug])
 
   const value = {
     session,

@@ -52,6 +52,30 @@ export function getSession() {
   return session
 }
 
+/* ── the business an admin is looking at ──────────────────────────────────
+ *
+ * A normal owner never sets this: the API resolves their business from
+ * entity_owners and ignores anything the request says.
+ *
+ * An admin has no ownership row, so there is nothing for the server to
+ * resolve. middleware/ownerAuth.js allows exactly one exception — an account
+ * platform_admins vouches for may name a slug explicitly — and this is where
+ * that slug lives so every request can carry it, not just the ones that
+ * happened to take it as an argument.
+ *
+ * Naming it here changes no permission. The server still checks
+ * platform_admins before honouring it; for anyone else it is ignored outright.
+ */
+let actingSlug = null
+
+export function setActingSlug(slug) {
+  actingSlug = slug || null
+}
+
+export function getActingSlug() {
+  return actingSlug
+}
+
 export function setSession(next) {
   write(next)
 }
