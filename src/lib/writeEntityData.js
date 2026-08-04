@@ -1,58 +1,53 @@
-import { supabase } from './supabaseClient'
+import { api } from './apiClient'
+import { endpoints } from './endpoints'
 
-// Every write in the dashboard goes through this one module, so scoping and
-// permission handling live in a single place.
+// Every write in the dashboard goes through this one module.
 //
-// Rows are always written with the signed-in business's own slug, and updates
-// and deletes are always filtered by that slug as well as the row id — so even
-// a tampered id can't reach another business's row. The database must still
-// enforce this independently via row-level security; this is the client half.
+// It used to hold the client half of a security model — stamping the slug on
+// inserts, filtering updates and deletes by it — and hope the database
+// enforced the same thing independently. It does not need to any more. The
+// slug is not sent at all now: gcr-api-clean resolves it from the session and
+// puts it in the WHERE clause itself, where nothing in the request can reach.
+//
+// That is why these functions lost their `slug` argument. There is no longer
+// anywhere to put it, and no longer any point — the server was never going to
+// believe it.
 
-function tidy(values) {
-  const out = {}
-  for (const [k, v] of Object.entries(values)) {
-    if (v === '') out[k] = null // empty input means "no value", not empty string
-    else out[k] = v
-  }
-  return out
-}
-
+/** Turn an API failure into something worth showing an owner. */
 function describe(error) {
-  const msg = error?.message || 'Write failed'
-  // PostgREST reports an RLS refusal as a permissions error; make it readable.
-  if (/row-level security|permission denied|violates/i.test(msg)) {
-    return "You don't have permission to change this yet."
+  if (error?.isNotLinked) return 'This account is not linked to a business yet.'
+  if (error?.isNetworkError) return 'Could not reach the server — check your connection.'
+  return error?.message || 'Write failed'
+}
+
+export async function createRow(table, values) {
+  try {
+    const { row } = await api.post(endpoints.business.create(table), values)
+    return row
+  } catch (error) {
+    throw new Error(describe(error))
   }
-  return msg
 }
 
-export async function createRow(table, slug, values) {
-  const { data, error } = await supabase
-    .from(table)
-    .insert({ ...tidy(values), entity_slug: slug })
-    .select()
-  if (error) throw new Error(describe(error))
-  return data?.[0]
+export async function updateRow(table, id, values) {
+  try {
+    const { row } = await api.patch(endpoints.business.update(table, id), values)
+    return row
+  } catch (error) {
+    throw new Error(describe(error))
+  }
 }
 
-export async function updateRow(table, slug, id, values) {
-  const { data, error } = await supabase
-    .from(table)
-    .update(tidy(values))
-    .eq('id', id)
-    .eq('entity_slug', slug) // never reachable outside this business
-    .select()
-  if (error) throw new Error(describe(error))
-  if (!data?.length) throw new Error('Nothing was updated — check permissions.')
-  return data[0]
+export async function deleteRow(table, id) {
+  try {
+    await api.del(endpoints.business.remove(table, id))
+  } catch (error) {
+    throw new Error(describe(error))
+  }
 }
 
-export async function deleteRow(table, slug, id) {
-  const { error, count } = await supabase
-    .from(table)
-    .delete({ count: 'exact' })
-    .eq('id', id)
-    .eq('entity_slug', slug)
-  if (error) throw new Error(describe(error))
-  if (!count) throw new Error('Nothing was deleted — check permissions.')
+/** One section's rows, for refreshing after an edit without a full reload. */
+export async function fetchRows(table, { limit = 200, offset = 0 } = {}) {
+  const { rows = [] } = await api.get(endpoints.business.table(table), { query: { limit, offset } })
+  return rows
 }

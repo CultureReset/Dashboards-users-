@@ -11,7 +11,7 @@ import { createRow } from '../lib/writeEntityData'
 // uses. Saving writes the first row, which is what turns the table into a real
 // section on the next load.
 
-export default function AddSection({ allTables, activeKeys, slug, onDone, onCancel }) {
+export default function AddSection({ allTables, activeKeys, onDone, onCancel }) {
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState(null)
 
@@ -59,7 +59,7 @@ export default function AddSection({ allTables, activeKeys, slug, onDone, onCanc
           table={picked.table}
           row={null}
           onSave={async (values) => {
-            await createRow(picked.table, slug, values)
+            await createRow(picked.table, values)
             onDone?.(picked.table)
           }}
           onCancel={() => setPicked(null)}

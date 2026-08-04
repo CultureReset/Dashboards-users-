@@ -1,5 +1,5 @@
-import { supabase } from './supabaseClient'
-import { GCR_API_BASE } from './config'
+import { api } from './apiClient'
+import { endpoints } from './endpoints'
 
 // The App Store, as a business sees it.
 //
@@ -7,48 +7,29 @@ import { GCR_API_BASE } from './config'
 // never reaches a browser, and the business's own slug is resolved server-side
 // from entity_owners rather than sent from here. There is nothing this file
 // could put in a request that would let it act on another business.
-
-const API = `${GCR_API_BASE}/api/connections`
-
-/** The Supabase session token the API verifies to work out who is calling. */
-async function authHeaders() {
-  const { data } = await supabase.auth.getSession()
-  const token = data?.session?.access_token
-  if (!token) throw new Error('You are signed out — sign in again.')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
-
-async function call(path, { method = 'GET', body } = {}) {
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers: await authHeaders(),
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const err = new Error(data.error || `Request failed (${res.status})`)
-    Object.assign(err, data)
-    throw err
-  }
-  return data
-}
+//
+// This file already did the right thing; it only borrowed the session token
+// from the database client to prove who was calling. That client is gone now,
+// so the token comes from the auth store instead — and because the request
+// goes through apiClient, it also picks up the timeout, the error shape and
+// the automatic token renewal that its own small fetch wrapper did not have.
 
 /**
  * Every tool on offer, each carrying this business's connection if it has one.
  * Returns { entity_slug, tools, categories, composio_configured }.
  */
-export const fetchAppStore = () => call('/')
+export const fetchAppStore = () => api.get(endpoints.connections.list())
 
 /**
  * Begin connecting. Returns a redirect_url the owner must visit to authorise.
  * Composio handles the OAuth — no credentials are typed here or held by us.
  */
-export const connectTool = (toolId) => call(`/${encodeURIComponent(toolId)}/connect`, { method: 'POST' })
+export const connectTool = (toolId) => api.post(endpoints.connections.connect(toolId))
 
 /** Ask the server to reconcile with Composio after the owner comes back. */
-export const refreshTool = (toolId) => call(`/${encodeURIComponent(toolId)}/refresh`, { method: 'POST' })
+export const refreshTool = (toolId) => api.post(endpoints.connections.refresh(toolId))
 
-export const disconnectTool = (toolId) => call(`/${encodeURIComponent(toolId)}`, { method: 'DELETE' })
+export const disconnectTool = (toolId) => api.del(endpoints.connections.disconnect(toolId))
 
 /**
  * Group tools for display. Categories come from Composio, but a tool can carry

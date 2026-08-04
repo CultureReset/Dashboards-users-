@@ -10,10 +10,11 @@ import { INDUSTRIES } from '../lib/industries'
 // with the two things it actually needs: a password, and what kind of business
 // this is.
 //
-// Everything here goes through gcr-api-clean. POST /api/auth/accept-invite
-// creates the Auth account, writes the entity_owners row the dashboard reads
-// access from, and sets entity_type. Only the sign-in afterwards touches
-// Supabase directly, because that is what mints the browser session.
+// Everything here goes through gcr-api-clean, including the sign-in that
+// follows. POST /api/auth/accept-invite creates the Auth account, writes the
+// entity_owners row the dashboard reads access from, and sets entity_type;
+// POST /api/business-auth/password then mints the session. Nothing in this
+// browser holds a database credential.
 
 export default function AcceptInvite({ token, onDone }) {
   const { signIn } = useAuth()
