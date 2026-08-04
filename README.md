@@ -1,0 +1,214 @@
+# Business dashboard
+
+**This is the dashboard a business owner logs into — one business, identified by
+its slug.** It is not the operator console. The operator console, where you see
+every business at once, is `Admin-dashboard-main`.
+
+Copied here from `admin-dashboard-` so the name says what it is; that repo's
+name (`admin-dashboard-`, package `dashboard-shell`) read as an admin tool and
+sat one hyphen away from `Admin-dashboard-main`, which is a different product.
+Treat this copy as the one to work on.
+
+Both talk to the same backend, `gcr-api-clean`.
+
+---
+
+Every business gets sections built from its own data. Nothing is hardcoded per
+business or per industry.
+
+A business is identified by its **slug** (`flora-bama-yacht-club`). Everything
+about it lives in tables carrying an `entity_slug` column. The dashboard has no
+list of features: it asks the database what tables exist, pulls the rows
+belonging to that slug, and turns every table that has data into a section. A
+restaurant ends up with Menu, Hours, Happy Hour. A charter ends up with Trips,
+Species, Meeting Points, Weather Rules. Same code, different data.
+
+Add a table to the database and it appears in every business that has data in
+it. Drop it and the section disappears. No deploy, no code change.
+
+The business decides what goes in their dashboard. The **Add** tab lists every
+slug table the schema supports that they aren't using yet — grouped, searchable,
+including tables nobody has written any code for. Pick one, fill in the form
+built from that table's columns, and it becomes a live section. A business with
+nothing entered starts from that catalog rather than an empty screen.
+
+## Run it
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production build into dist/
+npm run check    # discovery + table-mapping checks, no network needed
+```
+
+Deploy `dist/` anywhere static. Copy `.env.example` to `.env.local` only if you
+need to point at something other than the live GCR stack.
+
+## Where the data comes from
+
+Two sources, merged:
+
+| Source | Covers |
+|---|---|
+| `GET /api/gcr/entity/:slug` on **gcr-api-clean** | The ~60 domains the API knows about, pre-joined — menu sections with their items nested, offerings with their price tiers |
+| Direct PostgREST sweep of the GCR Supabase | Everything else — any table with an `entity_slug` column |
+
+Where both carry the same table, the API version wins because it arrives better
+shaped.
+
+Everything else this app talks to also goes through gcr-api-clean:
+
+| What | Endpoint |
+|---|---|
+| Load a business | `GET /api/gcr/entity/:slug` |
+| Admin business picker, claim search | `GET /api/gcr/entities?search=` |
+| Submit a claim | `POST /api/gcr/claim` |
+
+Hosts live in `src/lib/config.js`, overridable with `VITE_*` variables.
+
+### The API renames tables
+
+`buildFullEntity()` in gcr-api-clean reshapes the database before sending it —
+`entity_hours` arrives as `hours`, `entity_offer_fee` as `fees`. `src/lib/tableMap.js`
+maps those names back, which is what lets an API-supplied section be edited (the
+write has to name a real table) and what stops a swept table from appearing a
+second time next to its renamed twin. Anything not in the map is assumed to
+already be a real table name, so a table added tomorrow still works untouched.
+
+## The files that matter
+
+**Engine — `src/lib/`**
+
+| File | What it does |
+|---|---|
+| `schemaDiscovery.js` | Reads the live PostgREST OpenAPI spec every load. Finds every table with an `entity_slug` column, and each table's columns — which is how edit forms build themselves. |
+| `entityTables.js` | Sweeps those tables for one slug. Tries the `entity_sections` RPC first (one call); falls back to 12-at-a-time streaming requests when it isn't installed. |
+| `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
+| `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Holds back internal tables (AI indexes, bookings, customer records, access control, backups). |
+| `tableMap.js` | API payload key ↔ real table name. |
+| `gcrApi.js` | The three gcr-api-clean calls: entity, search, claim. |
+| `writeEntityData.js` | **Every write goes through here.** Forces the business's own slug onto inserts; filters updates and deletes by slug as well as row id. |
+| `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
+| `config.js` | API host, Supabase host and key, login domain. |
+
+**Screens — `src/pages/`** — `Login`, `Claim`, `Dashboard`, `BusinessPicker` (admin only).
+
+**Layout — `src/components/`** — `TopBar`, `BottomNav` (one tab per discovered
+section plus a permanent Add tab; mobile-first, no sidebar), `MainContent`,
+`AddSection` (the catalog), `RowEditor` (builds a form from a table's columns).
+
+**Sections — `src/sections/`** — `GenericSection` renders *any* table by
+inspecting the shape of its rows. `registry.jsx` maps a handful of purpose-built
+renderers; it does **not** define which sections exist — discovery does.
+
+## Artist module
+
+Artists are businesses like any other — same slug, same discovery, same editor.
+Most of the module already exists in the database (`artist_profiles`, `songs`,
+`song_requests`, `shoutouts`, `artist_goals`, `song_cooperatives`, `tip_links`,
+`artist_shows`, `artist_follows`, `artist_booking_requests`).
+
+What did not exist is the part the artist needs to control: **what anything
+costs.** `sql/artist_module.sql` adds it —
+
+| Thing | Where the artist sets it |
+|---|---|
+| Price per song | `songs.price` (falls back to `artist_profiles.default_min_request_amount`) |
+| Custom-song price | `artist_profiles.custom_song_price` |
+| Shoutout tiers | `artist_price_tiers` where `kind = 'shoutout'` |
+| Tip buttons | `artist_price_tiers` where `kind = 'tip'` |
+| Crowdfund amounts | `artist_price_tiers` where `kind = 'crowdfund'` |
+| Crowdfund targets | `artist_goals`, `song_cooperatives` |
+| Cash App / Venmo / PayPal | `tip_links` (platform, handle, deep-link prefix) |
+| Requests open right now | `artist_profiles.requests_open` |
+
+`artist_price_tiers` is one table behind every money button on the fan pages, so
+a new kind of paid thing is a row — not a schema change and not a deploy.
+
+**Nothing about this is hardwired.** `src/lib/artistModule.js` contains only
+nicer words — labels, icons, and a name pattern for catalog grouping. Delete it
+and the artist dashboard still works; it just says "Artist Price Tiers" instead
+of "Prices". Every decision that matters is made from the live schema and the
+shape of the rows, in `src/lib/shapes.js`:
+
+| Decision | How it's made |
+|---|---|
+| Which sections exist | Tables with rows for this slug |
+| What you can add | Every slug table you aren't using yet |
+| Progress bar or not | Row has a raised/target numeric pair |
+| Price layout or not | Rows have a kind + label + amount |
+| Held back from Add | Row carries somebody else's identity, or the name says it collects submissions |
+| Contact masking | Field name matches a contact convention |
+
+A `merch_crowdfund` table invented tomorrow gets a progress bar. A
+`sponsor_tiers` table gets the grouped price layout. A `wish_wall` table with a
+`patron_phone` column is recognised as fan-submitted and held out of the Add
+catalog with its phone numbers masked. None of those names appear anywhere in
+`src/` — `npm run check` asserts exactly that.
+
+Fan-submitted tables still show as sections once they have rows (that's the
+artist's queue); they're just never offered as something to *add*, because the
+artist isn't the author.
+
+**The fan-facing pages live in `gcr-unified`, not here** — `/artist/:slug` and
+`/artist/:slug/live`. They currently hardcode their amounts; once this SQL is
+run they should read `artist_price_tiers` and `tip_links` instead. See
+`docs/PORT_REVIEW.md`.
+
+## Access
+
+1. `sql/ownership_and_write_access.sql` — **required before editing works.**
+   Locks `entity_owners`, creates `platform_admins` + `is_platform_admin()`,
+   creates `owns_entity(slug)`, and enables owner-scoped write policies on 8
+   starter tables while keeping public read intact.
+2. `sql/entity_sections.sql` — optional. One read-only `SECURITY INVOKER`
+   function returning all of a slug's data in a single call instead of ~305
+   requests. `entityTables.js` uses it automatically when present.
+
+**Neither has been run.** Both are proposals — read them before executing.
+
+Provision logins once the SQL is in place:
+
+```bash
+SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs --dry-run --limit=5
+SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs
+```
+
+Credentials land in `business-credentials.csv`, which is gitignored and should
+be treated as secret.
+
+**Admin deep link** — from CyberCheck admin, link each business row to
+`https://<dashboard-host>/?business=<slug>`. That opens that business's
+dashboard with an "Admin view" banner. With no `?business=`, admins land on the
+searchable picker.
+
+## Claims
+
+A business without a login uses **Claim your business** on the sign-in screen.
+That searches `GET /api/gcr/entities` and posts to `POST /api/gcr/claim`, which
+writes a `business_claims` row with status `new`. It grants nothing on its own —
+an admin reviews it in cybercheck-login's `admin.html` GCR Claims panel
+(`GET /api/admin/gcr/claims`, `PATCH /api/admin/gcr/claims/:id`), and approving
+is what creates the account and the `entity_owners` row.
+
+## Status
+
+**Verified:** builds clean; `npm run check` passes; section discovery, table
+mapping and the add catalog tested against realistic restaurant and charter
+payloads.
+
+**Note on writes:** the Add catalog offers every table the schema supports, but
+`sql/ownership_and_write_access.sql` only grants write access to 8 of them. Until
+that list is widened, most things a business picks will fail at save time with a
+permissions error. See `docs/PORT_REVIEW.md`.
+
+**Never run:** this app has not been opened in a browser against live data, has
+not authenticated against Supabase, and has not saved an edit. Treat every
+runtime path as unproven until it's deployed.
+
+`docs/everything.html` is the full record — the architecture write-up, the
+extracted product spec, the module-source analysis, and the reconciliation of
+the 244-table design against the 563-table live database. Open it in a browser;
+it needs no server and no network.
+
+`docs/PORT_REVIEW.md` lists what this port is missing and what to fix first.
