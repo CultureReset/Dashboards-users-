@@ -6,7 +6,7 @@ import { tableFor } from '../lib/tableMap'
 
 // Wraps a discovered section with add / edit / delete. Works for any table,
 // since both the display and the form derive from the data and schema.
-export default function EditableSection({ section, slug, onChanged, children }) {
+export default function EditableSection({ section, onChanged, children }) {
   const [editing, setEditing] = useState(null) // row object, or 'new'
 
   // section.key is whatever the payload called this domain; writes need the
@@ -16,14 +16,16 @@ export default function EditableSection({ section, slug, onChanged, children }) 
   const isList = section.kind === 'list' && !!table
 
   async function save(values) {
-    if (editing === 'new') await createRow(table, slug, values)
-    else await updateRow(table, slug, editing.id, values)
+    // No slug argument: the server takes it from the session, which is the
+    // only copy that was ever trustworthy.
+    if (editing === 'new') await createRow(table, values)
+    else await updateRow(table, editing.id, values)
     setEditing(null)
     onChanged?.()
   }
 
   async function remove() {
-    await deleteRow(table, slug, editing.id)
+    await deleteRow(table, editing.id)
     setEditing(null)
     onChanged?.()
   }

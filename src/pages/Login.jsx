@@ -57,10 +57,11 @@ export default function Login({ onClaim, onSignUp }) {
     setError('')
     setBusy(true)
     try {
-      // The server checks the code and hands back a one-time secret; signing
-      // in with it is what mints the session. Nothing is typed by the owner.
-      const { session_secret, login_email } = await verifySigninCode(phone, code)
-      const { error: signInError } = await signInWithPhone(phone, session_secret, login_email)
+      // The server checks the code and mints the session itself, so what comes
+      // back is the finished thing rather than a secret to redeem. Nothing is
+      // typed by the owner, and no credential reaches this browser at all.
+      const { session } = await verifySigninCode(phone, code)
+      const { error: signInError } = await signInWithPhone(phone, session)
       if (signInError) throw signInError
     } catch (err) { setError(err.message); setBusy(false) }
   }

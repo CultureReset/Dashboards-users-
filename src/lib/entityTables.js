@@ -1,13 +1,21 @@
-import { supabase } from './supabaseClient'
+import { api } from './apiClient'
+import { endpoints } from './endpoints'
 
-// Pull this business's rows from every table tied to a slug. Results stream
-// back as they arrive so sections appear immediately instead of waiting for the
-// full scan, and are cached per business so repeat visits are instant.
+// Every section this business has, in one request.
 //
-// Tables locked down by row-level security simply return nothing and drop out.
+// This used to be the most expensive thing the dashboard did: 316 separate
+// PostgREST calls from the browser, twelve at a time, on every page load — one
+// per slug-scoped table — plus an RPC fallback and a concurrency pool to
+// manage them. All of that moved to the server. GET /api/business/sections
+// runs the same sweep next to the database with the service key and returns
+// only the tables that actually have rows.
+//
+// Two things got better besides the round trips. The API resolves the business
+// from the session, so the slug is no longer something the browser asserts.
+// And the 99 slug tables with row-level security on and no policy — which
+// returned an empty list to the browser, indistinguishable from "this business
+// has nothing here" — come back with their real contents now.
 
-const CONCURRENCY = 12
-const ROW_LIMIT = 200
 const CACHE_PREFIX = 'gcr_tables_'
 const CACHE_TTL_MS = 1000 * 60 * 5
 
@@ -25,87 +33,35 @@ export function readTableCache(slug) {
 
 function writeTableCache(slug, rows) {
   try {
-    sessionStorage.setItem(
-      CACHE_PREFIX + slug,
-      JSON.stringify({ rows, at: Date.now() })
-    )
+    sessionStorage.setItem(CACHE_PREFIX + slug, JSON.stringify({ rows, at: Date.now() }))
   } catch {
     /* quota exceeded — caching is optional */
   }
 }
 
-// Set once per page load: null = untried, true/false = whether the RPC exists.
-let rpcAvailable = null
-
-/** Every slug-scoped table for this business in one call, or null if unavailable. */
-async function fetchViaRpc(slug) {
-  if (rpcAvailable === false) return null
-  const { data, error } = await supabase.rpc('entity_sections', { p_slug: slug })
-  if (error || !data || typeof data !== 'object') {
-    rpcAvailable = false
-    return null
-  }
-  rpcAvailable = true
-  // Drop tables that came back empty so the shape matches the sweep's.
-  const out = {}
-  for (const [table, rows] of Object.entries(data)) {
-    if (Array.isArray(rows) && rows.length) out[table] = rows
-  }
-  return out
-}
-
-async function mapLimit(items, limit, worker) {
-  let cursor = 0
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
-      await worker(items[cursor++])
-    }
-  })
-  await Promise.all(runners)
-}
-
 /**
- * @param {string} slug
- * @param {string[]} tables
+ * @param {string} slug   Which business the caller believes it is showing. The
+ *                        server resolves this from the session regardless; it
+ *                        is used here only to key the cache. Admins viewing
+ *                        another business pass it through as `?slug=`.
+ * @param {string[]} tables    Kept for the progress callback's denominator.
  * @param {{ onFound?: (table: string, rows: object[]) => void,
  *           onProgress?: (done: number, total: number) => void }} handlers
  * @returns {Promise<Record<string, object[]>>}
  */
-export async function fetchTablesForSlug(slug, tables, { onFound, onProgress } = {}) {
-  // One round trip instead of ~305, when sql/entity_sections.sql has been run.
-  // SECURITY INVOKER, so row-level security applies exactly as it does to the
-  // sweep below. Until that function exists PostgREST returns PGRST202 and we
-  // fall through — the dashboard works either way.
-  const viaRpc = await fetchViaRpc(slug)
-  if (viaRpc) {
-    for (const [table, rows] of Object.entries(viaRpc)) onFound?.(table, rows)
-    onProgress?.(tables.length, tables.length)
-    writeTableCache(slug, viaRpc)
-    return viaRpc
-  }
-
-  const found = {}
-  let done = 0
-
-  await mapLimit(tables, CONCURRENCY, async (table) => {
-    try {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .eq('entity_slug', slug)
-        .limit(ROW_LIMIT)
-
-      if (!error && data && data.length) {
-        found[table] = data
-        onFound?.(table, data) // surface this section right away
-      }
-    } catch {
-      /* an unreadable table shouldn't break the dashboard */
-    } finally {
-      onProgress?.(++done, tables.length)
-    }
+export async function fetchTablesForSlug(slug, tables = [], { onFound, onProgress } = {}) {
+  const { sections = {} } = await api.get(endpoints.business.sections(), {
+    // Only honoured for an account platform_admins vouches for; for everyone
+    // else the server uses the session's own slug and ignores this entirely.
+    query: { slug },
   })
 
-  writeTableCache(slug, found)
-  return found
+  for (const [table, rows] of Object.entries(sections)) onFound?.(table, rows)
+
+  // One call, so there is no partial progress to report — it is done or it
+  // threw. The callback stays because the caller draws a progress bar with it.
+  onProgress?.(tables.length, tables.length)
+
+  writeTableCache(slug, sections)
+  return sections
 }

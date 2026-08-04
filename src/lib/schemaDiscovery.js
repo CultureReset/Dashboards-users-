@@ -1,15 +1,20 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient'
+import { api } from './apiClient'
+import { endpoints } from './endpoints'
 
 // Runtime schema discovery.
 //
-// The dashboard carries no list of known tables. It asks the database what
-// tables exist (via the PostgREST OpenAPI spec Supabase publishes) and treats
-// every table with an `entity_slug` column as a possible business section.
+// The dashboard carries no list of known tables. It asks what tables exist and
+// treats every table with an `entity_slug` column as a possible business
+// section — so adding a table to the database makes it appear here, and
+// dropping one makes it disappear, with no deploy in between.
 //
-// The schema is re-read on every load, so the dashboard tracks the database:
-// add a table and it appears, drop a table and it disappears, rename or add
-// columns and they flow straight through. The cache below only seeds the first
-// paint — it never decides what's current.
+// What changed: the question used to go straight to PostgREST's OpenAPI
+// document with the anon key, which meant downloading the entire database
+// schema into the browser on every load. It goes to GET /api/business/schema
+// now. The API computes the same answer server-side with the service key and
+// caches it, so the reply is a short list rather than the whole database — and
+// tables the browser was never allowed to see are included, because the API is
+// the one reading them.
 
 const SCHEMA_CACHE_KEY = 'gcr_entity_tables_v1'
 
@@ -29,12 +34,19 @@ export function getCachedTables() {
 // rather than from hand-written field lists.
 let columnsByTable = {}
 
-/** Column definitions for a table: [{ name, type, format, readOnly }] */
+/** Column definitions for a table: [{ name, type, format, editable }] */
 export function getColumns(table) {
   return columnsByTable[table] || []
 }
 
-// Columns the business shouldn't hand-edit (identity, ownership, bookkeeping).
+/**
+ * Whether a business may hand-edit this column.
+ *
+ * The API decides — it strips the same identity and bookkeeping columns out of
+ * every incoming body, so a form that offered one would just be showing a
+ * field the server ignores. `editable` is its answer; the local test is the
+ * fallback for a cached column list from before the API returned the flag.
+ */
 const SYSTEM_COLUMNS = new Set([
   'id',
   'entity_slug',
@@ -47,47 +59,18 @@ const SYSTEM_COLUMNS = new Set([
 ])
 
 export function isEditableColumn(col) {
+  if (typeof col?.editable === 'boolean') return col.editable
   return !SYSTEM_COLUMNS.has(col.name) && !col.readOnly
 }
 
 /** Always reads the live schema. This is the source of truth. */
 export async function fetchEntityTables() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      Accept: 'application/openapi+json',
-    },
-    cache: 'no-store',
-  })
-  if (!res.ok) throw new Error(`Schema read failed (${res.status})`)
-  const spec = await res.json()
+  const { tables = [], columns = {} } = await api.get(endpoints.business.schema())
 
-  const defs = spec.definitions || spec.components?.schemas || {}
-  const tables = Object.keys(defs)
-    .filter((name) => {
-      const props = defs[name]?.properties
-      return props && Object.prototype.hasOwnProperty.call(props, 'entity_slug')
-    })
-    .sort()
-
-  columnsByTable = {}
-  for (const table of tables) {
-    const props = defs[table].properties || {}
-    columnsByTable[table] = Object.entries(props).map(([name, def]) => ({
-      name,
-      type: def.type || 'string',
-      format: def.format || '',
-      enum: def.enum || null,
-      readOnly: /generated|identity/i.test(def.description || ''),
-    }))
-  }
+  columnsByTable = columns
 
   try {
-    localStorage.setItem(
-      SCHEMA_CACHE_KEY,
-      JSON.stringify({ tables, at: Date.now() })
-    )
+    localStorage.setItem(SCHEMA_CACHE_KEY, JSON.stringify({ tables, at: Date.now() }))
   } catch {
     /* storage unavailable — discovery still works, just without a warm start */
   }

@@ -150,7 +150,6 @@ export default function Dashboard() {
           <AddSection
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
-            slug={gcrSlug}
             onCancel={() => setAdding(false)}
             onDone={(table) => {
               setAdding(false)
@@ -164,7 +163,6 @@ export default function Dashboard() {
             <EditableSection
               key={active.key}
               section={active}
-              slug={gcrSlug}
               onChanged={() => setReloadKey((k) => k + 1)}
             >
               {Custom ? (
