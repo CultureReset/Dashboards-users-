@@ -343,7 +343,8 @@ two things, both named in the header:
 2. **Duplicates.** The sweep finds `entity_hours` independently, so with no
    mapping the dashboard shows both "Hours" and "Entity Hours" with the same rows.
 
-`API_KEY_TO_TABLE` is a 73-entry map. Entries where both sides are identical
+⟲ `API_KEY_TO_TABLE` is a **59-entry** map — 26 real renames and 33 where both
+sides are identical. (An earlier pass said 73; recounted from the file.) Entries where both sides are identical
 (`faqs: 'faqs'`, `offerings: 'offerings'`) are listed deliberately, *"so the
 mapping reads as the full picture rather than looking like an oversight."*
 
