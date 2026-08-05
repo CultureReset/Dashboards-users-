@@ -712,6 +712,31 @@ into either host. Consumes the same `--` tokens, so it themes for free.
 
 ---
 
+## 9b. ⟲ The stylesheets, read in full
+
+Previously characterized by structure. Read line by line; this is the tightest
+CSS of the four repos.
+
+**`src/index.css` (830)** — **45 tokens, and not one raw hex value outside
+`:root`.** Every colour in 830 lines resolves through a custom property. That is
+the cleanest token discipline anywhere in the platform (`Admin-dashboard-main`
+has 36 escapes; `gcr-unified` has 1,617).
+
+Both themes through the three-tier cascade the header documents:
+
+> 1. `[data-theme='light'|'dark']` on `<html>` — the business's explicit choice,
+> 2. `prefers-color-scheme` — for anyone who has never touched the toggle.
+
+Implemented as `:root` → `@media (prefers-color-scheme: dark) { :root:not([data-theme]) }`
+→ `:root[data-theme='dark']`, so the explicit choice wins in **both** directions
+— which is what makes the three-way Auto/Light/Dark switch in `TopBar` honest
+rather than decorative.
+
+**`src/components/AppStoreView.css` (256)** is a self-contained `as-*` namespace
+that consumes the same tokens, so the shared component themes correctly in
+whichever host it is dropped into — the styling half of the
+same-file-in-two-repos arrangement (§15).
+
 ## 10. Scripts (`scripts/`, 5 files, 1,479 lines)
 
 | Script | Lines | What it does | Network |
