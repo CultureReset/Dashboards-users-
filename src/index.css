@@ -828,3 +828,73 @@ input { font: inherit; }
 }
 .store-btn.off { color: var(--muted); }
 .store-btn:disabled { opacity: 0.5; }
+
+/* ── Availability ────────────────────────────────────────────────────────
+ *
+ * The one screen where the business corrects a number the platform has been
+ * changing on its behalf, so the emphasis is on what the customer currently
+ * sees rather than on the raw row behind it. Colour carries meaning here —
+ * open, nearly gone, full, closed — and every value is a token so the dark
+ * theme follows without a second rule.
+ */
+
+.availability__capacity { margin-bottom: 18px; }
+.availability__capacity label { display: block; font-size: 0.88rem; margin-bottom: 6px; }
+.availability__caprow { display: flex; gap: 8px; align-items: center; }
+.availability__caprow input {
+  width: 120px; padding: 8px 10px; font: inherit; font-size: 0.95rem;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--input-bg); color: var(--text);
+}
+.availability__caprow button {
+  padding: 8px 14px; font: inherit; font-size: 0.9rem; cursor: pointer;
+  border: 1px solid var(--accent); border-radius: 8px;
+  background: var(--accent); color: var(--on-accent);
+}
+.availability__caprow button:disabled { opacity: 0.55; cursor: default; }
+
+.availability__range { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.availability__range label { font-size: 0.8rem; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.availability__range input {
+  font: inherit; font-size: 0.88rem; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--input-bg); color: var(--text);
+}
+
+.availability__table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.availability__table th {
+  text-align: left; font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--muted); font-weight: 600;
+  padding: 6px 8px 6px 0; border-bottom: 1px solid var(--border);
+}
+.availability__table td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.availability__table input {
+  width: 72px; font: inherit; font-size: 0.88rem; padding: 5px 7px;
+  border: 1px solid var(--accent); border-radius: 6px;
+  background: var(--input-bg); color: var(--text);
+}
+.availability__row.is-blocked td { opacity: 0.6; }
+.availability__actions { text-align: right; white-space: nowrap; }
+.availability__actions button + button { margin-left: 10px; }
+
+/* A status word, not a decoration: these are the four things a customer can
+ * be told, so they read as labels rather than badges. */
+.pill {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 0.74rem; font-weight: 600; letter-spacing: 0.01em;
+  border: 1px solid var(--border); color: var(--muted);
+}
+.pill--available { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.pill--limited { background: var(--accent-bg); border-color: var(--star); color: var(--star); }
+.pill--full,
+.pill--blocked { background: transparent; border-color: var(--muted); color: var(--muted); }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.78rem; }
+.notice { color: var(--accent); font-size: 0.85rem; margin: 8px 0; }
+.error { color: var(--danger); font-size: 0.85rem; margin: 8px 0; }
+.link {
+  background: none; border: none; padding: 0; font: inherit; font-size: 0.84rem;
+  color: var(--accent); cursor: pointer; text-decoration: underline;
+}
+.link:disabled { opacity: 0.45; cursor: default; text-decoration: none; }

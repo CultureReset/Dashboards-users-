@@ -65,6 +65,22 @@ export const endpoints = {
     industries: () => `${BUSINESS}/industries`,
   },
 
+  // ------------------------------------------------ this business's inventory ---
+  // Capacity, day-level corrections, and closed dates. Mounted ahead of the
+  // `/:table` routes above on the API side, so `availability` is a verb here
+  // rather than a table name.
+  availability: {
+    /** Capacity, raw day rows, blocks, and the merged public view. */
+    range: (from, to) => `${BUSINESS}/availability?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    /** The number every count is subtracted from. */
+    capacity: () => `${BUSINESS}/availability/capacity`,
+    /** Correct what is actually taken on one date. */
+    day: () => `${BUSINESS}/availability/day`,
+    /** Closed, not full — vetoes every other source for that date. */
+    block: () => `${BUSINESS}/availability/block`,
+    unblock: (id) => `${BUSINESS}/availability/block/${seg(id)}`,
+  },
+
   // ------------------------------------------------------- the App Store ---
   // Scoped to one business. The API resolves which one from the session via
   // entity_owners, so no path here carries a slug either.

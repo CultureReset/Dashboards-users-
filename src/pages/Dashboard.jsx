@@ -8,6 +8,7 @@ import { TABLE_TO_API_KEY, tableFor } from '../lib/tableMap'
 import { rendererFor } from '../sections/registry'
 import GenericSection from '../sections/GenericSection'
 import EditableSection from '../sections/EditableSection'
+import AvailabilitySection from '../sections/AvailabilitySection'
 import TopBar from '../components/TopBar'
 import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
@@ -95,7 +96,20 @@ export default function Dashboard() {
     () => mergeEntitySources(entity, tableRows),
     [entity, tableRows]
   )
-  const sections = useMemo(() => discoverSections(merged), [merged])
+  const discovered = useMemo(() => discoverSections(merged), [merged])
+
+  // Availability is pinned rather than discovered. Discovery only surfaces a
+  // section once it has rows, but a business with no capacity set has no rows
+  // — which is precisely the business that needs this screen. It is also the
+  // one section the owner does not author so much as correct, so it stays
+  // first in the list where a wrong number can be found quickly.
+  const sections = useMemo(
+    () => [
+      { key: '__availability', label: 'Availability', icon: '📅', kind: 'record', data: {}, pinned: true },
+      ...discovered,
+    ],
+    [discovered],
+  )
 
   useEffect(() => {
     if (sections.length && !sections.some((s) => s.key === activeKey)) {
@@ -158,6 +172,11 @@ export default function Dashboard() {
               setReloadKey((k) => k + 1)
             }}
           />
+        ) : active?.key === '__availability' ? (
+          // Not wrapped in EditableSection: this screen owns its own reads and
+          // writes against /api/business/availability rather than the generic
+          // slug-table CRUD that wrapper provides.
+          <AvailabilitySection />
         ) : (
           active && (
             <EditableSection
