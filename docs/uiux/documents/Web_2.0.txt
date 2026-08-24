@@ -1,0 +1,2721 @@
+Yes. Put together as one system, the concept is much bigger than “one update updates everywhere.” That is the first practical use case. The underlying idea is to change where authority lives in the software stack.
+Today, the application usually sits in the middle. Your proposed architecture puts the person or business and its persistent data/capability environment in the middle, while applications become replaceable tools around it.
+The core idea
+Think of the organization as an open, owner-controlled computing and data foundation.
+
+TODAY
+
+Business
+   │
+   ├── Facebook ── Facebook's representation
+   ├── Google ──── Google's representation
+   ├── Yelp ────── Yelp's representation
+   ├── CRM ─────── CRM's database
+   ├── Booking ─── Booking platform's database
+   ├── POS ─────── POS database
+   └── Website ─── Website database
+
+Every system stores another version of reality.
+Every system has another interface.
+Every system has another permission model.
+Every system becomes another integration problem.
+
+You want to invert that:
+
+                         OWNER
+                           │
+                           ▼
+              ╔════════════════════════╗
+              ║   OWNER'S FOUNDATION   ║
+              ║                        ║
+              ║ Identity               ║
+              ║ Structured data        ║
+              ║ Relationships          ║
+              ║ Permissions            ║
+              ║ Provenance             ║
+              ║ Capabilities           ║
+              ║ Connections            ║
+              ║ Automations            ║
+              ║ Apps                   ║
+              ║ AI access              ║
+              ║ Audit / proof          ║
+              ╚═══════════╤════════════╝
+                          │
+              everything plugs into it
+                          │
+       ┌──────────┬───────┼────────┬───────────┐
+       ▼          ▼       ▼        ▼           ▼
+    Google    Facebook   Yelp    Booking       POS
+       │          │       │        │           │
+       └──────────┴───────┼────────┴───────────┘
+                          │
+                     TOOLS / CHANNELS
+
+The foundation survives when an application changes.
+That is the key.
+
+1. The business itself becomes the canonical entity
+A restaurant shouldn't fundamentally be:
+a Google Business Profile + Facebook page + Yelp page + Toast account + website.
+Those are representations and tools associated with the restaurant.
+The permanent object is:
+
+BUSINESS
+│
+├── identity
+├── locations
+├── people
+├── hours
+├── services
+├── products
+├── menus
+├── pricing
+├── availability
+├── events
+├── specials
+├── media
+├── reviews
+├── policies
+├── customers
+├── bookings
+├── relationships
+└── capabilities
+
+That becomes the business's machine-readable representation.
+Facebook, Google, the website, an AI assistant, a QR code and an AR application can all consume different portions of it.
+
+2. Your tables become the factual foundation
+This is why your insistence on tables for the actual sections makes sense.
+You aren't building one giant JSON document.
+For example:
+
+business
+business_location
+
+hours
+holiday_hours
+
+menu
+menu_section
+menu_item
+menu_item_option
+
+product
+service
+pricing_tier
+
+availability
+inventory
+booking
+
+special
+happy_hour
+event
+
+review
+media
+amenity
+
+customer
+customer_preference
+
+policy
+waiver
+deposit
+
+etc.
+
+And relationships connect them.
+JSON/JSON-LD can then be generated when information needs to leave the system.
+So:
+Tables store truth.
+JSON transports it.
+JSON-LD describes it semantically to the wider Web.
+
+3. Then comes the source/provenance system
+You also don't want Ghost blindly assuming everything it sees is true.
+Take hours.
+Your canonical table might say:
+Day	Open	Close
+Friday	11:00 AM	11:00 PM
+But Ghost might observe:
+
+OWNER       → 11 AM – 11 PM
+WEBSITE     → 11 AM – 11 PM
+GOOGLE      → 11 AM – 10 PM
+FACEBOOK    → 11 AM – 11 PM
+YELP        → 11 AM – 10 PM
+
+That's where your checklist idea belongs.
+The UI becomes:
+
+FRIDAY HOURS
+Canonical: 11 AM – 11 PM
+
+SOURCE                         STATUS
+
+✓ Owner       11 AM – 11 PM   MATCH
+✓ Website     11 AM – 11 PM   MATCH
+⚠ Google      11 AM – 10 PM   MISMATCH
+✓ Facebook    11 AM – 11 PM   MATCH
+⚠ Yelp        11 AM – 10 PM   MISMATCH
+
+              [ SYNCHRONIZE ]
+
+Notice what you didn't do.
+You didn't create:
+
+google_hours
+facebook_hours
+yelp_hours
+
+as the canonical truth.
+Instead:
+
+              CANONICAL HOURS
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+     Google      Facebook       Yelp
+     observed    observed     observed
+      value        value        value
+
+That allows you to add 100 more platforms without adding 100 columns to the hours table.
+
+4. Connections tell Ghost where the business exists
+Now the business connects its external systems.
+
+CONNECTIONS
+
+✓ Google Business
+✓ Facebook
+✓ Instagram
+✓ Yelp
+✓ Toast
+✓ FareHarbor
+✓ Gmail
+✓ Website
+✓ Google Calendar
+✓ Android application
++ Add connection
+
+Each connection records things such as:
+
+business
+provider
+account
+credentials/session
+permissions
+supported capabilities
+last checked
+health
+mapping
+
+The foundation now knows:
+“This Facebook page belongs to this business.”
+and:
+“This Toast account belongs to this business.”
+That's the Connection Map.
+
+5. Then you normalize what software can actually do
+This is one of the most important layers.
+Don't make the rest of Ghost understand:
+
+Facebook endpoint XYZ
+Toast endpoint ABC
+Yelp operation 123
+Android button coordinate 627
+
+Define business-level capabilities.
+For example:
+
+business.hours.read
+business.hours.update
+
+menu.read
+menu.update
+
+availability.search
+
+booking.create
+
+customer.create
+
+review.reply
+
+social.post.publish
+
+message.send
+
+display.update
+
+Now an application asks Ghost:
+
+business.hours.update
+
+rather than:
+“Call Google's API endpoint X.”
+That's the abstraction that lets the entire ecosystem remain modular.
+
+6. Underneath capabilities are adapters/executors
+Suppose Ghost needs to update something.
+It can decide how.
+
+                 hours.update
+                       │
+                       ▼
+               CAPABILITY ROUTER
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+         API         Browser      Android
+          │            │            │
+       official     automated     real app
+      integration      UI         executor
+
+So Android isn't Ghost.
+Playwright isn't Ghost.
+MCP isn't Ghost.
+An API isn't Ghost.
+They are interchangeable mechanisms underneath a stable capability.
+That distinction is essential to making your foundation survive technology changes.
+
+7. Your AppMaps make existing software reusable
+This is where your idea of mapping every application comes in.
+For a Facebook Android workflow, for example:
+
+Facebook AppMap
+│
+├── screens
+├── elements
+├── states
+├── actions
+├── transitions
+├── expected results
+└── recovery procedures
+
+The expensive AI doesn't need to rediscover the application every time.
+Instead:
+
+UNKNOWN APPLICATION
+        ↓
+AI explores it
+        ↓
+creates AppMap
+        ↓
+tests it
+        ↓
+save version
+        ↓
+
+KNOWN APPLICATION
+        ↓
+deterministic script
+        ↓
+cheap execution
+
+If Facebook changes the interface:
+
+execution fails
+      ↓
+verification catches failure
+      ↓
+AI repair
+      ↓
+AppMap v2
+      ↓
+test
+      ↓
+deploy
+
+And ideally that repaired mapping becomes reusable across authorized installations rather than rediscovered independently for every business.
+
+8. AI sits on top of structure instead of replacing structure
+This is another fundamental part of what you're proposing.
+You don't want:
+
+Huge model
+   ↓
+read 40 webpages
+   ↓
+figure out what everything means
+   ↓
+guess answer
+
+when the system already knows:
+
+business
+location
+menu
+menu_item
+price
+hours
+availability
+
+For:
+“Find somewhere with grouper under $30 that's open after 9.”
+AI's job becomes primarily:
+
+natural language
+      ↓
+understand intent
+      ↓
+structured query
+
+Then normal software/database operations handle the deterministic work.
+That means you can route models:
+
+NO MODEL
+Exact lookup / known automation
+
+SMALL LOCAL MODEL
+Intent / classification / extraction
+
+MEDIUM MODEL
+Complex reasoning
+
+LARGE MODEL
+Unknown UI / difficult planning / creation
+
+You're not anti-AI.
+You're trying to stop using AI for jobs conventional computing already performs better.
+
+9. Then MCP becomes one way into the business
+This is where your AI-access idea becomes important.
+Conceptually:
+
+                  BUSINESS FOUNDATION
+
+               ┌─────────────────────┐
+               │ Public Resources    │
+               │ Private Resources   │
+               │ Capabilities        │
+               │ Permissions         │
+               └──────────┬──────────┘
+                          │
+                    ACCESS GATEWAY
+                          │
+             ┌────────────┼────────────┐
+             ▼            ▼            ▼
+            MCP          API        JSON-LD
+             │            │            │
+             ▼            ▼            ▼
+          AI Agent      App         Web/Search
+
+MCP is therefore an adapter into Ghost, not Ghost itself.
+If MCP disappears five years from now, you replace that adapter.
+The business's underlying data doesn't change.
+
+10. Public, permissioned and private become separate views
+Not everything should be exposed.
+
+PUBLIC
+────────────────
+name
+hours
+location
+menu
+prices
+events
+amenities
+public availability
+
+
+PERMISSIONED
+────────────────
+booking.create
+availability details
+partner rates
+customer-owned records
+
+
+EMPLOYEE
+────────────────
+reservations
+operational information
+customers
+
+
+OWNER
+────────────────
+everything
+connections
+permissions
+automation
+provenance
+configuration
+
+The owner controls those grants.
+That is much closer to the Berners-Lee/Solid/data-sovereignty direction we've been discussing than creating another conventional SaaS silo.
+
+11. Apps are installed on the foundation
+This is where your GoHighLevel comparison fits.
+Instead of buying:
+
+GIANT CRM
+
+CRM
+Forms
+Website
+Reviews
+Email
+Calendar
+Automation
+Payments
+Funnels
+etc.
+
+$XXX/month
+
+and using 15% of it, Ghost becomes:
+
+YOUR FOUNDATION
+
+[ + CRM ]
+[ + Forms ]
+[ + Reviews ]
+[ + Booking ]
+[ + Website ]
+[ + Song Requests ]
+[ + Digital Signage ]
+[ + Loyalty ]
+[ + Whatever someone builds ]
+
+And apps should not get to take the underlying business away with them.
+Uninstall:
+
+APP
+ ↓
+permissions revoked
+runtime removed
+UI removed
+
+BUT
+
+business data remains
+
+That's a major architectural principle.
+
+12. Front ends are also replaceable
+The same restaurant could expose:
+
+Restaurant Website
+
+or your expandable Linktree-style interface:
+
+RESTAURANT
+
+[ Menu                  + ]
+[ Specials              + ]
+[ Events                + ]
+[ Availability          + ]
+[ Reviews               + ]
+[ Reservations          + ]
+
+or:
+
+QR interface
+
+or:
+
+AI conversation
+
+or:
+
+AR overlay
+
+All are simply different renderers over the same structured foundation.
+So a developer can build a radically different UX without rebuilding the business underneath it.
+
+13. Your marketplace becomes more than an app store
+This is where your GitHub analogy becomes interesting.
+Developers could contribute several kinds of reusable objects:
+
+APPS
+Complete functionality
+
+CAPABILITIES
+Reusable business actions
+
+ADAPTERS
+Connections to external software
+
+APPMAPS
+Mapped application workflows
+
+SCHEMAS
+Industry/data definitions
+
+WORKFLOWS
+Reusable automations
+
+SURFACES
+UI components/templates
+
+MODELS
+Specialized AI components
+
+ENDPOINT DRIVERS
+Hardware/device integrations
+
+So somebody might create:
+restaurant.menu.digital-signage
+while somebody else creates:
+toast.menu.adapter
+and somebody else creates:
+android.toast.appmap.
+They don't need to build one another's entire stack.
+They agree on the foundation.
+
+14. Blockchain belongs in provenance, not in the operational hot path
+Your royalty/contribution concept is a legitimate separate layer.
+I would not put menus, bookings, customer records and every database write on-chain.
+Instead:
+
+Developer publishes component
+        ↓
+content/package hash
+        ↓
+author identity
+        ↓
+license
+        ↓
+version
+        ↓
+dependency graph
+        ↓
+signed provenance record
+        ↓
+optional blockchain anchor
+
+Then:
+
+Tool B
+depends on
+Tool A
+    ↓
+commercial transaction
+    ↓
+royalty rules
+    ↓
+Contributor A receives share
+
+Blockchain can provide independently verifiable provenance/settlement.
+Normal databases still do the actual application work.
+
+15. The same principle can apply to concepts, but attribution is harder
+Your chat-ledger idea fits provenance much better than claiming that a ledger can prove another model “stole” an idea.
+You could preserve:
+
+timestamp
+conversation
+artifact
+concept description
+hash
+author
+revision
+derived component
+dependencies
+
+and externally timestamp/hash it.
+That can establish evidence such as:
+“This exact artifact existed in this form by date X.”
+It does not by itself prove that a later company saw it, trained on it, copied it, or derived something from it. Those are separate factual/legal questions requiring additional evidence.
+But as a contribution provenance system, the idea is useful.
+
+16. Local ownership extends all the way to support
+And this connects to the support model you just described.
+The customer can have:
+
+                    THEIR GHOST NODE
+                           │
+                           │ encrypted
+                           ▼
+                    CLOUD RENDEZVOUS
+                           │
+                           ▼
+                  APPROVED TECHNICIAN
+
+The owner says:
+
+Grant:
+Baldwin County IT
+
+Access:
+diagnostics
+logs
+container health
+
+Duration:
+2 hours
+
+Permissions:
+✓ inspect
+✓ restart service
+✗ customer data
+✗ financial data
+✗ export
+
+[ GRANT ACCESS ]
+
+Then:
+
+session starts
+      ↓
+everything logged
+      ↓
+technician diagnoses
+      ↓
+fix
+      ↓
+owner sees receipt
+      ↓
+access expires
+
+Your company doesn't have to become the IT department for every customer.
+That creates a local service ecosystem around an open foundation.
+
+17. Hardware becomes a distribution option, not the product
+You could offer:
+
+RUN IT YOURSELF
+       │
+       ├── compatible existing machine
+       └── download Ghost
+
+HOSTED
+       │
+       └── managed Ghost instance
+
+APPLIANCE
+       │
+       └── preconfigured hardware
+
+HYBRID
+       │
+       ├── local node
+       └── cloud services
+
+The important principle is:
+The software contract stays identical.
+You're selling convenience when you sell the box.
+You're not making the box the architecture.
+
+18. Now take your “closed early” example
+This illustrates almost the entire organization.
+Restaurant normally closes at 10 PM.
+Storm comes in.
+Owner says:
+“We're closing at 7 tonight.”
+Ghost receives:
+
+temporary_hours
+date = today
+close = 19:00
+reason = weather
+authority = owner
+
+Then an event fires:
+
+business.hours.changed
+
+Subscriptions respond:
+
+Website          → update
+Public profile   → update
+QR               → update
+AI/MCP           → immediately sees it
+Signage          → update
+
+Google adapter   → attempt update
+Facebook adapter → attempt update
+Yelp adapter     → attempt update
+
+Then verification:
+
+Website     ✓ 7 PM
+QR          ✓ 7 PM
+Facebook    ✓ 7 PM
+Google      ✓ 7 PM
+Yelp        ⚠ still 10 PM
+
+Owner dashboard:
+
+TODAY'S CLOSING TIME
+
+Canonical                     7:00 PM
+
+Website              ✓       7:00 PM
+QR                   ✓       7:00 PM
+AI / MCP             ✓       7:00 PM
+Facebook             ✓       7:00 PM
+Google               ✓       7:00 PM
+Yelp                 ⚠      10:00 PM
+
+5 / 6 synchronized
+
+Yelp
+Mismatch detected
+
+[ Retry ]
+[ Inspect ]
+
+That's your entire philosophy expressed in one feature.
+The business said something once.
+The system stored the fact once.
+Everything else is supposed to reflect that fact.
+
+The organization as a whole
+Ultimately I would divide the organization into five products/ecosystems, even though underneath they are one foundation:
+
+                         GHOST
+                           │
+       ┌───────────────────┼────────────────────┐
+       │                   │                    │
+       ▼                   ▼                    ▼
+
+  GHOST FOUNDATION     GHOST MARKET         GHOST CLOUD
+  Open-source core     Apps/modules         Hosting
+  Data model           AppMaps              Relay
+  Capabilities         Schemas              Updates
+  Permissions          Workflows            Heavy compute
+  Runtime              Components           Discovery
+
+       │                   │                    │
+       └───────────────────┼────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+
+        GHOST HARDWARE             GHOST NETWORK
+        Optional nodes             Businesses
+        Endpoints                  Developers
+        Displays                   Local IT
+        Android                    Partners
+                                   AI/apps
+
+And the open-source foundation is what prevents you from becoming the next gatekeeper.
+Businesses should be able to:
+
+export everything
+self-host
+change hosting provider
+change AI
+change apps
+change UI
+change executor
+change IT provider
+
+without losing their underlying identity/data.
+That's the strongest version of your argument.
+The philosophy in one sentence
+The business owns the foundation; software rents permission to operate on it.
+And at network scale:
+
+                 OPEN BUSINESS WEB
+
+Business A ── Ghost Node ──┐
+Business B ── Ghost Node ──┤
+Business C ── Ghost Node ──┼── Open protocols
+Business D ── Ghost Node ──┤        │
+Business E ── Ghost Node ──┘        │
+                                    ▼
+                     ┌──────────────┼──────────────┐
+                     ▼              ▼              ▼
+                   Search           AI           Apps
+                     │              │              │
+                     └──────────────┼──────────────┘
+                                    │
+                             permissioned access
+
+That is where the Tim Berners-Lee connection becomes meaningful: not recreating the 1990 Web literally, but restoring its decentralization/interoperability principles for a world of structured data, applications, automation and AI agents.
+The real product isn't the restaurant profile, Android controller, MCP server, AI assistant, website builder, marketplace, Mac Mini, blockchain ledger, or synchronization dashboard individually.
+The product is the owner-controlled foundation that makes all of those things interchangeable modules.
+
+
+Include everything in the document. All the information, all the details, examples, the flow, the similarities, what the temporarily wanted.
+
+
+Done. I rebuilt it as a 32-page master document that pulls the whole concept together instead of treating the pieces separately.
+It includes the full Ghost foundation, every layer of the build, canonical table structure, schema provisioning, source/provenance logic, Google/Facebook/Yelp synchronization checklist, capabilities, permissions, Constitution, blockchain role, apps/sandboxing, surfaces, builder, AI routing, AppMaps, API/browser/Android execution, verification/ledger, local IT remote support, existing-computer/Ghost Node/cloud/hybrid deployment, the portable SIM/plug-and-play device concept, local-model downloads, subscription model, MCP/open-business-web architecture, marketplace/open-source/royalty system, concept provenance, concrete end-to-end examples, exact build order, and acceptance tests.
+I also added a dedicated historical section covering what Tim Berners-Lee actually proposed—the original Web's decentralization/modularity, Semantic Web, Linked Data, Read-Write Linked Data, Socially Aware Cloud Storage, and Solid—and then separately maps exactly where Ghost is similar and what Ghost adds beyond those ideas.
+You need to build a Universal Platform Map that answers, for every third-party platform:
+What objects exist? What fields/blanks exist? What can be read? What can be changed? What events can happen? What Ghost section does each thing belong to? Which Ghost capability performs the action? How do I verify the third party now matches the business's canonical truth?
+The mistake would be building the database around Yelp, Toast, FareHarbor, Square, etc.
+You build one universal business model, and then every vendor is mapped into it.
+
+1. The architecture you need
+Think of it as five registries sitting between the business database and all external software.
+
+                 THIRD-PARTY PLATFORMS
+
+ Yelp   Booking.com   FareHarbor   Peek   Toast   Square   Clover
+  │          │            │         │       │       │        │
+  └──────────┴────────────┴─────────┴───────┴───────┴────────┘
+                              │
+                              ▼
+                 PLATFORM SPEC REGISTRY
+                 ──────────────────────
+                 endpoints
+                 objects
+                 fields
+                 permissions
+                 events/webhooks
+                 API versions
+                              │
+                              ▼
+                    FIELD MAPPING LAYER
+                 ──────────────────────
+            vendor field → canonical Ghost field
+                              │
+                              ▼
+                   CAPABILITY REGISTRY
+                 ──────────────────────
+           what can actually be READ / CHANGED?
+                              │
+                              ▼
+                   CANONICAL GHOST DATA
+                 ──────────────────────
+                 business
+                 hours
+                 products
+                 prices
+                 availability
+                 bookings
+                 customers
+                 ...
+                              │
+                              ▼
+                   RECONCILIATION ENGINE
+                 ──────────────────────
+            Canonical vs Yelp vs Google vs Toast...
+                              │
+                              ▼
+                    SYNCHRONIZATION UI
+
+                     ✓ Match
+                     ⚠ Mismatch
+                     ↻ Stale
+                     ✕ Unsupported
+                     🔒 Permission needed
+
+That becomes the orchestration layer.
+Your existing Ghost kernel is already pointed toward this because it separates sources, observations, resolved facts, and conflicts rather than treating one platform as inherently authoritative. 
+
+2. First create the Universal Section Registry
+Before mapping a single API, decide what kinds of information can exist in Ghost.
+Across Yelp, POS systems, booking systems, hotel systems, social platforms and websites, most of the thousands of endpoint fields collapse into a much smaller number of business concepts.
+I would make the master registry roughly this:
+Canonical Ghost section	Contains
+Business Identity	legal/display name, description, status, entity type
+Contact	phone, email, website, booking URL
+Location	address, coordinates, timezone
+Hours	recurring weekly hours
+Special Hours	holidays, temporary closing, early closing
+Categories / Tags	restaurant, seafood, boat rental, pet-friendly
+Amenities / Attributes	Wi-Fi, alcohol, parking, wheelchair access, outdoor seating
+Media	photos, video, logos
+Products / Services	item/service/activity/unit
+Variants / Options	size, boat type, room type, ticket type
+Menus / Catalogs	menus, sections, item grouping
+Modifiers / Add-ons	toppings, upgrades, rental extras
+Pricing	price, basis, currency
+Rate Plans	occupancy/LOS/rate packages
+Taxes / Charges / Fees	tax, resort fee, service fee
+Discounts / Promotions	coupons, discounts, packages
+Inventory	physical stock/count
+Availability	bookable remaining quantity/time
+Calendar / Schedule	dates, slots, departure/start/end times
+Capacity	max guests/seats/units
+Resources	boats, rooms, equipment, tables, guides
+Staff	employees, guides, providers, shifts
+Bookings / Reservations	reservation state and lines
+Customers / Guests	identity/contact/customer relationship
+Orders / Checks	sale/order, check, line items
+Payments	payment, tender, settlement
+Refunds / Returns	refunds, voids, returns
+Pickup / Delivery	delivery/pickup information
+Policies	cancellation, reschedule, refund, deposits
+Waivers / Requirements	license, age, waiver, eligibility
+Reviews / Ratings	review, rating, response
+Messaging	guest/business communications
+Loyalty / Gift Cards	memberships, rewards, vouchers
+Events / Specials	events, happy hour, daily special
+Reporting / Analytics	sales, booking, performance metrics
+Connection Health	authorization/session/sync health
+Provenance / Sync	source, freshness, conflict, verification
+That is your ontology.
+Every field from every outside platform must eventually land in one of those buckets or justify a new canonical section.
+
+3. Then map every platform object
+You need a table conceptually like:
+
+provider_object
+
+id
+provider_id
+external_object_name
+external_version
+canonical_section
+description
+readable
+writable
+event_source
+
+Example:
+
+Yelp.Business
+      → Ghost.Business
+
+FareHarbor.Item
+      → Ghost.Product
+
+FareHarbor.Availability
+      → Ghost.Availability
+
+Peek.Product
+      → Ghost.Product
+
+Toast.MenuItem
+      → Ghost.MenuItem
+
+Square.CatalogItem
+      → Ghost.Product
+
+Clover.Item
+      → Ghost.Product
+
+Booking.Room
+      → Ghost.Resource / LodgingUnit
+
+This is object mapping.
+
+4. Then map every individual field
+Next:
+
+provider_field
+
+provider
+object
+external_field
+external_type
+canonical_field
+direction
+required
+transform
+version
+
+For example:
+
+
+
+For example:
+
+Yelp
+business
+phone
+        →
+contact.phone
+
+Yelp
+business
+hours
+        →
+hours
+
+Square
+CatalogItem
+name
+        →
+product.name
+
+Square
+CatalogItemVariation
+price_money
+        →
+pricing.amount
+
+FareHarbor
+Availability
+capacity
+        →
+availability.capacity
+
+Peek
+Availability
+availabilityId
+        →
+provider_mapping.external_id
+
+Now Ghost understands the meaning, not just the vendor's field name.
+
+5. Never create provider columns inside the canonical table
+So don't do:
+
+hours
+
+monday_open
+monday_close
+yelp_monday_open
+yelp_monday_close
+facebook_monday_open
+facebook_monday_close
+google_monday_open
+...
+
+That becomes impossible.
+Instead:
+Canonical table
+
+hours
+
+business_id
+location_id
+day_of_week
+opens_at
+closes_at
+
+Then observations:
+
+source_observation
+
+business_id
+source_id
+canonical_record
+field
+observed_value
+observed_at
+authority
+confidence
+
+Example:
+
+Canonical
+Friday close      11:00 PM
+
+Observations
+Google            11:00 PM
+Facebook          11:00 PM
+Yelp              10:00 PM
+Website           11:00 PM
+
+Now you can add platform #1,000 without changing the hours table.
+
+6. This gives you the synchronization checklist you wanted
+Owner sees:
+Field	Canonical	Google	Facebook	Yelp	Website
+Name	Flora-Bama	✓	✓	✓	✓
+Friday close	11 PM	✓	✓	10 PM ⚠	✓
+Phone	xxx-xxxx	✓	✓	✓	✓
+Website	...	✓	✓	✓	✓
+Outdoor seating	Yes	—	✓	✓	✓
+Happy hour	3–6	—	✓	Missing ⚠	✓
+And every cell has a state:
+
+✓ MATCH
+
+⚠ MISMATCH
+
+↻ STALE
+
+? UNKNOWN
+
+— NOT SUPPORTED
+
+🔒 NO PERMISSION
+
+↔ READ ONLY
+
+→ WRITE ONLY
+
+○ NOT MAPPED
+
+That's your data synchronization control center.
+
+7. Yelp mapping
+Yelp is largely a business-information/reputation source.
+Its current Business Details endpoint returns detailed business information, and its Places offerings expose fields including business name, address, categories, phone, hours, rating, review count, closure status, profile URL, photos, reservations/waitlist/order-related attributes, price, menu URL, and more depending on product level. 
+Yelp's ingestion documentation also explicitly includes contact information, hours including split hours, open/temporary-closure status, business descriptions, amenities such as takeout/delivery/dogs/alcohol/happy hour/TV/outdoor seating/parking/reservations/Wi-Fi/wheelchair accessibility, plus photos. 
+So your mapping becomes:
+
+YELP
+
+Business
+    → Business Identity
+
+Address
+    → Location
+
+Phone / URL
+    → Contact
+
+Categories
+    → Categories / Tags
+
+Hours
+    → Hours
+
+Closed / temporarily closed
+    → Business Status / Special Hours
+
+Price
+    → Price Range
+
+Amenities
+    → Amenities
+
+Photos
+    → Media
+
+Rating / Review Count
+    → Reviews / Rating Aggregate
+
+Reviews
+    → Reviews
+
+Menu URL
+    → External Resource / Connection
+
+Reservations / Waitlist indicators
+    → Capability Availability / Connection Metadata
+
+Important: what you can actually write depends on the Yelp product and partner authorization. Don't assume that because a field is readable through Places/Fusion that your integration can update it. Yelp uses different authentication/products for Business Details, owner functions and Data Ingestion. 
+
+8. FareHarbor mapping
+FareHarbor is completely different.
+It's primarily operational booking data.
+The current API documentation says its availability objects include start/end times, capacity, valid ticket options and their prices, custom fields, party-size restrictions and other settings. The availability ID/PK is then used through the booking flow. 
+Therefore:
+
+FAREHARBOR
+
+Company
+    → Business
+
+Item
+    → Product / Service
+
+Item calendar
+    → Calendar
+
+Availability
+    → Availability
+
+Availability PK
+    → Provider External ID
+
+Start / End
+    → Schedule
+
+Capacity
+    → Capacity
+
+Ticket types
+    → Product Variant / Ticket Type
+
+Ticket prices
+    → Pricing Tier
+
+Party-size limits
+    → Booking Rules
+
+Custom fields
+    → Requirements / Provider Extensions
+
+Cancellation policy
+    → Policy
+
+Booking
+    → Booking
+
+Booking contact
+    → Customer
+
+Pickup
+    → Pickup / Location
+
+Receipt subtotal
+    → Order subtotal
+
+Taxes
+    → Tax
+
+Total
+    → Order total
+
+Now Ghost can ask:
+
+availability.search()
+
+instead of:
+
+fareharbor_get_availabilities()
+
+
+9. Peek Pro mapping
+Peek Pro's OCTO implementation gives you another booking vocabulary.
+Its API models suppliers, products, options, units, unit items and vouchers. 
+Peek exposes a fast availability-calendar call and a more detailed availability endpoint that provides the availabilityIdused to make a booking. 
+Its booking flow is:
+
+availability
+    ↓
+booking reservation
+    ↓
+payment/customer data
+    ↓
+booking confirmation
+
+and includes update, extend, retrieve and list operations. 
+So:
+
+PEEK
+
+Supplier
+    → Business
+
+Product
+    → Product / Service
+
+Option
+    → Product Option
+
+Unit
+    → Ticket Type / Resource / Variant
+
+Availability Calendar
+    → Calendar
+
+Availability
+    → Availability
+
+Availability ID
+    → Provider External ID
+
+Pricing capability
+    → Pricing
+
+Booking
+    → Booking
+
+Contact
+    → Customer
+
+Voucher
+    → Voucher / Ticket
+
+Booking update
+    → booking.update
+
+Booking cancel
+    → booking.cancel
+
+Webhook
+    → Event Subscription
+
+Peek currently documents optional OCTO capabilities for Pricing and Webhooks, including webhook notifications for booking confirmations, updates and cancellations. 
+Peek Pro itself exposes broader operational functionality such as resource/equipment assignment, dynamic pricing, communications and other integrations, but the public reseller API documentation does not establish that every one of those internal Pro features is exposed through that API. So those should remain unmapped/unknown until you have the appropriate Developer Hub contract/docs. 
+That's an important principle:
+Don't invent mappings where the provider has not actually exposed a contract.
+
+10. Booking.com is almost an entire industry schema by itself
+Booking.com's Connectivity API already gives a useful top-level decomposition.
+Current connection types include:
+
+Reservations
+Rates and Availability
+Guest Reviews
+Reporting
+Content
+Photos
+Promotions
+Messaging
+Performance data and insights
+Payments by Booking.com onboarding
+
+
+That maps beautifully into your canonical sections.
+Booking.com's property onboarding flow includes creation of legal entity, property details, units, contacts, rate plans, policies, settings, license information, charges, facilities, photos, room-rates, length-of-stay pricing, and availability. 
+So:
+
+BOOKING.COM
+
+Property
+    → Business / Lodging Property
+
+Legal Entity
+    → Legal Identity
+
+Contacts
+    → Contacts
+
+Room / Unit
+    → Resource / Lodging Unit
+
+Facilities
+    → Amenities
+
+Photos
+    → Media
+
+Rate Plan
+    → Rate Plan
+
+Room Rate
+    → Pricing
+
+Occupancy Pricing
+    → Pricing Tier / Occupancy Rule
+
+LOS Pricing
+    → Length-of-Stay Pricing
+
+Charges
+    → Fees / Charges
+
+Availability
+    → Availability
+
+Restrictions
+    → Availability Rule
+
+Reservation
+    → Booking
+
+Guest
+    → Customer
+
+Reservation modification
+    → booking.update
+
+Cancellation
+    → booking.cancel
+
+Policies
+    → Policies
+
+Promotions
+    → Promotions
+
+Reviews
+    → Reviews
+
+Messaging
+    → Messaging
+
+Payments
+    → Payment / Settlement
+
+Booking.com's current content API also supports property/room content and opening/closing properties, while Rates & Availability supports loading inventory, rates and restrictions. 
+The important lesson here is that one provider may span 20 Ghost sections.
+That is fine.
+
+11. Toast mapping
+Toast is POS/restaurant operational infrastructure.
+Its API reference currently includes categories for restaurants, menus, orders, labor, stock, analytics, kitchen, configuration, gift cards, loyalty, tender integrations and more. 
+Toast's Orders API says orders contain checks, ordered items, prices, payments, discounts and customer data. 
+So your Toast object map becomes:
+
+TOAST
+
+Restaurant
+    → Business / Location
+
+Menu
+    → Menu
+
+Menu Group
+    → Menu Section
+
+Menu Item
+    → Menu Item / Product
+
+Modifier Group
+    → Modifier Group
+
+Modifier Option
+    → Modifier
+
+Prices
+    → Pricing
+
+Dining Option
+    → Fulfillment / Service Mode
+
+Order
+    → Order
+
+Check
+    → Check
+
+Selection
+    → Order Line Item
+
+Discount
+    → Discount
+
+Applied Tax
+    → Tax
+
+Payment
+    → Payment
+
+Customer
+    → Customer
+
+Delivery information
+    → Delivery
+
+Stock
+    → Inventory
+
+Employee / Labor
+    → Staff / Shift
+
+Kitchen
+    → Fulfillment / Operational State
+
+Loyalty
+    → Loyalty
+
+Gift Cards
+    → Gift Card
+
+Analytics
+    → Analytics
+
+Toast also requires price calculation before order creation in its ordering flow, so that's not merely a field mapping; it's a workflow dependency that Ghost must store in the provider implementation. 
+That's why you need both:
+
+field_mapping
+
+and:
+
+capability_implementation
+
+
+12. Square mapping
+Square has an especially rich catalog.
+The current Catalog API includes products/services, variations, categories, discounts, taxes, modifiers, images, pricing rules, product sets, time periods, measurement units, options and custom attributes. 
+Therefore:
+
+SQUARE
+
+Seller
+    → Business
+
+Location
+    → Location
+
+Catalog Item
+    → Product / Service
+
+Item Variation
+    → Product Variant
+
+Item Option
+    → Option
+
+Category
+    → Category
+
+Image
+    → Media
+
+Modifier List
+    → Modifier Group
+
+Modifier
+    → Modifier
+
+Tax
+    → Tax
+
+Discount
+    → Discount
+
+Pricing Rule
+    → Pricing Rule
+
+Time Period
+    → Schedule / Pricing Condition
+
+Inventory
+    → Inventory
+
+Customer
+    → Customer
+
+Order
+    → Order
+
+Order Line
+    → Order Line
+
+Payment
+    → Payment
+
+Booking
+    → Booking
+
+Booking Availability
+    → Availability
+
+Team Member
+    → Staff
+
+Vendor
+    → Supplier
+
+Square's current Bookings API supports searching availability and creating, retrieving, updating and cancelling bookings, along with seller/location/team booking profiles. 
+Its Orders API handles sales, itemization, customer references, POS fulfillment and related order state. 
+
+13. Clover mapping
+Clover is similar to Square but with a different vocabulary.
+Its REST API covers merchant information, inventory, orders and payments. 
+Its inventory system includes items, stock quantities, item groups, modifier groups/modifiers, discounts, taxes, categories and availability. 
+So:
+
+CLOVER
+
+Merchant
+    → Business
+
+Merchant Address
+    → Location
+
+Merchant Properties
+    → Business Attributes
+
+Item
+    → Product
+
+Item Group
+    → Product Group
+
+Category
+    → Category
+
+Item Stock
+    → Inventory
+
+Available
+    → Product Availability
+
+Modifier Group
+    → Modifier Group
+
+Modifier
+    → Modifier
+
+Discount
+    → Discount
+
+Tax
+    → Tax
+
+Order
+    → Order
+
+Line Item
+    → Order Line
+
+Customer
+    → Customer
+
+Payment
+    → Payment
+
+Refund
+    → Refund
+
+Employee
+    → Staff
+
+Shift
+    → Shift
+
+Order Type
+    → Fulfillment / Service Mode
+
+Clover also exposes read/write permissions separately for customers, employees, inventory, merchant properties, orders and payments. 
+Again, this maps directly to Ghost's permission/capability model.
+
+14. Your database for the orchestration layer
+This is the important implementation part.
+I would add tables along these lines:
+
+provider
+────────
+id
+key
+name
+category
+docs_url
+
+
+provider_version
+────────────────
+id
+provider_id
+version
+released_at
+spec_hash
+
+
+provider_object
+───────────────
+id
+provider_version_id
+external_name
+canonical_section_id
+description
+
+
+provider_endpoint
+─────────────────
+id
+provider_version_id
+method
+path
+operation_id
+external_object_id
+read_write
+auth_type
+required_scope
+rate_limit_info
+
+
+provider_field
+──────────────
+id
+provider_object_id
+external_path
+data_type
+required
+nullable
+description
+
+
+canonical_section
+─────────────────
+id
+key
+name
+
+
+canonical_field
+───────────────
+id
+section_id
+field_path
+data_type
+unit
+description
+
+
+field_mapping
+─────────────
+id
+provider_field_id
+canonical_field_id
+direction
+transform_in
+transform_out
+enum_map
+confidence
+
+
+capability
+──────────
+key
+
+availability.search
+booking.create
+business.hours.update
+menu.item.update
+social.post.publish
+
+
+capability_implementation
+─────────────────────────
+provider_id
+capability_key
+endpoint_id
+priority
+requirements
+verification_contract
+
+
+provider_event
+──────────────
+provider
+event_name
+canonical_event
+webhook_supported
+
+
+external_record
+───────────────
+business_id
+provider_id
+external_object_type
+external_id
+canonical_record_id
+
+
+sync_observation
+────────────────
+business_id
+provider_id
+canonical_field
+observed_value
+observed_at
+status
+
+
+sync_job
+────────
+business
+provider
+direction
+started_at
+ended_at
+result
+
+That's the orchestration database.
+
+15. Automatically ingest OpenAPI specifications wherever possible
+This is how you avoid manually typing tens of thousands of endpoints.
+Toast explicitly publishes downloadable OpenAPI specifications. 
+Square has a structured current API reference. Clover has structured REST references. Peek's OCTO endpoints follow a standardized model.
+So build:
+
+SPEC INGESTER
+
+that consumes:
+
+OpenAPI
+Swagger
+JSON Schema
+provider metadata
+
+and generates:
+
+provider_object
+provider_endpoint
+provider_field
+
+automatically.
+Then your developer/admin does the semantic mapping:
+
+Square.CatalogItem.name
+
+Ghost suggestion:
+product.name
+
+[✓ Confirm]
+
+Now you've turned API documentation into a reusable machine-readable registry.
+
+16. AI can help with initial mapping — but not become the truth
+This is one place a large model is useful.
+Give it:
+
+Square OpenAPI
++
+Ghost Canonical Schema
+
+Ask:
+Map all Square fields into likely Ghost sections.
+It outputs:
+
+CatalogItem.name
+    → product.name
+confidence 0.99
+
+CatalogItem.description
+    → product.description
+confidence 0.99
+
+CatalogItem.category_id
+    → product_category.external_reference
+confidence 0.94
+
+some_weird_field
+    → unmapped
+confidence 0.31
+
+Human approves.
+Then store mapping permanently.
+Future executions do not need AI.
+That's the same build expensive → run deterministic pattern we've been discussing.
+
+17. Handle provider-specific fields without corrupting your canonical model
+Suppose Toast has:
+
+defaultOptionsChargePrice
+
+and Ghost doesn't have an equivalent yet.
+Do not throw it away.
+Store:
+
+provider_extension
+
+provider = toast
+object = modifier_group
+field = defaultOptionsChargePrice
+value = YES
+
+Then decide:
+Is this concept useful across providers?
+If yes:
+Promote it into:
+
+modifier_group.default_option_pricing_behavior
+
+in the canonical schema.
+That is how Ghost's ontology evolves.
+
+18. You need explicit transformations
+Different providers will represent the same thing differently.
+Example money:
+
+Square
+2500 cents
+
+Ghost
+25.00 USD
+
+Clover likewise represents many monetary values in cents. 
+So mapping stores:
+
+transform_in:
+amount / 100
+
+transform_out:
+round(amount * 100)
+
+Same with:
+
+time zones
+UTC/local timestamps
+yes/no enums
+capacity units
+age limits
+occupancy
+price basis
+phone normalization
+addresses
+
+Transformations must be code/versioned mappings, not AI guesses during every run.
+
+19. You need provider ID crosswalks
+Ghost product:
+
+ghost_product_id = abc123
+
+External IDs:
+
+FareHarbor Item PK      8831
+Peek Product ID         pk_882
+Square Catalog ID       JS8D...
+Toast GUID              90af...
+Clover Item ID          WXYZ...
+
+Store:
+
+external_record
+
+so the same Ghost object can be linked to all external representations.
+
+20. Then your owner gets the Master Sync Matrix
+This is probably one of the most powerful owner-facing screens.
+
+                    BUSINESS DATA HEALTH
+
+                        Canonical   Google   Yelp   Facebook   Toast
+
+Business Name           ✓           ✓       ✓      ✓          ✓
+
+Phone                   ✓           ✓       ✓      ✓          —
+
+Friday Hours            11 PM       ✓       ⚠10PM ✓          —
+
+Website                 ✓           ✓       ✓      ✓          —
+
+Menu Item
+Grouper Sandwich        $18.99      —       —      —          ✓
+
+Availability
+Tomorrow 8 AM           4           —       —      —          —
+
+Outdoor Seating         Yes         ✓       ✓      ✓          —
+
+Happy Hour
+3–6 PM                  ✓           —       ⚠      ✓          —
+
+──────────────────────────────────────────────────────────────
+
+17 sources healthy
+2 mismatches
+1 stale
+3 unsupported
+
+             [ Synchronize mismatches ]
+
+That is the business actually seeing:
+“Here is my truth, and here is where the outside world disagrees.”
+
+21. Clicking a mismatch should explain everything
+Example:
+
+FRIDAY HOURS
+
+Ghost canonical
+11:00 AM – 11:00 PM
+
+Authority
+Owner verified
+
+Updated
+Today 2:14 PM
+
+────────────────────
+
+Yelp observed
+11:00 AM – 10:00 PM
+
+Observed
+Today 2:21 PM
+
+Status
+MISMATCH
+
+Connection
+Healthy
+
+Write capability
+Available
+
+[ Update Yelp ]
+
+[ Ignore ]
+
+[ Make Yelp canonical ]
+
+That last option is important.
+Sometimes the outside platform is actually correct.
+The owner decides.
+
+22. The same mapping system handles functionality, not just fields
+This is where it becomes far more powerful than a data mapper.
+Example:
+
+Ghost capability
+
+booking.create
+
+Implementations:
+
+FareHarbor booking.create
+Peek OCTO POST /bookings + confirm
+Square POST /v2/bookings
+Booking.com reservation workflow
+
+Same upstream call.
+Different downstream workflow.
+Your existing Ghost build already defines capabilities specifically as stable verbs with swappable implementations. 
+
+23. Store workflow requirements with the capability implementation
+A provider implementation may require one endpoint:
+
+business.hours.update
+→ API call
+
+Another may require seven steps.
+Peek booking:
+
+availability.search
+        ↓
+obtain availabilityId
+        ↓
+booking reservation
+        ↓
+collect customer/payment
+        ↓
+booking confirm
+
+
+Toast order creation can require price calculation before posting the order. 
+So:
+
+capability_implementation
+
+needs to be able to reference:
+
+workflow_template
+
+not just one endpoint.
+
+24. The complete orchestration loop
+Now the entire architecture becomes:
+
+1. IMPORT PROVIDER SPEC
+        ↓
+2. DISCOVER OBJECTS
+        ↓
+3. DISCOVER FIELDS
+        ↓
+4. MAP TO GHOST SECTIONS
+        ↓
+5. MAP TO CANONICAL FIELDS
+        ↓
+6. DEFINE TRANSFORMATIONS
+        ↓
+7. DISCOVER READ/WRITE PERMISSIONS
+        ↓
+8. DEFINE CAPABILITIES
+        ↓
+9. CONNECT ENDPOINTS/WORKFLOWS TO CAPABILITIES
+        ↓
+10. DEFINE WEBHOOK/EVENT MAPPINGS
+        ↓
+11. DEFINE VERIFICATION
+        ↓
+12. VERSION THE PROVIDER PACKAGE
+        ↓
+
+CUSTOMER CONNECTS PLATFORM
+        ↓
+13. AUTHORIZE ACCOUNT
+        ↓
+14. DISCOVER EXTERNAL OBJECTS
+        ↓
+15. LINK EXTERNAL IDs TO GHOST OBJECTS
+        ↓
+16. INITIAL IMPORT
+        ↓
+17. NORMALIZE
+        ↓
+18. CREATE OBSERVATIONS
+        ↓
+19. RESOLVE CANONICAL FACTS
+        ↓
+20. IDENTIFY CONFLICTS
+        ↓
+21. SHOW OWNER SYNC CHECKLIST
+        ↓
+22. OWNER RESOLVES
+        ↓
+23. PUSH AUTHORIZED CHANGES OUT
+        ↓
+24. VERIFY DESTINATION
+        ↓
+25. STORE EVIDENCE / RECEIPT
+        ↓
+26. KEEP WATCHING EVENTS / WEBHOOKS
+
+That's the orchestration system.
+
+25. And critically: build the provider package once
+You don't want every customer creating their own Square mapping.
+Build:
+
+ghost-provider-square
+
+once.
+It contains:
+
+provider metadata
+API versions
+objects
+endpoints
+field mappings
+transformations
+capabilities
+permission requirements
+event mappings
+verification rules
+
+Then Customer A installs it.
+Customer B installs it.
+Customer C installs it.
+Their:
+
+credentials
+external IDs
+data
+permissions
+
+are different.
+The provider knowledge is shared.
+
+26. Same for Android/browser apps
+If there is no usable endpoint:
+
+ghost-provider-facebook
+
+can have implementations:
+
+API implementation
+browser implementation
+Android implementation
+
+The Android package additionally carries:
+
+AppMaps
+screens
+selectors
+actions
+verification
+known versions
+
+But upstream, it's still:
+
+social.post.publish
+
+
+27. That gives you the real “GitHub of business software”
+Now developers don't just contribute whole applications.
+They can contribute:
+
+Square mappings
+
+Toast field maps
+
+FareHarbor capability adapter
+
+Peek booking workflow
+
+Yelp synchronization connector
+
+Facebook Android AppMap
+
+Booking.com occupancy-price transformer
+
+Restaurant menu schema
+
+Charter availability schema
+
+And every contribution increases Ghost's coverage.
+That's the asset.
+Your ultimate registry eventually knows:
+What information exists in thousands of software products, what each field means, how each product performs each business action, and how those concepts map into one common business language.
+At that point Ghost is not simply connecting APIs.
+It is building a machine-readable map of business software itself.
+And that is the correct orchestration layer for the system you've been describing.
+
+
+Well, basically each user, each person I build it can be a web app. So each web app that's built. So when they update anything or they change anything, basically it's less maintenance for the web app to maintain it. It's also cheaper, but if you do change something, it's basically the business is responsible for updating the control of how it functions and how it clicks. So they basically, or they edit anything, it's their responsibility of the tool or the software owner, the business, whatever, to make sure they update the how, the whole map out their entire app or the functionality of each section that they offer.
+
+Yes. And that changes an important part of the orchestration model I described.
+You don't want your central system to be permanently responsible for maintaining every third-party UI map. You want the platform to define the contract, while whoever publishes/owns a web app, connector, automation, or software module is responsible for keeping its implementation compatible with that contract.
+That makes the whole thing much more scalable.
+The model becomes: “You own what you publish”
+Suppose someone builds a web app for a restaurant:
+
+RESTAURANT WEB APP
+│
+├── Menu
+├── Hours
+├── Specials
+├── Events
+├── Reservations
+├── Reviews
+└── Song Requests
+
+The app does not create its own isolated database containing another copy of the restaurant.
+Instead, when it is built, it declares:
+
+THIS APP USES
+
+READ
+✓ business.identity
+✓ business.location
+✓ business.hours
+✓ menu
+✓ specials
+✓ events
+✓ reviews
+
+WRITE
+✓ song_request.create
+✓ reservation.request
+
+EVENTS
+✓ hours.changed
+✓ menu.changed
+✓ event.created
+
+The actual restaurant data lives underneath in the owner's foundation.
+So if the restaurant changes:
+
+Friday close:
+10 PM → 8 PM
+
+you don't maintain the restaurant website manually.
+The underlying fact changes:
+
+business.special_hours
+        ↓
+Web App automatically renders 8 PM
+        ↓
+QR automatically renders 8 PM
+        ↓
+AI/MCP answers 8 PM
+        ↓
+other subscribed surfaces receive the event
+
+That's where your maintenance savings become substantial.
+
+And you're moving responsibility to the correct level
+There are actually three different responsibilities.
+1. Ghost maintains the standard
+Your foundation is responsible for things like:
+
+Canonical schemas
+Identity
+Permissions
+Capability contracts
+Event contracts
+App packaging
+Runtime
+Verification framework
+Versioning rules
+
+Ghost says:
+business.hours.update means this.
+It doesn't care whether Facebook redesigned its screen yesterday.
+2. The app/connector publisher maintains its implementation
+If somebody publishes:
+
+Facebook Connector
+
+they are responsible for:
+
+Facebook mapping
+Facebook fields
+Facebook actions
+Facebook UI/AppMap
+Facebook transformations
+Facebook verification
+Facebook version compatibility
+
+If Facebook changes:
+
+Settings
+   ↓
+Business Info
+
+to:
+
+Profile
+   ↓
+Business Details
+
+the Facebook connector maintainer updates their package.
+They publish:
+
+facebook-connector
+v4.7 → v4.8
+
+Every authorized installation can receive that update.
+You don't remap Facebook for 100,000 businesses.
+One maintainer fixes it once.
+3. The business maintains its own configuration/data
+The business is responsible for:
+
+their hours
+their prices
+their menu
+their availability
+their connections
+their permissions
+their chosen apps
+their automations
+their business-specific mappings
+
+That's very different from asking the restaurant to maintain the generic Facebook integration.
+
+That's an important separation
+I would not make a normal restaurant owner responsible for understanding:
+
+DOM selectors
+API endpoints
+Android accessibility IDs
+OpenAPI schemas
+webhook payloads
+
+That's the connector/app publisher's responsibility.
+The restaurant should only have to say:
+“This is my Facebook account.”
+“These are my hours.”
+“Allow this connector to update my hours.”
+The technical implementation remains with whoever published the connector.
+
+But a business can absolutely build its own connector
+This is where your open architecture matters.
+Suppose a business uses some weird proprietary marina program nobody else uses.
+They can build:
+
+my-marina-connector
+
+and map it themselves.
+Or hire their local IT company.
+Or use AI to map it.
+Then they own responsibility for maintaining that package.
+Later they could publish it:
+
+PRIVATE
+     ↓
+ORGANIZATION
+     ↓
+MARKETPLACE
+     ↓
+OPEN SOURCE
+
+Now other marinas can use it.
+That is basically your GitHub analogy becoming practical.
+
+Web apps become extremely lightweight
+This is a major advantage of what you're describing.
+Today someone builds:
+
+Restaurant Website
+
+database
+CMS
+authentication
+menu editor
+events editor
+hours editor
+forms
+customer storage
+booking integration
+API
+admin panel
+permissions
+
+That's ridiculous if Ghost already provides those things.
+Under your architecture:
+
+                GHOST FOUNDATION
+
+Business ───────────────────────────────┐
+Hours ──────────────────────────────────┤
+Menu ───────────────────────────────────┤
+Events ─────────────────────────────────┤
+Availability ───────────────────────────┤
+Reviews ────────────────────────────────┤
+Permissions ────────────────────────────┤
+Capabilities ───────────────────────────┘
+                         │
+                         ▼
+                  RESTAURANT WEB APP
+
+                  presentation
+                  components
+                  interaction
+                  special logic
+
+The developer mainly builds the experience.
+That makes something like a Lovable-style builder much more powerful in your system.
+Instead of asking AI:
+Build me an entire restaurant SaaS.
+You ask:
+Build me a restaurant surface using these installed Ghost capabilities.
+The builder sees:
+
+AVAILABLE
+
+✓ menu.read
+✓ menu.item.update
+✓ hours.read
+✓ event.read
+✓ reservation.create
+✓ availability.search
+✓ review.read
+✓ song_request.create
+
+and generates the interface.
+
+And every UI component declares what it connects to
+This is another piece I'd formalize.
+Imagine someone builds:
+
+┌─────────────────────────────┐
+│        TODAY'S HOURS        │
+│                             │
+│     11:00 AM – 10:00 PM     │
+└─────────────────────────────┘
+
+Behind it isn't arbitrary code.
+The component manifest says:
+
+Component:
+HoursCard
+
+Data:
+business.hours
+
+Capability:
+business.hours.read
+
+Event:
+business.hours.changed
+
+Now somebody creates a completely different design:
+
+OPEN NOW
+Closes 10 PM
+
+Same binding:
+
+business.hours
+
+And another:
+
+HOURS                    +
+
+Mon     11–9
+Tue     11–9
+Wed     11–9
+...
+
+Same data.
+UI becomes disposable. Data doesn't.
+
+This also solves your “everything is clickable” concept
+Each module can have both a public and private surface.
+For example:
+
+                    MENU APP
+
+                       │
+            ┌──────────┴──────────┐
+            ▼                     ▼
+
+       PUBLIC SURFACE        OWNER SURFACE
+
+       View menu             Edit menu
+       Search                Change prices
+       Filter                Add item
+       Dietary tags          Hide item
+       Order                 Change photo
+
+Both are bound to:
+
+menu
+menu_section
+menu_item
+menu_modifier
+pricing
+
+So the business could completely replace the public menu UI without replacing the menu system.
+And replace the owner editor without replacing the data.
+That's powerful.
+
+Updates then happen at multiple levels
+This needs to be explicit in Ghost.
+
+BUSINESS DATA UPDATE
+────────────────────
+Restaurant changes $18 → $19
+
+Only that business changes.
+
+
+APP UPDATE
+────────────────────
+Menu developer improves UI.
+
+Every installation can update.
+
+
+CONNECTOR UPDATE
+────────────────────
+Facebook changes interface.
+
+Facebook connector maintainer repairs it.
+
+Every installation can update.
+
+
+GHOST STANDARD UPDATE
+────────────────────
+Ghost adds new canonical capability.
+
+Platform version changes.
+
+
+PRIVATE CUSTOMIZATION
+────────────────────
+Business modifies its own workflow/UI.
+
+Only that installation changes.
+
+Those should never be confused.
+
+And every installed component has an owner
+Your registry should know:
+
+PACKAGE
+─────────────────────────────
+
+Name:
+Facebook Business Connector
+
+Publisher:
+Developer ABC
+
+Maintainer:
+Developer ABC
+
+License:
+Apache-2.0
+
+Version:
+4.8.1
+
+Ghost Contract:
+>= 2.4
+
+Supported Facebook:
+current mapped version
+
+Capabilities:
+✓ social.post.publish
+✓ business.hours.update
+✓ message.read
+
+Execution:
+API
+Browser
+Android
+
+Health:
+✓ Healthy
+
+Last verified:
+Today
+
+Automatic updates:
+✓ Enabled
+
+Now responsibility is traceable.
+If it breaks, Ghost knows which component broke and who maintains it.
+
+This also creates the marketplace economics you were talking about
+Someone could spend months making an excellent:
+
+Toast Connector
+
+They publish it.
+Maybe it's free.
+Maybe it's paid.
+Maybe it's open-source with commercial royalties.
+Maybe businesses pay:
+
+$5/month
+
+for maintained updates.
+They don't own the restaurant's Toast data.
+They're selling the maintained mapping/functionality.
+That's an important economic distinction.
+Your marketplace isn't primarily selling data.
+It's selling:
+Reusable knowledge about how software works.
+That knowledge includes:
+
+what fields exist
+what they mean
+how they map
+how to read them
+how to change them
+how to authenticate
+how workflows work
+how UI screens work
+how to verify success
+how to recover from failure
+
+That becomes valuable intellectual infrastructure.
+
+And AI drastically lowers the cost of maintaining those packages
+Suppose an Android app changes.
+Old AppMap fails.
+Instead of immediately making somebody manually inspect everything:
+
+FAILURE
+   ↓
+capture screen/state
+   ↓
+compare previous AppMap
+   ↓
+AI identifies changed UI
+   ↓
+propose repaired mapping
+   ↓
+run tests
+   ↓
+human/publisher approval if required
+   ↓
+publish new package
+   ↓
+installations update
+
+So the AI is doing maintenance assistance.
+It isn't sitting there reasoning through every click forever.
+That's far cheaper.
+
+Ultimately, your orchestration becomes hierarchical
+
+                         GHOST STANDARD
+                               │
+                  Defines universal contracts
+                               │
+                               ▼
+                       APP MARKETPLACE
+                               │
+            Developers publish implementations
+                               │
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+      Web Apps             Connectors            AppMaps
+          │                    │                    │
+          └────────────────────┼────────────────────┘
+                               ▼
+                       BUSINESS NODE
+                               │
+                Business chooses/install them
+                               │
+                               ▼
+                       BUSINESS DATA
+                               │
+               Business owns/maintains truth
+                               │
+                               ▼
+                       PUBLIC + PRIVATE UI
+                               │
+           Customer / employee / AI / partner
+
+And the responsibility chain is equally clean:
+
+GHOST
+owns the contracts
+
+DEVELOPER / PUBLISHER
+owns the implementation
+
+BUSINESS
+owns its data + configuration
+
+USER
+controls access to their personal data
+
+AI
+assists with building, mapping and repair
+
+That's substantially more scalable than you maintaining every website, connector and application yourself.
+The central foundation stays relatively boring and stable. The ecosystem around it can change constantly.
+And that's actually one of the strongest connections between what you're describing and the original Web philosophy: standardize the interfaces between independent pieces rather than centrally owning every piece.
