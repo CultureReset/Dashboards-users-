@@ -1,0 +1,1410 @@
+[
+  {
+    "number": 1,
+    "group": "System",
+    "file": "index.html",
+    "title": "Ghost UI/UX Demo",
+    "purpose": "Complete clickable product demo.",
+    "next": ""
+  },
+  {
+    "number": 2,
+    "group": "System",
+    "file": "journey-map.html",
+    "title": "Complete User Journey",
+    "purpose": "From account creation to daily operations.",
+    "next": ""
+  },
+  {
+    "number": 3,
+    "group": "System",
+    "file": "ecosystem-map.html",
+    "title": "Six Independent Ecosystems",
+    "purpose": "Separate catalogs and installs attached to one workspace.",
+    "next": ""
+  },
+  {
+    "number": 4,
+    "group": "System",
+    "file": "workspace-manifest.html",
+    "title": "Workspace Manifest",
+    "purpose": "The business dashboard's single source of installed workspace state.",
+    "next": ""
+  },
+  {
+    "number": 5,
+    "group": "Account",
+    "file": "welcome.html",
+    "title": "Welcome to Ghost",
+    "purpose": "Your business software, connected without becoming one giant all-in-one.",
+    "next": "create-account.html"
+  },
+  {
+    "number": 6,
+    "group": "Account",
+    "file": "choose-account-type.html",
+    "title": "How will you use Ghost?",
+    "purpose": "Choose business owner, team member, developer, or operator.",
+    "next": "create-account.html"
+  },
+  {
+    "number": 7,
+    "group": "Account",
+    "file": "create-account.html",
+    "title": "Create your account",
+    "purpose": "One identity for every business, app, connection, device, plugin, and automation.",
+    "next": "verify-phone.html"
+  },
+  {
+    "number": 8,
+    "group": "Account",
+    "file": "verify-phone.html",
+    "title": "Verify your phone",
+    "purpose": "Confirm your identity before creating or claiming a workspace.",
+    "next": "secure-account.html"
+  },
+  {
+    "number": 9,
+    "group": "Account",
+    "file": "secure-account.html",
+    "title": "Secure your account",
+    "purpose": "Add a passkey or authenticator for sensitive approvals.",
+    "next": "privacy-principles.html"
+  },
+  {
+    "number": 10,
+    "group": "Account",
+    "file": "privacy-principles.html",
+    "title": "Your data stays yours",
+    "purpose": "Apps receive only approved permissions; connections stay separate.",
+    "next": "workspace-choice.html"
+  },
+  {
+    "number": 11,
+    "group": "Account",
+    "file": "workspace-choice.html",
+    "title": "Create or join a workspace",
+    "purpose": "A workspace owns installs, permissions, surfaces, billing, and businesses.",
+    "next": "create-workspace.html"
+  },
+  {
+    "number": 12,
+    "group": "Account",
+    "file": "create-workspace.html",
+    "title": "Create workspace",
+    "purpose": "Create the account-level container for your businesses.",
+    "next": "business-choice.html"
+  },
+  {
+    "number": 13,
+    "group": "Account",
+    "file": "join-workspace.html",
+    "title": "Join workspace",
+    "purpose": "Use an invitation to join an existing workspace.",
+    "next": "dashboard-home.html"
+  },
+  {
+    "number": 14,
+    "group": "Setup",
+    "file": "business-choice.html",
+    "title": "Add a business",
+    "purpose": "Claim an existing business or create a new record.",
+    "next": "find-business.html"
+  },
+  {
+    "number": 15,
+    "group": "Setup",
+    "file": "find-business.html",
+    "title": "Find your business",
+    "purpose": "Search the existing directory before creating a duplicate.",
+    "next": "claim-business.html"
+  },
+  {
+    "number": 16,
+    "group": "Setup",
+    "file": "claim-business.html",
+    "title": "Claim this business",
+    "purpose": "Confirm the business you control.",
+    "next": "verify-ownership.html"
+  },
+  {
+    "number": 17,
+    "group": "Setup",
+    "file": "verify-ownership.html",
+    "title": "Verify ownership",
+    "purpose": "Use an approved proof path before owner access is granted.",
+    "next": "industry.html"
+  },
+  {
+    "number": 18,
+    "group": "Setup",
+    "file": "industry.html",
+    "title": "What kind of business is this?",
+    "purpose": "Industry changes recommendations, not the platform foundation.",
+    "next": "business-basics.html"
+  },
+  {
+    "number": 19,
+    "group": "Setup",
+    "file": "business-basics.html",
+    "title": "Business basics",
+    "purpose": "Confirm public identity, contact details, and description.",
+    "next": "business-hours.html"
+  },
+  {
+    "number": 20,
+    "group": "Setup",
+    "file": "business-hours.html",
+    "title": "Hours",
+    "purpose": "Set canonical hours once; connections can publish them elsewhere.",
+    "next": "business-media.html"
+  },
+  {
+    "number": 21,
+    "group": "Setup",
+    "file": "business-media.html",
+    "title": "Brand & media",
+    "purpose": "Add logo, hero, and gallery assets independently from page layout.",
+    "next": "business-data-review.html"
+  },
+  {
+    "number": 22,
+    "group": "Setup",
+    "file": "business-data-review.html",
+    "title": "Review imported data",
+    "purpose": "Separate owner truth from provider observations and conflicts.",
+    "next": "recommended-data-modules.html"
+  },
+  {
+    "number": 23,
+    "group": "Setup",
+    "file": "recommended-data-modules.html",
+    "title": "Choose Data Modules",
+    "purpose": "Enable canonical business data such as Menu, Events, Pricing, and Amenities.",
+    "next": "recommended-apps.html"
+  },
+  {
+    "number": 24,
+    "group": "Setup",
+    "file": "recommended-apps.html",
+    "title": "Choose Ghost Apps",
+    "purpose": "Install independent Ghost products such as QR Menu, Reviews, and Availability.",
+    "next": "recommended-connections.html"
+  },
+  {
+    "number": 25,
+    "group": "Setup",
+    "file": "recommended-connections.html",
+    "title": "Connect existing software",
+    "purpose": "Choose API/OAuth tools separately from Ghost apps.",
+    "next": "recommended-device-apps.html"
+  },
+  {
+    "number": 26,
+    "group": "Setup",
+    "file": "recommended-device-apps.html",
+    "title": "Choose Device Apps",
+    "purpose": "Add Android/browser targets separately from API connections.",
+    "next": "recommended-plugins.html"
+  },
+  {
+    "number": 27,
+    "group": "Setup",
+    "file": "recommended-plugins.html",
+    "title": "Choose Plugins",
+    "purpose": "Attach smaller reusable extensions to compatible products.",
+    "next": "recommended-automations.html"
+  },
+  {
+    "number": 28,
+    "group": "Setup",
+    "file": "recommended-automations.html",
+    "title": "Choose Automations",
+    "purpose": "Install reusable workflows and scripts separately.",
+    "next": "public-page-template.html"
+  },
+  {
+    "number": 29,
+    "group": "Setup",
+    "file": "public-page-template.html",
+    "title": "Choose your public experience",
+    "purpose": "Start with full-scroll, quick links, accordion, or hybrid.",
+    "next": "public-page-compose.html"
+  },
+  {
+    "number": 30,
+    "group": "Setup",
+    "file": "public-page-compose.html",
+    "title": "Arrange public sections",
+    "purpose": "Compose Data Modules, Ghost Apps, and capability actions.",
+    "next": "setup-review.html"
+  },
+  {
+    "number": 31,
+    "group": "Setup",
+    "file": "setup-review.html",
+    "title": "Review setup",
+    "purpose": "See what is installed, connected, published, and optional.",
+    "next": "publish-first-page.html"
+  },
+  {
+    "number": 32,
+    "group": "Setup",
+    "file": "publish-first-page.html",
+    "title": "Publish your first page",
+    "purpose": "Launch a public surface without exposing private workspace data.",
+    "next": "dashboard-home.html"
+  },
+  {
+    "number": 33,
+    "group": "Owner Dashboard",
+    "file": "dashboard-home.html",
+    "title": "Home",
+    "purpose": "A calm overview of what changed and what needs attention.",
+    "next": ""
+  },
+  {
+    "number": 34,
+    "group": "Owner Dashboard",
+    "file": "business-switcher.html",
+    "title": "Businesses",
+    "purpose": "Switch among businesses without changing accounts.",
+    "next": ""
+  },
+  {
+    "number": 35,
+    "group": "Owner Dashboard",
+    "file": "business-data.html",
+    "title": "Business Data",
+    "purpose": "Owner-controlled canonical data. This is not an app store.",
+    "next": ""
+  },
+  {
+    "number": 36,
+    "group": "Owner Dashboard",
+    "file": "data-module-library.html",
+    "title": "Data Modules",
+    "purpose": "Enable ordinary business-data capabilities.",
+    "next": ""
+  },
+  {
+    "number": 37,
+    "group": "Owner Dashboard",
+    "file": "data-module-detail.html",
+    "title": "Data Module \u2014 Menu",
+    "purpose": "Edit canonical menu data independently from the renderer.",
+    "next": ""
+  },
+  {
+    "number": 38,
+    "group": "Owner Dashboard",
+    "file": "data-conflicts.html",
+    "title": "Data Conflicts",
+    "purpose": "Compare owner truth against external observations.",
+    "next": ""
+  },
+  {
+    "number": 39,
+    "group": "Owner Dashboard",
+    "file": "my-apps.html",
+    "title": "My Ghost Apps",
+    "purpose": "Independent installed software products.",
+    "next": ""
+  },
+  {
+    "number": 40,
+    "group": "Owner Dashboard",
+    "file": "connections-home.html",
+    "title": "Connections",
+    "purpose": "External API/OAuth software.",
+    "next": ""
+  },
+  {
+    "number": 41,
+    "group": "Owner Dashboard",
+    "file": "device-apps-home.html",
+    "title": "Device Apps",
+    "purpose": "External Android/browser targets.",
+    "next": ""
+  },
+  {
+    "number": 42,
+    "group": "Owner Dashboard",
+    "file": "plugins-home.html",
+    "title": "Plugins",
+    "purpose": "Small extensions bound to products or surfaces.",
+    "next": ""
+  },
+  {
+    "number": 43,
+    "group": "Owner Dashboard",
+    "file": "automations-home.html",
+    "title": "Automations",
+    "purpose": "Installed workflows and scripts.",
+    "next": ""
+  },
+  {
+    "number": 44,
+    "group": "Owner Dashboard",
+    "file": "public-page-home.html",
+    "title": "Public Page",
+    "purpose": "Edit what customers see without changing the underlying data.",
+    "next": ""
+  },
+  {
+    "number": 45,
+    "group": "Owner Dashboard",
+    "file": "customers.html",
+    "title": "Customers",
+    "purpose": "Customer records and consent.",
+    "next": ""
+  },
+  {
+    "number": 46,
+    "group": "Owner Dashboard",
+    "file": "activity.html",
+    "title": "Activity",
+    "purpose": "Installs, changes, runs, and verification receipts.",
+    "next": ""
+  },
+  {
+    "number": 47,
+    "group": "Owner Dashboard",
+    "file": "notifications.html",
+    "title": "Notifications",
+    "purpose": "Approvals, failures, and updates that need attention.",
+    "next": ""
+  },
+  {
+    "number": 48,
+    "group": "Ghost Apps",
+    "file": "app-store.html",
+    "title": "Ghost App Store",
+    "purpose": "Install independent products built on the shared Ghost foundation.",
+    "next": ""
+  },
+  {
+    "number": 49,
+    "group": "Ghost Apps",
+    "file": "app-store-category.html",
+    "title": "Browse Apps by Category",
+    "purpose": "Marketing, booking, commerce, operations, and vertical apps.",
+    "next": ""
+  },
+  {
+    "number": 50,
+    "group": "Ghost Apps",
+    "file": "app-song-request.html",
+    "title": "Song Request",
+    "purpose": "Standalone Ghost app with customer and business surfaces.",
+    "next": ""
+  },
+  {
+    "number": 51,
+    "group": "Ghost Apps",
+    "file": "app-song-request-permissions.html",
+    "title": "Song Request Permissions",
+    "purpose": "Review exactly what the app can read, write, call, and expose.",
+    "next": ""
+  },
+  {
+    "number": 52,
+    "group": "Ghost Apps",
+    "file": "app-song-request-installing.html",
+    "title": "Installing Song Request",
+    "purpose": "Create install, app-private schema, grants, and surfaces.",
+    "next": ""
+  },
+  {
+    "number": 53,
+    "group": "Ghost Apps",
+    "file": "app-song-request-config.html",
+    "title": "Configure Song Request",
+    "purpose": "Set request rules, pricing, and public display.",
+    "next": ""
+  },
+  {
+    "number": 54,
+    "group": "Ghost Apps",
+    "file": "app-song-request-business.html",
+    "title": "Song Request \u2014 Business View",
+    "purpose": "Manage the live request queue.",
+    "next": ""
+  },
+  {
+    "number": 55,
+    "group": "Ghost Apps",
+    "file": "app-song-request-public.html",
+    "title": "Song Request \u2014 Customer View",
+    "purpose": "Public QR / page / widget experience.",
+    "next": ""
+  },
+  {
+    "number": 56,
+    "group": "Ghost Apps",
+    "file": "app-qr-menu.html",
+    "title": "QR Menu",
+    "purpose": "Uses canonical menu data without owning it.",
+    "next": ""
+  },
+  {
+    "number": 57,
+    "group": "Ghost Apps",
+    "file": "app-qr-menu-permissions.html",
+    "title": "QR Menu Permissions",
+    "purpose": "Approve only the menu scopes it needs.",
+    "next": ""
+  },
+  {
+    "number": 58,
+    "group": "Ghost Apps",
+    "file": "app-qr-menu-public.html",
+    "title": "QR Menu \u2014 Public",
+    "purpose": "Fast mobile menu powered by canonical data.",
+    "next": ""
+  },
+  {
+    "number": 59,
+    "group": "Ghost Apps",
+    "file": "app-authentic-reviews.html",
+    "title": "Authentic Reviews",
+    "purpose": "Review request and verified source product.",
+    "next": ""
+  },
+  {
+    "number": 60,
+    "group": "Ghost Apps",
+    "file": "app-authentic-reviews-public.html",
+    "title": "Authentic Reviews \u2014 Public",
+    "purpose": "Customer-facing verified review experience.",
+    "next": ""
+  },
+  {
+    "number": 61,
+    "group": "Ghost Apps",
+    "file": "app-availability.html",
+    "title": "Availability",
+    "purpose": "Provider-neutral availability search.",
+    "next": ""
+  },
+  {
+    "number": 62,
+    "group": "Ghost Apps",
+    "file": "app-availability-public.html",
+    "title": "Availability \u2014 Public",
+    "purpose": "Customer search by date, quantity, and price.",
+    "next": ""
+  },
+  {
+    "number": 63,
+    "group": "Ghost Apps",
+    "file": "app-installations.html",
+    "title": "App Installations",
+    "purpose": "Versions, status, permissions, surfaces, and update policy.",
+    "next": ""
+  },
+  {
+    "number": 64,
+    "group": "Connections",
+    "file": "connections-store.html",
+    "title": "Connections Store",
+    "purpose": "External SaaS/API/OAuth tools are connections \u2014 not Ghost apps.",
+    "next": ""
+  },
+  {
+    "number": 65,
+    "group": "Connections",
+    "file": "connections-categories.html",
+    "title": "Connection Categories",
+    "purpose": "Email, CRM, commerce, calendars, social, payments, booking, and operations.",
+    "next": ""
+  },
+  {
+    "number": 66,
+    "group": "Connections",
+    "file": "connection-gmail.html",
+    "title": "Gmail Connection",
+    "purpose": "Connect Gmail through an approved provider.",
+    "next": ""
+  },
+  {
+    "number": 67,
+    "group": "Connections",
+    "file": "connection-gmail-permissions.html",
+    "title": "Gmail Access",
+    "purpose": "Choose labels, senders, and scopes before OAuth.",
+    "next": ""
+  },
+  {
+    "number": 68,
+    "group": "Connections",
+    "file": "connection-gmail-oauth.html",
+    "title": "Connect Gmail",
+    "purpose": "Complete the OAuth/provider handshake.",
+    "next": ""
+  },
+  {
+    "number": 69,
+    "group": "Connections",
+    "file": "connection-gmail-connected.html",
+    "title": "Gmail Connected",
+    "purpose": "See health, account identity, scopes, and capabilities.",
+    "next": ""
+  },
+  {
+    "number": 70,
+    "group": "Connections",
+    "file": "connection-composio.html",
+    "title": "Composio Connection Catalog",
+    "purpose": "Admin-curated tools from platform_connections.",
+    "next": ""
+  },
+  {
+    "number": 71,
+    "group": "Connections",
+    "file": "connection-native.html",
+    "title": "Native Connection",
+    "purpose": "Native providers still belong in Connections.",
+    "next": ""
+  },
+  {
+    "number": 72,
+    "group": "Connections",
+    "file": "connection-health.html",
+    "title": "Connection Health",
+    "purpose": "Token, scope, sync, and provider warnings.",
+    "next": ""
+  },
+  {
+    "number": 73,
+    "group": "Connections",
+    "file": "connection-capabilities.html",
+    "title": "Connection Capabilities",
+    "purpose": "See which stable Ghost capabilities each connection can fulfill.",
+    "next": ""
+  },
+  {
+    "number": 74,
+    "group": "Connections",
+    "file": "connection-remove.html",
+    "title": "Disconnect Tool",
+    "purpose": "Revoke the connection without uninstalling unrelated Ghost apps.",
+    "next": ""
+  },
+  {
+    "number": 75,
+    "group": "Device Apps",
+    "file": "device-app-store.html",
+    "title": "Device App Store",
+    "purpose": "External Android/browser apps available for controlled execution.",
+    "next": ""
+  },
+  {
+    "number": 76,
+    "group": "Device Apps",
+    "file": "device-app-categories.html",
+    "title": "Device App Categories",
+    "purpose": "Social, CRM, booking, operations, and vertical mobile apps.",
+    "next": ""
+  },
+  {
+    "number": 77,
+    "group": "Device Apps",
+    "file": "device-app-facebook.html",
+    "title": "Facebook Android",
+    "purpose": "Attach the Android app to a device runtime.",
+    "next": ""
+  },
+  {
+    "number": 78,
+    "group": "Device Apps",
+    "file": "device-app-facebook-device.html",
+    "title": "Choose a Device",
+    "purpose": "Select Cloud Android, physical phone, or local node.",
+    "next": ""
+  },
+  {
+    "number": 79,
+    "group": "Device Apps",
+    "file": "device-app-facebook-install.html",
+    "title": "Install Facebook",
+    "purpose": "Install/open the target app inside the selected runtime.",
+    "next": ""
+  },
+  {
+    "number": 80,
+    "group": "Device Apps",
+    "file": "device-app-facebook-login.html",
+    "title": "Sign in to Facebook",
+    "purpose": "Owner signs in inside the Android workspace.",
+    "next": ""
+  },
+  {
+    "number": 81,
+    "group": "Device Apps",
+    "file": "device-app-facebook-appmap.html",
+    "title": "Facebook AppMap",
+    "purpose": "Attach versioned UI knowledge for deterministic actions.",
+    "next": ""
+  },
+  {
+    "number": 82,
+    "group": "Device Apps",
+    "file": "device-app-facebook-ready.html",
+    "title": "Facebook Ready",
+    "purpose": "Advertise the capabilities the device app can fulfill.",
+    "next": ""
+  },
+  {
+    "number": 83,
+    "group": "Device Apps",
+    "file": "devices.html",
+    "title": "Devices",
+    "purpose": "Cloud Android, physical Android, browser workspaces, and Ghost Nodes.",
+    "next": ""
+  },
+  {
+    "number": 84,
+    "group": "Device Apps",
+    "file": "device-cloud-android.html",
+    "title": "Cloud Android",
+    "purpose": "Persistent remote Android workspace.",
+    "next": ""
+  },
+  {
+    "number": 85,
+    "group": "Device Apps",
+    "file": "device-live-viewer.html",
+    "title": "Live Device Viewer",
+    "purpose": "Watch, pause, take control, and return to Ghost.",
+    "next": ""
+  },
+  {
+    "number": 86,
+    "group": "Device Apps",
+    "file": "device-browser.html",
+    "title": "Browser Workspace",
+    "purpose": "Persistent browser execution environment.",
+    "next": ""
+  },
+  {
+    "number": 87,
+    "group": "Device Apps",
+    "file": "device-home-node.html",
+    "title": "Ghost Node",
+    "purpose": "Local execution resource connected to the control plane.",
+    "next": ""
+  },
+  {
+    "number": 88,
+    "group": "Device Apps",
+    "file": "appmaps.html",
+    "title": "AppMaps",
+    "purpose": "Reusable versioned UI knowledge.",
+    "next": ""
+  },
+  {
+    "number": 89,
+    "group": "Device Apps",
+    "file": "appmap-detail.html",
+    "title": "AppMap Detail",
+    "purpose": "Screen signatures, controls, actions, and success states.",
+    "next": ""
+  },
+  {
+    "number": 90,
+    "group": "Device Apps",
+    "file": "repair-pipeline.html",
+    "title": "Repair Pipeline",
+    "purpose": "Capture, repair, test, canary, and reuse a changed interface.",
+    "next": ""
+  },
+  {
+    "number": 91,
+    "group": "Plugins",
+    "file": "plugin-store.html",
+    "title": "Plugin Store",
+    "purpose": "Small reusable extensions bound to compatible products.",
+    "next": ""
+  },
+  {
+    "number": 92,
+    "group": "Plugins",
+    "file": "plugin-qr-generator.html",
+    "title": "QR Generator Plugin",
+    "purpose": "Reusable plugin for QR Menu, Song Request, Loyalty, or public pages.",
+    "next": ""
+  },
+  {
+    "number": 93,
+    "group": "Plugins",
+    "file": "plugin-qr-generator-bind.html",
+    "title": "Choose Plugin Bindings",
+    "purpose": "Pick where the plugin appears.",
+    "next": ""
+  },
+  {
+    "number": 94,
+    "group": "Plugins",
+    "file": "plugin-qr-generator-permissions.html",
+    "title": "Plugin Permissions",
+    "purpose": "Review plugin scopes separately from the host app.",
+    "next": ""
+  },
+  {
+    "number": 95,
+    "group": "Plugins",
+    "file": "plugin-qr-generator-ready.html",
+    "title": "QR Generator Ready",
+    "purpose": "Enabled at selected extension points.",
+    "next": ""
+  },
+  {
+    "number": 96,
+    "group": "Plugins",
+    "file": "plugin-ai-summary.html",
+    "title": "AI Summary Plugin",
+    "purpose": "Adds summaries without owning underlying data.",
+    "next": ""
+  },
+  {
+    "number": 97,
+    "group": "Plugins",
+    "file": "plugin-pdf-export.html",
+    "title": "PDF Export Plugin",
+    "purpose": "Adds export at declared extension points.",
+    "next": ""
+  },
+  {
+    "number": 98,
+    "group": "Plugins",
+    "file": "plugin-bindings.html",
+    "title": "Plugin Bindings",
+    "purpose": "See every active app/surface binding.",
+    "next": ""
+  },
+  {
+    "number": 99,
+    "group": "Automations",
+    "file": "automation-store.html",
+    "title": "Automation & Script Store",
+    "purpose": "Install workflows independently from apps and connections.",
+    "next": ""
+  },
+  {
+    "number": 100,
+    "group": "Automations",
+    "file": "automation-cancel-waitlist.html",
+    "title": "Cancellation \u2192 Waitlist",
+    "purpose": "Cancellation event \u2192 matching opted-in customers.",
+    "next": ""
+  },
+  {
+    "number": 101,
+    "group": "Automations",
+    "file": "automation-cancel-permissions.html",
+    "title": "Automation Permissions",
+    "purpose": "Approve required data and action scopes.",
+    "next": ""
+  },
+  {
+    "number": 102,
+    "group": "Automations",
+    "file": "automation-cancel-config.html",
+    "title": "Configure Automation",
+    "purpose": "Set rules, thresholds, and approval policy.",
+    "next": ""
+  },
+  {
+    "number": 103,
+    "group": "Automations",
+    "file": "automation-cancel-ready.html",
+    "title": "Automation Ready",
+    "purpose": "Installed and waiting for events.",
+    "next": ""
+  },
+  {
+    "number": 104,
+    "group": "Automations",
+    "file": "automation-builder.html",
+    "title": "Automation Builder",
+    "purpose": "Build WHEN / IF / THEN / VERIFY workflows.",
+    "next": ""
+  },
+  {
+    "number": 105,
+    "group": "Automations",
+    "file": "automation-builder-trigger.html",
+    "title": "Choose Trigger",
+    "purpose": "Events, schedules, messages, provider changes, or manual starts.",
+    "next": ""
+  },
+  {
+    "number": 106,
+    "group": "Automations",
+    "file": "automation-builder-condition.html",
+    "title": "Add Conditions",
+    "purpose": "Use business data and state to gate the workflow.",
+    "next": ""
+  },
+  {
+    "number": 107,
+    "group": "Automations",
+    "file": "automation-builder-action.html",
+    "title": "Choose Action",
+    "purpose": "Call a stable capability rather than provider-specific clicks.",
+    "next": ""
+  },
+  {
+    "number": 108,
+    "group": "Automations",
+    "file": "automation-builder-approval.html",
+    "title": "Approval Policy",
+    "purpose": "Choose AUTO, ASK, or NEVER.",
+    "next": ""
+  },
+  {
+    "number": 109,
+    "group": "Automations",
+    "file": "automation-builder-verify.html",
+    "title": "Verification",
+    "purpose": "Define the read-back required for success.",
+    "next": ""
+  },
+  {
+    "number": 110,
+    "group": "Automations",
+    "file": "automation-builder-review.html",
+    "title": "Review & Install",
+    "purpose": "Review the complete workflow contract.",
+    "next": ""
+  },
+  {
+    "number": 111,
+    "group": "Automations",
+    "file": "automation-runs.html",
+    "title": "Automation Runs",
+    "purpose": "Durable run history, retries, approvals, and verification.",
+    "next": ""
+  },
+  {
+    "number": 112,
+    "group": "Automations",
+    "file": "automation-run-detail.html",
+    "title": "Automation Run Detail",
+    "purpose": "Step-by-step execution timeline.",
+    "next": ""
+  },
+  {
+    "number": 113,
+    "group": "Automations",
+    "file": "script-package.html",
+    "title": "Script Package",
+    "purpose": "Versioned script package behind approved capabilities.",
+    "next": ""
+  },
+  {
+    "number": 114,
+    "group": "Public Surfaces",
+    "file": "surface-builder.html",
+    "title": "Public Surface Builder",
+    "purpose": "Compose what customers see without merging underlying systems.",
+    "next": ""
+  },
+  {
+    "number": 115,
+    "group": "Public Surfaces",
+    "file": "surface-layout.html",
+    "title": "Choose Layout",
+    "purpose": "Link-style, scroll, accordion, modal, hybrid, widget, or standalone.",
+    "next": ""
+  },
+  {
+    "number": 116,
+    "group": "Public Surfaces",
+    "file": "surface-items.html",
+    "title": "Add Surface Items",
+    "purpose": "Data Module, Ghost App, Capability, Provider Handoff, or Composite.",
+    "next": ""
+  },
+  {
+    "number": 117,
+    "group": "Public Surfaces",
+    "file": "surface-item-menu.html",
+    "title": "Configure Menu Item",
+    "purpose": "Bind canonical menu data or mount QR Menu.",
+    "next": ""
+  },
+  {
+    "number": 118,
+    "group": "Public Surfaces",
+    "file": "surface-item-song-request.html",
+    "title": "Configure Song Request",
+    "purpose": "Mount the installed app as modal, page, widget, or full-screen.",
+    "next": ""
+  },
+  {
+    "number": 119,
+    "group": "Public Surfaces",
+    "file": "surface-item-book.html",
+    "title": "Configure Booking Action",
+    "purpose": "Bind a stable capability.",
+    "next": ""
+  },
+  {
+    "number": 120,
+    "group": "Public Surfaces",
+    "file": "surface-theme.html",
+    "title": "Branding & Theme",
+    "purpose": "Typography, spacing, shape, imagery, and brand.",
+    "next": ""
+  },
+  {
+    "number": 121,
+    "group": "Public Surfaces",
+    "file": "surface-preview-mobile.html",
+    "title": "Mobile Preview",
+    "purpose": "See exactly what a customer sees.",
+    "next": ""
+  },
+  {
+    "number": 122,
+    "group": "Public Surfaces",
+    "file": "surface-preview-desktop.html",
+    "title": "Desktop Preview",
+    "purpose": "Same composition adapted to desktop.",
+    "next": ""
+  },
+  {
+    "number": 123,
+    "group": "Public Surfaces",
+    "file": "surface-publish.html",
+    "title": "Publish Surface",
+    "purpose": "Version and publish the public experience.",
+    "next": ""
+  },
+  {
+    "number": 124,
+    "group": "Public Surfaces",
+    "file": "surface-analytics.html",
+    "title": "Surface Analytics",
+    "purpose": "Visits and actions without becoming business truth.",
+    "next": ""
+  },
+  {
+    "number": 125,
+    "group": "Settings",
+    "file": "team.html",
+    "title": "Team",
+    "purpose": "Workspace members can have different roles across businesses.",
+    "next": ""
+  },
+  {
+    "number": 126,
+    "group": "Settings",
+    "file": "invite-member.html",
+    "title": "Invite Team Member",
+    "purpose": "Grant access without sharing credentials.",
+    "next": ""
+  },
+  {
+    "number": 127,
+    "group": "Settings",
+    "file": "member-detail.html",
+    "title": "Member Access",
+    "purpose": "Roles, businesses, app grants, and sensitive permissions.",
+    "next": ""
+  },
+  {
+    "number": 128,
+    "group": "Settings",
+    "file": "permissions.html",
+    "title": "Permissions",
+    "purpose": "One vocabulary shared by apps, plugins, automations, and capabilities.",
+    "next": ""
+  },
+  {
+    "number": 129,
+    "group": "Settings",
+    "file": "permission-detail.html",
+    "title": "Permission Detail",
+    "purpose": "Where a scope is used and whether it is sensitive.",
+    "next": ""
+  },
+  {
+    "number": 130,
+    "group": "Settings",
+    "file": "approval-inbox.html",
+    "title": "Approval Inbox",
+    "purpose": "Sensitive ASK actions wait here.",
+    "next": ""
+  },
+  {
+    "number": 131,
+    "group": "Settings",
+    "file": "approval-detail.html",
+    "title": "Approve Action",
+    "purpose": "Review actor, capability, target, inputs, and risk.",
+    "next": ""
+  },
+  {
+    "number": 132,
+    "group": "Settings",
+    "file": "security.html",
+    "title": "Security",
+    "purpose": "Passkeys, sessions, trusted devices, tokens, and support access.",
+    "next": ""
+  },
+  {
+    "number": 133,
+    "group": "Settings",
+    "file": "sessions.html",
+    "title": "Sessions",
+    "purpose": "Account, browser, device, and remote execution sessions.",
+    "next": ""
+  },
+  {
+    "number": 134,
+    "group": "Settings",
+    "file": "settings.html",
+    "title": "Workspace Settings",
+    "purpose": "Identity, notifications, billing, data, and developer controls.",
+    "next": ""
+  },
+  {
+    "number": 135,
+    "group": "Settings",
+    "file": "billing.html",
+    "title": "Billing",
+    "purpose": "Workspace plan, app/plugin subscriptions, usage, and invoices.",
+    "next": ""
+  },
+  {
+    "number": 136,
+    "group": "Settings",
+    "file": "data-export.html",
+    "title": "Data Export",
+    "purpose": "Export business-owned data independently from apps.",
+    "next": ""
+  },
+  {
+    "number": 137,
+    "group": "Settings",
+    "file": "audit-log.html",
+    "title": "Audit Log",
+    "purpose": "Who changed what, through which layer, and what was verified.",
+    "next": ""
+  },
+  {
+    "number": 138,
+    "group": "Customer",
+    "file": "public-business-home.html",
+    "title": "Harbor House",
+    "purpose": "Polished public business home composed from data, apps, and capabilities.",
+    "next": ""
+  },
+  {
+    "number": 139,
+    "group": "Customer",
+    "file": "public-link-page.html",
+    "title": "Harbor House \u2014 Quick Links",
+    "purpose": "Compact action-first public layout.",
+    "next": ""
+  },
+  {
+    "number": 140,
+    "group": "Customer",
+    "file": "public-scroll-page.html",
+    "title": "Harbor House \u2014 Full Website",
+    "purpose": "Full-scroll public site with the same data.",
+    "next": ""
+  },
+  {
+    "number": 141,
+    "group": "Customer",
+    "file": "public-menu.html",
+    "title": "Menu",
+    "purpose": "Canonical menu rendered as a customer experience.",
+    "next": ""
+  },
+  {
+    "number": 142,
+    "group": "Customer",
+    "file": "public-availability.html",
+    "title": "Availability",
+    "purpose": "Live provider-neutral availability search.",
+    "next": ""
+  },
+  {
+    "number": 143,
+    "group": "Customer",
+    "file": "public-events.html",
+    "title": "Events",
+    "purpose": "Upcoming events and live music.",
+    "next": ""
+  },
+  {
+    "number": 144,
+    "group": "Customer",
+    "file": "public-reviews.html",
+    "title": "Reviews",
+    "purpose": "Authentic Reviews app mounted publicly.",
+    "next": ""
+  },
+  {
+    "number": 145,
+    "group": "Customer",
+    "file": "public-song-request.html",
+    "title": "Request a Song",
+    "purpose": "Standalone Song Request customer surface.",
+    "next": ""
+  },
+  {
+    "number": 146,
+    "group": "Customer",
+    "file": "public-loyalty.html",
+    "title": "Loyalty",
+    "purpose": "Rewards as a separate installed app.",
+    "next": ""
+  },
+  {
+    "number": 147,
+    "group": "Customer",
+    "file": "public-contact.html",
+    "title": "Contact",
+    "purpose": "Call, message, directions, and questions.",
+    "next": ""
+  },
+  {
+    "number": 148,
+    "group": "Admin",
+    "file": "admin-home.html",
+    "title": "Operator Home",
+    "purpose": "Platform-wide health and independent registries.",
+    "next": ""
+  },
+  {
+    "number": 149,
+    "group": "Admin",
+    "file": "admin-businesses.html",
+    "title": "Businesses",
+    "purpose": "All businesses, claims, workspace assignment, and operator actions.",
+    "next": ""
+  },
+  {
+    "number": 150,
+    "group": "Admin",
+    "file": "admin-business-detail.html",
+    "title": "Business Detail",
+    "purpose": "Inspect one business without becoming its owner.",
+    "next": ""
+  },
+  {
+    "number": 151,
+    "group": "Admin",
+    "file": "admin-data-modules.html",
+    "title": "Data Module Registry",
+    "purpose": "Manage ordinary business data separately from software.",
+    "next": ""
+  },
+  {
+    "number": 152,
+    "group": "Admin",
+    "file": "admin-schema-registry.html",
+    "title": "Table / Schema Registry",
+    "purpose": "Classify DATA_MODULE, APP_PRIVATE, INTERNAL, SUBMISSION, and SYSTEM tables.",
+    "next": ""
+  },
+  {
+    "number": 153,
+    "group": "Admin",
+    "file": "admin-apps.html",
+    "title": "Ghost App Registry",
+    "purpose": "One canonical app catalog.",
+    "next": ""
+  },
+  {
+    "number": 154,
+    "group": "Admin",
+    "file": "admin-app-release.html",
+    "title": "App Release",
+    "purpose": "Versions, manifest, permissions, surfaces, hash, and rollout.",
+    "next": ""
+  },
+  {
+    "number": 155,
+    "group": "Admin",
+    "file": "admin-plugins.html",
+    "title": "Plugin Registry",
+    "purpose": "Independent plugin catalog and compatibility.",
+    "next": ""
+  },
+  {
+    "number": 156,
+    "group": "Admin",
+    "file": "admin-connections.html",
+    "title": "Connection Catalog",
+    "purpose": "Curate Composio/native external tools.",
+    "next": ""
+  },
+  {
+    "number": 157,
+    "group": "Admin",
+    "file": "admin-connection-detail.html",
+    "title": "Connection Provider Detail",
+    "purpose": "Auth config, capabilities, health, and usage.",
+    "next": ""
+  },
+  {
+    "number": 158,
+    "group": "Admin",
+    "file": "admin-device-apps.html",
+    "title": "Device App Registry",
+    "purpose": "Android/browser targets, AppMaps, and capability coverage.",
+    "next": ""
+  },
+  {
+    "number": 159,
+    "group": "Admin",
+    "file": "admin-automations.html",
+    "title": "Automation Registry",
+    "purpose": "Workflow/script packages, versions, and failed runs.",
+    "next": ""
+  },
+  {
+    "number": 160,
+    "group": "Admin",
+    "file": "admin-permissions.html",
+    "title": "Permission Catalog",
+    "purpose": "Typed permissions and sensitivity.",
+    "next": ""
+  },
+  {
+    "number": 161,
+    "group": "Admin",
+    "file": "admin-surfaces.html",
+    "title": "Surface Templates",
+    "purpose": "Reusable public layout templates.",
+    "next": ""
+  },
+  {
+    "number": 162,
+    "group": "Admin",
+    "file": "admin-devices.html",
+    "title": "Fleet",
+    "purpose": "Cloud Android, browser, nodes, and health.",
+    "next": ""
+  },
+  {
+    "number": 163,
+    "group": "Admin",
+    "file": "admin-operations.html",
+    "title": "Operations",
+    "purpose": "Execution failures, verification mismatches, and provider health.",
+    "next": ""
+  },
+  {
+    "number": 164,
+    "group": "Developer",
+    "file": "developer-home.html",
+    "title": "Developer Center",
+    "purpose": "Build against Ghost contracts, not raw internals.",
+    "next": ""
+  },
+  {
+    "number": 165,
+    "group": "Developer",
+    "file": "developer-app.html",
+    "title": "Create App Package",
+    "purpose": "Declare manifest, surfaces, permissions, schemas, and capabilities.",
+    "next": ""
+  },
+  {
+    "number": 166,
+    "group": "Developer",
+    "file": "developer-sdk.html",
+    "title": "Ghost SDK",
+    "purpose": "Read approved data, call capabilities, subscribe to events, and mount UI.",
+    "next": ""
+  },
+  {
+    "number": 167,
+    "group": "Developer",
+    "file": "developer-permissions.html",
+    "title": "Permission Requests",
+    "purpose": "Test install-time permission declarations.",
+    "next": ""
+  },
+  {
+    "number": 168,
+    "group": "Developer",
+    "file": "developer-schema.html",
+    "title": "App Schema",
+    "purpose": "Declare app-private schema without generic discovery.",
+    "next": ""
+  },
+  {
+    "number": 169,
+    "group": "Developer",
+    "file": "developer-surface.html",
+    "title": "App Surfaces",
+    "purpose": "Register public and business surfaces.",
+    "next": ""
+  },
+  {
+    "number": 170,
+    "group": "Developer",
+    "file": "developer-test.html",
+    "title": "Test & Sandbox",
+    "purpose": "Run package tests in a restricted environment.",
+    "next": ""
+  },
+  {
+    "number": 171,
+    "group": "Developer",
+    "file": "developer-package.html",
+    "title": "Package & Sign",
+    "purpose": "Create immutable version, SBOM, hash, and signature.",
+    "next": ""
+  },
+  {
+    "number": 172,
+    "group": "Developer",
+    "file": "developer-publish.html",
+    "title": "Publish",
+    "purpose": "Submit package to the correct registry.",
+    "next": ""
+  },
+  {
+    "number": 173,
+    "group": "Developer",
+    "file": "api-explorer.html",
+    "title": "API Explorer",
+    "purpose": "Inspect workspace, capabilities, executions, and verification APIs.",
+    "next": ""
+  },
+  {
+    "number": 174,
+    "group": "System",
+    "file": "install-flow.html",
+    "title": "Install Flows",
+    "purpose": "How Data Modules, Ghost Apps, Connections, Device Apps, Plugins, and Automations are added without overlapping.",
+    "next": ""
+  },
+  {
+    "number": 175,
+    "group": "System",
+    "file": "capability-flow.html",
+    "title": "Capability Routing",
+    "purpose": "How independent products work together without knowing provider-specific implementation details.",
+    "next": ""
+  },
+  {
+    "number": 176,
+    "group": "System",
+    "file": "screen-directory.html",
+    "title": "Every Screen",
+    "purpose": "Complete clickable directory of every UI/UX page in the demo.",
+    "next": ""
+  }
+]

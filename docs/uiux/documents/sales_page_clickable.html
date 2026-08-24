@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost / CyberCheck — Clickable Sales Page</title>
+  <meta name="description" content="Clickable Ghost / CyberCheck sales page with embedded front-end and back-end examples." />
+  <style>
+    :root{
+      --bg:#06101c;
+      --bg2:#091a2c;
+      --panel:#0d2034;
+      --panel2:#112843;
+      --line:#244764;
+      --text:#f6fbff;
+      --muted:#9fb6ce;
+      --blue:#58a8ff;
+      --cyan:#39ddd3;
+      --green:#4ce28e;
+      --purple:#a38bff;
+      --orange:#ffb463;
+      --pink:#ff78c8;
+      --yellow:#ffd95b;
+      --red:#ff7b86;
+      --shadow:0 25px 80px rgba(0,0,0,.35);
+      --radius:24px;
+      --max:1280px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(88,168,255,.14), transparent 28%),
+        radial-gradient(circle at 90% 0%, rgba(57,221,211,.09), transparent 26%),
+        linear-gradient(180deg, #07111f 0%, #06101c 35%, #050b14 100%);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .wrap{width:min(var(--max),92vw);margin:0 auto}
+    .nav{
+      position:sticky;top:0;z-index:90;
+      backdrop-filter:blur(14px);
+      background:rgba(6,16,28,.84);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .nav-inner{
+      min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:18px
+    }
+    .brand{display:flex;align-items:center;gap:14px;font-weight:950;letter-spacing:-.03em}
+    .brand-mark{
+      width:44px;height:44px;border-radius:16px;display:grid;place-items:center;
+      background:linear-gradient(135deg,#fff,#8fd7ff 50%,#7ef0d0);
+      color:#07111f;font-size:22px;box-shadow:0 0 40px rgba(88,168,255,.2)
+    }
+    .brand small{display:block;font-size:10px;color:#8ce6da;text-transform:uppercase;letter-spacing:.14em;margin-top:1px}
+    .links{display:flex;gap:8px;flex-wrap:wrap}
+    .links a{
+      padding:9px 12px;border-radius:999px;color:#c6d7e8;font-size:13px;font-weight:850
+    }
+    .links a:hover{background:rgba(255,255,255,.07);color:#fff}
+    .btn{
+      min-height:48px;padding:12px 18px;border-radius:14px;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      font-weight:900;border:1px solid transparent;transition:.2s ease
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#07111f}
+    .btn.secondary{background:#0b1727;border-color:#32567a;color:#e9f3fb}
+    .btn.ghost{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
+    .hero{padding:86px 0 56px}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid #2b587c;background:rgba(11,27,45,.78);font-size:12px;
+      color:#92d9ff;font-weight:950;text-transform:uppercase;letter-spacing:.12em
+    }
+    h1,h2,h3,h4{margin:0;line-height:1.04;letter-spacing:-.04em}
+    h1{font-size:clamp(46px,7vw,82px);margin:18px 0 22px}
+    h2{font-size:clamp(34px,5vw,56px)}
+    h3{font-size:26px}
+    p{margin:0}
+    .gradient{
+      background:linear-gradient(90deg,#fff 0%,#8cd7ff 38%,#7cefd2 70%,#b49cff);
+      -webkit-background-clip:text;background-clip:text;color:transparent
+    }
+    .hero p{font-size:20px;color:#b6cadb;max-width:780px}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+    .hero-note{margin-top:16px;color:#85a0bb;font-size:13px}
+    .hero-demo{
+      border:1px solid #2a4b6b;border-radius:30px;padding:16px;
+      background:linear-gradient(180deg,#0d1c2f,#08131f);box-shadow:var(--shadow)
+    }
+    .browser-bar{display:flex;align-items:center;gap:8px;color:#91a8be;font-size:12px;padding:4px 4px 12px}
+    .dots{display:flex;gap:5px}.dots i{width:8px;height:8px;border-radius:50%;background:#35536f;display:block}
+    .hero-page{
+      border:1px solid #244662;border-radius:24px;background:#07111b;padding:18px;min-height:430px
+    }
+    .banner{
+      min-height:148px;border-radius:22px;padding:20px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(88,168,255,.22), transparent 32%),
+        radial-gradient(circle at 0% 100%, rgba(76,226,142,.14), transparent 34%),
+        linear-gradient(135deg,#11253b,#0b1422);
+      border:1px solid #26445f;
+      display:flex;flex-direction:column;justify-content:flex-end;
+      margin-bottom:14px
+    }
+    .banner .tag{font-size:11px;color:#73ecc0;font-weight:950;letter-spacing:.12em;text-transform:uppercase}
+    .banner h3{font-size:28px;margin:8px 0 4px}
+    .banner span{color:#a8bdd0;font-size:13px}
+    .stack{display:grid;gap:9px}
+    .action-btn{
+      min-height:52px;border-radius:16px;border:1px solid #294864;background:#0f2238;color:#fff;
+      padding:0 15px;text-align:left;display:flex;align-items:center;justify-content:space-between;
+      font-weight:900
+    }
+    .action-btn .sub{display:block;color:#8fd3f0;font-size:12px;font-weight:700}
+    .action-btn.special{background:linear-gradient(135deg,rgba(88,168,255,.18),rgba(57,221,211,.1));border-color:#325b84}
+    .section{padding:78px 0}
+    .soft{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012));border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04)}
+    .kicker{color:#7dd1fb;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.14em}
+    .lede{font-size:18px;color:#a2b8cd;max-width:900px;margin:16px 0 34px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .card{
+      border:1px solid #21405d;border-radius:var(--radius);
+      background:linear-gradient(180deg,rgba(14,31,50,.96),rgba(8,19,30,.98));
+      padding:24px;box-shadow:0 14px 40px rgba(0,0,0,.14)
+    }
+    .icon{
+      width:50px;height:50px;border-radius:16px;display:grid;place-items:center;font-size:24px;
+      background:#0f2940;border:1px solid #2d5b7f;margin-bottom:16px
+    }
+    .card p{margin-top:8px;color:#9db0c5}
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .pill{
+      padding:7px 10px;border-radius:999px;border:1px solid #2b4c6d;background:#0a1829;
+      color:#bed0df;font-size:12px;font-weight:800
+    }
+    .foundation-duo{
+      display:grid;grid-template-columns:1fr 150px 1fr;gap:18px;align-items:center
+    }
+    .side{
+      border:1px solid #284968;border-radius:26px;background:#0a1828;padding:22px
+    }
+    .side ul{margin:12px 0 0;padding-left:20px;color:#abc0d4}
+    .side li{margin:7px 0}
+    .core-orb{
+      border-radius:999px;padding:18px;text-align:center;border:1px solid #5a4ba4;
+      background:radial-gradient(circle,#261a57,#0e1730 70%);font-weight:950;color:#ddd4ff
+    }
+    .demo-shell{
+      border:1px solid #284c6c;border-radius:30px;overflow:hidden;background:#07121e;box-shadow:var(--shadow)
+    }
+    .demo-toolbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      padding:16px 18px;border-bottom:1px solid #1f3956;background:#0b192b
+    }
+    .tab-row{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{
+      border:1px solid #2c4d6d;background:#0a1728;color:#c2d5e7;border-radius:999px;
+      padding:10px 12px;font-weight:850;font-size:12px
+    }
+    .tab.active{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#06101c;border-color:transparent}
+    .demo-layout{display:grid;grid-template-columns:.92fr 1.08fr;min-height:720px}
+    .preview{
+      padding:24px;border-right:1px solid #1f3956;
+      background:linear-gradient(180deg,#08131f,#07111b)
+    }
+    .phone{
+      width:min(402px,100%);margin:0 auto;border:1px solid #36536f;border-radius:34px;padding:12px;background:#02070d;
+      box-shadow:0 20px 60px rgba(0,0,0,.35)
+    }
+    .phone-screen{
+      border-radius:24px;overflow:hidden;background:#0a1523;min-height:610px;padding:18px
+    }
+    .phone-header{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#7f96ae;font-size:12px
+    }
+    .module-stack{display:grid;gap:9px}
+    .module-btn{
+      width:100%;min-height:56px;border:1px solid #294762;border-radius:16px;background:#102338;color:#fff;
+      padding:0 15px;text-align:left;font-weight:950;display:flex;align-items:center;justify-content:space-between;gap:10px
+    }
+    .module-btn small{display:block;color:#8fd3f0;font-size:12px;font-weight:700}
+    .hidden-demo{display:none !important}
+    .dashboard{
+      padding:24px;background:#0a1728
+    }
+    .dash-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .dash-head p{margin-top:6px;color:#97adc2;font-size:13px}
+    .status{padding:8px 10px;border-radius:999px;background:rgba(76,226,142,.12);border:1px solid rgba(76,226,142,.25);color:#94f3bf;font-size:12px;font-weight:900}
+    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .metric{border:1px solid #23415d;border-radius:16px;padding:14px;background:#0c1c2f}
+    .metric b{display:block;font-size:22px}.metric span{font-size:11px;color:#8ea5bb}
+    .dash-panel{
+      border:1px solid #23405a;border-radius:20px;background:#0b1a2c;padding:16px;margin-top:14px
+    }
+    .dash-panel h4{font-size:15px;margin-bottom:10px}
+    .module-row{
+      display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid rgba(255,255,255,.06)
+    }
+    .module-row:first-child{border-top:0}
+    .module-row small{display:block;color:#879db2}
+    .toggle{
+      width:44px;height:25px;border-radius:999px;border:1px solid #37536d;background:#15283b;padding:2px;position:relative
+    }
+    .toggle::before{
+      content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;
+      background:#8094a6;transition:.2s ease
+    }
+    .toggle.on{background:rgba(76,226,142,.18);border-color:#2c7c59}
+    .toggle.on::before{left:22px;background:#53e79f}
+    .mode{
+      min-height:34px;border-radius:10px;border:1px solid #30506b;background:#091523;color:#d2e0eb;padding:0 8px;font-size:12px
+    }
+    .live-box{
+      border:1px solid #284a67;border-radius:18px;background:#081623;padding:14px;margin-top:12px
+    }
+    .small{font-size:13px;color:#8fa8c0}
+    .backend-kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .mini{
+      border:1px solid #274560;border-radius:14px;padding:12px;background:#0a1727
+    }
+    .mini b{display:block}
+    .examples-shell{
+      border:1px solid #284968;border-radius:30px;overflow:hidden;background:#07121f;box-shadow:var(--shadow)
+    }
+    .example-nav{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      padding:16px 18px;border-bottom:1px solid #1f3956;background:#0b182b
+    }
+    .example-panels{padding:24px}
+    .example{display:none}
+    .example.active{display:block}
+    .example-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+    .app-card{
+      border:1px solid #24425f;border-radius:22px;background:#0b1a2c;padding:20px
+    }
+    .link-page-demo{
+      border:1px solid #294a66;border-radius:22px;padding:18px;background:#091726
+    }
+    .profile-head{
+      min-height:140px;border-radius:20px;padding:18px;background:
+        radial-gradient(circle at 100% 0%,rgba(88,168,255,.18),transparent 28%),
+        linear-gradient(135deg,#132943,#0b1422);
+      border:1px solid #28455d;margin-bottom:12px
+    }
+    .profile-head h4{font-size:24px;margin-top:32px}
+    .link-actions{display:grid;gap:9px}
+    .link-actions button{
+      min-height:50px;border-radius:14px;border:1px solid #294662;background:#11253b;color:#fff;
+      text-align:left;padding:0 14px;font-weight:900
+    }
+    .flow-strip{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px
+    }
+    .flow-step{
+      border:1px solid #27455f;border-radius:16px;padding:14px;background:#081524;text-align:center
+    }
+    .flow-step b{display:block;margin-bottom:4px}.flow-step span{font-size:12px;color:#93aac0}
+    .popup-panel{
+      border:1px solid #35556f;border-radius:22px;background:#081524;padding:18px;min-height:350px
+    }
+    .popup-panel h4{margin-bottom:10px}
+    .list-card{
+      border:1px solid #284863;border-radius:14px;background:#0b1a2b;padding:12px;margin-top:10px
+    }
+    .price{float:right;color:#7cecbf;font-weight:900}
+    .time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+    .time-grid button,.chip-grid button{
+      min-height:42px;border:1px solid #30506d;border-radius:12px;background:#0f2337;color:#e1eef8;font-weight:850
+    }
+    .time-grid button.selected,.chip-grid button.selected{
+      background:linear-gradient(135deg,var(--blue),var(--cyan));color:#06101c;border-color:transparent
+    }
+    .stepper{display:grid;gap:10px}
+    .step-box{
+      border:1px solid #284762;border-radius:16px;background:#091726;padding:14px
+    }
+    .step-title{display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .step-num{
+      width:28px;height:28px;border-radius:10px;display:grid;place-items:center;
+      background:#10304b;border:1px solid #2f5a7c;font-weight:900
+    }
+    .chip-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+    .summary{
+      border:1px solid #2a7553;border-radius:16px;background:rgba(76,226,142,.08);padding:14px;margin-top:12px
+    }
+    .summary b{display:block}
+    .diagram{
+      display:grid;grid-template-columns:1fr 80px 1fr 80px 1fr;gap:10px;align-items:center
+    }
+    .diagram-card{
+      border:1px solid #294863;border-radius:18px;background:#0a1828;padding:18px;text-align:center
+    }
+    .diagram-card strong{display:block}.diagram-card small{display:block;color:#92aac0;margin-top:4px}
+    .arrow{text-align:center;font-size:28px;color:#6cdbe5;font-weight:900}
+    .surface-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .surface{border:1px solid #243f5c;border-radius:18px;background:#091727;padding:18px}
+    .surface b{display:block;margin:7px 0}.surface p{font-size:12px;color:#93a9bf}
+    .surface .emoji{font-size:25px}
+    .foundation-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .foundation-card{border:1px solid #284763;border-radius:20px;padding:20px;background:#0a192a}
+    .foundation-card b{display:block;font-size:17px}
+    .foundation-card p{margin-top:7px;color:#94a9be;font-size:13px}
+    .pipeline{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:10px
+    }
+    .pipe{
+      border:1px solid #24415e;border-radius:16px;background:#091726;padding:16px;text-align:center;cursor:pointer
+    }
+    .pipe.active{border-color:#69d5e2;background:rgba(88,168,255,.10)}
+    .pipe b{display:block;margin-bottom:4px}.pipe span{font-size:12px;color:#91a7bd}
+    .info-panel{
+      margin-top:16px;border:1px solid #284a67;border-radius:20px;padding:18px;background:#0a1829;min-height:110px
+    }
+    .build-steps{counter-reset:step;display:grid;gap:12px}
+    .build-step{display:grid;grid-template-columns:46px 1fr;gap:14px;align-items:start}
+    .build-step::before{
+      counter-increment:step;content:counter(step);width:40px;height:40px;border-radius:13px;
+      display:grid;place-items:center;background:linear-gradient(135deg,#217dd6,#33d4ca);color:#06101c;font-weight:950
+    }
+    .quote{
+      border:1px solid #345777;border-radius:28px;padding:30px;background:linear-gradient(135deg,rgba(88,168,255,.08),rgba(163,139,255,.07));
+      font-size:clamp(25px,3vw,40px);font-weight:950;letter-spacing:-.04em
+    }
+    .cta{padding:86px 0 100px;text-align:center}
+    .cta-box{
+      border:1px solid #2a5875;border-radius:34px;padding:48px 24px;
+      background:
+        radial-gradient(circle at 50% -10%,rgba(57,221,211,.16),transparent 36%),
+        linear-gradient(180deg,#0b1b2d,#07121e)
+    }
+    .cta-box p{max-width:760px;margin:16px auto 26px;color:#a8bccd;font-size:18px}
+    footer{padding:28px 0 40px;text-align:center;color:#73889d;font-size:12px}
+    .note{
+      border:1px solid #304f6e;border-radius:16px;background:#091726;padding:14px;color:#b9ccdb
+    }
+    @media(max-width:1100px){
+      .hero-grid,.demo-layout,.example-grid{grid-template-columns:1fr}
+      .preview{border-right:0;border-bottom:1px solid #1f3956}
+      .foundation-duo{grid-template-columns:1fr}
+      .core-orb{border-radius:24px}
+      .surface-grid{grid-template-columns:repeat(3,1fr)}
+      .foundation-grid{grid-template-columns:repeat(2,1fr)}
+      .diagram{grid-template-columns:1fr}
+      .arrow{transform:rotate(90deg)}
+      .pipeline{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:780px){
+      .links{display:none}
+      .grid-2,.grid-3,.grid-4,.foundation-grid{grid-template-columns:1fr}
+      .metrics,.backend-kpi{grid-template-columns:1fr}
+      .module-row{grid-template-columns:1fr auto}
+      .module-row .mode{grid-column:1/-1}
+      .surface-grid{grid-template-columns:repeat(2,1fr)}
+      .flow-strip{grid-template-columns:1fr}
+      .time-grid,.chip-grid{grid-template-columns:repeat(2,1fr)}
+      .pipeline{grid-template-columns:1fr}
+    }
+    @media(max-width:460px){
+      .surface-grid{grid-template-columns:1fr}
+      .hero p{font-size:17px}
+      .btn{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="brand">
+        <div class="brand-mark">◉</div>
+        <div>GHOST / CYBERCHECK<small>Clickable modular platform sales page</small></div>
+      </a>
+      <div class="links">
+        <a href="#what">What It Is</a>
+        <a href="#live-demo">Live Demo</a>
+        <a href="#examples">Examples</a>
+        <a href="#foundation">Foundation</a>
+        <a href="#build">Build Flow</a>
+      </div>
+      <a class="btn primary" href="#live-demo">Try It</a>
+    </div>
+  </nav>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Actually clickable examples built into the page</div>
+          <h1><span class="gradient">One business foundation.</span><br>Many customer experiences.</h1>
+          <p>
+            This page is built to show the concept, not just describe it. The examples below are interactive:
+            toggle modules on and off, switch industries, click the customer-facing buttons, walk through booking and request flows,
+            and see how the front end and back end stay connected through one shared Ghost foundation.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#live-demo">Open the Live Demo</a>
+            <a class="btn secondary" href="#examples">See Example Flows</a>
+          </div>
+          <div class="hero-note">Front end = what customers see. Back end = what the business manages. Foundation = what makes all of it modular and reusable.</div>
+        </div>
+        <div class="hero-demo">
+          <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><span>harborhouse.ghost.page</span></div>
+          <div class="hero-page">
+            <div class="banner">
+              <div class="tag">Customer experience</div>
+              <h3>Harbor House Seafood</h3>
+              <span>Menu • Bookings • Events • Specials • Reviews</span>
+            </div>
+            <div class="stack">
+              <button class="action-btn hero-open" data-key="menu"><span>View Menu <small>See live menu items and pricing</small></span><b>＋</b></button>
+              <button class="action-btn special hero-open" data-key="booking"><span>Book a Table <small>Check availability without leaving the page</small></span><b>＋</b></button>
+              <button class="action-btn hero-open" data-key="events"><span>Events & Live Music <small>Upcoming events and entertainment</small></span><b>＋</b></button>
+              <button class="action-btn hero-open" data-key="reviews"><span>Reviews <small>Customer trust and social proof</small></span><b>＋</b></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="what" class="section soft">
+      <div class="wrap">
+        <div class="kicker">The concept in plain English</div>
+        <h2>A customer page is just one surface over a deeper business system.</h2>
+        <p class="lede">
+          Ghost / CyberCheck is not just a landing page tool. It is a modular business foundation.
+          The business controls data, modules, providers, permissions, automation, and public outputs from one place.
+        </p>
+        <div class="foundation-duo">
+          <div class="side">
+            <div class="icon">👥</div>
+            <h3>Front End</h3>
+            <ul>
+              <li>Linktree-style stacked buttons</li>
+              <li>Scroll pages and full websites</li>
+              <li>QR pages, widgets, popups, drawers and inline sections</li>
+              <li>Customers interact with Menu, Booking, Events, Availability, Reviews, Loyalty, Song Requests and more</li>
+            </ul>
+          </div>
+          <div class="core-orb">GHOST<br>FOUNDATION</div>
+          <div class="side">
+            <div class="icon">⚙️</div>
+            <h3>Back End</h3>
+            <ul>
+              <li>Install apps and enable modules</li>
+              <li>Connect Toast, Resy, OpenTable, FareHarbor, Gmail, Calendar, CRM, social and more</li>
+              <li>Control display mode, permissions, data, automation, analytics and public visibility</li>
+              <li>Swap providers without rebuilding the customer experience</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="live-demo" class="section">
+      <div class="wrap">
+        <div class="kicker">Live demo</div>
+        <h2>Switch industries. Click the public page. Control it from the dashboard.</h2>
+        <p class="lede">
+          This is the clearest way to explain the product: the left side is the customer-facing experience, the right side is the business dashboard,
+          and both are driven by the same modules and data.
+        </p>
+
+        <div class="demo-shell">
+          <div class="demo-toolbar">
+            <strong>Industry Switcher</strong>
+            <div class="tab-row" id="industryTabs"></div>
+          </div>
+
+          <div class="demo-layout">
+            <section class="preview">
+              <div class="phone">
+                <div class="phone-screen">
+                  <div class="phone-header">
+                    <span id="publicTag">RESTAURANT</span>
+                    <span id="layoutModeText">Link Page</span>
+                  </div>
+                  <div class="banner" style="min-height:150px;">
+                    <div class="tag" id="publicTag2">RESTAURANT</div>
+                    <h3 id="publicName">Harbor House Seafood</h3>
+                    <span id="publicSubtitle">Fresh Gulf seafood • Waterfront dining • Live music</span>
+                  </div>
+                  <div class="module-stack" id="publicModules"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="dashboard">
+              <div class="dash-head">
+                <div>
+                  <div class="kicker">Business dashboard</div>
+                  <h3 id="backendTitle">Harbor House Workspace</h3>
+                  <p>Manage modules, choose display modes, and control what the customer sees.</p>
+                </div>
+                <span class="status">LIVE</span>
+              </div>
+
+              <div class="metrics">
+                <div class="metric"><b id="metric1">24</b><span id="metric1Label">Bookings today</span></div>
+                <div class="metric"><b id="metric2">87</b><span id="metric2Label">Verified reviews</span></div>
+                <div class="metric"><b id="metric3">4.9★</b><span id="metric3Label">Rating</span></div>
+              </div>
+
+              <div class="dash-panel">
+                <h4>Installed Modules</h4>
+                <div id="backendModules"></div>
+              </div>
+
+              <div class="dash-panel">
+                <h4>Public Surface</h4>
+                <div class="grid-2">
+                  <label>
+                    <div class="small">Layout style</div>
+                    <select class="mode" id="surfaceMode" style="width:100%;margin-top:6px">
+                      <option>Link Page</option>
+                      <option>Scrollable Page</option>
+                      <option>Website</option>
+                      <option>QR Experience</option>
+                    </select>
+                  </label>
+                  <label>
+                    <div class="small">Theme</div>
+                    <select class="mode" id="themeMode" style="width:100%;margin-top:6px">
+                      <option>Business Brand</option>
+                      <option>Minimal</option>
+                      <option>High Contrast</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="dash-panel">
+                <h4>Connected Providers</h4>
+                <div class="pill-row" id="providerPills"></div>
+              </div>
+
+              <div class="dash-panel">
+                <h4>Behind-the-scenes status</h4>
+                <div class="backend-kpi">
+                  <div class="mini"><b id="mini1">5</b><span class="small">Connected tools</span></div>
+                  <div class="mini"><b id="mini2">6</b><span class="small">Active public modules</span></div>
+                  <div class="mini"><b id="mini3">3</b><span class="small">Automations</span></div>
+                  <div class="mini"><b id="mini4">0</b><span class="small">Publish errors</span></div>
+                </div>
+                <div class="live-box small" id="liveExplanation">
+                  Customer taps a button → Ghost routes to the right capability → the configured provider handles the action or returns the data → the result is displayed inside the same experience.
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="examples" class="section soft">
+      <div class="wrap">
+        <div class="kicker">Clickable examples</div>
+        <h2>Real examples of the flows inside the page.</h2>
+        <p class="lede">
+          Instead of screenshots, these are working mini demos showing how different industries can use the same Ghost foundation.
+        </p>
+
+        <div class="examples-shell">
+          <div class="example-nav">
+            <strong>Embedded Example Set</strong>
+            <div class="tab-row" id="exampleTabs">
+              <button class="tab active" data-example="restaurant-demo">Restaurant Link Page</button>
+              <button class="tab" data-example="artist-demo">Artist Requests</button>
+              <button class="tab" data-example="charter-demo">Charter Booking</button>
+            </div>
+          </div>
+
+          <div class="example-panels">
+            <div class="example active" id="restaurant-demo">
+              <div class="example-grid">
+                <div class="app-card">
+                  <div class="kicker">Customer front end</div>
+                  <h3 style="margin-top:10px">Restaurant link-page example</h3>
+                  <p class="small" style="margin-top:10px">These buttons represent modules. Click them. They open inline on the page.</p>
+                  <div class="link-page-demo" style="margin-top:16px">
+                    <div class="profile-head">
+                      <div class="tag">Harbor House</div>
+                      <h4>Everything in one place.</h4>
+                      <div class="small" style="margin-top:8px">Menu • Reservation • Events • Happy Hour • Reviews</div>
+                    </div>
+                    <div class="link-actions">
+                      <button class="rest-link" data-key="menu">View Menu</button>
+                      <button class="rest-link" data-key="booking">Book a Table</button>
+                      <button class="rest-link" data-key="specials">Happy Hour</button>
+                      <button class="rest-link" data-key="events">Events</button>
+                      <button class="rest-link" data-key="reviews">Reviews</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="app-card">
+                  <div class="kicker">Opened module</div>
+                  <h3 style="margin-top:10px" id="restaurantPanelTitle">View Menu</h3>
+                  <div class="popup-panel" id="restaurantPanel">
+                    <p class="small">Choose a button on the left to open that module here.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="example" id="artist-demo">
+              <div class="example-grid">
+                <div class="app-card">
+                  <div class="kicker">Customer front end</div>
+                  <h3 style="margin-top:10px">Artist request + shoutout + tip flow</h3>
+                  <p class="small" style="margin-top:10px">This shows how a musician or venue could use a standalone app or page module.</p>
+                  <div class="stepper" style="margin-top:18px">
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">1</div><strong>Choose a request type</strong></div></div>
+                      <div class="chip-grid" id="artistTypeButtons">
+                        <button data-type="song">Song Request</button>
+                        <button data-type="shoutout">Shoutout</button>
+                        <button data-type="tip">Tip Only</button>
+                        <button data-type="follow">Follow Updates</button>
+                      </div>
+                    </div>
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">2</div><strong>Enter details</strong></div></div>
+                      <div class="list-card"><input id="artistInput" placeholder="Type song name or shoutout message" style="width:100%;background:transparent;border:0;color:#fff;outline:none" /></div>
+                    </div>
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">3</div><strong>Choose tip</strong></div></div>
+                      <div class="time-grid" id="artistTipButtons">
+                        <button data-tip="5">$5</button><button data-tip="10">$10</button><button data-tip="20">$20</button><button data-tip="50">$50</button>
+                      </div>
+                    </div>
+                    <button class="btn primary" id="artistSubmit" style="margin-top:4px">Submit Request</button>
+                  </div>
+                </div>
+                <div class="app-card">
+                  <div class="kicker">What happens</div>
+                  <h3 style="margin-top:10px">Queue + business view</h3>
+                  <div class="popup-panel" id="artistResults">
+                    <p class="small">Submit a request on the left. It will appear here as if it entered the artist/venue queue.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="example" id="charter-demo">
+              <div class="example-grid">
+                <div class="app-card">
+                  <div class="kicker">Customer front end</div>
+                  <h3 style="margin-top:10px">Charter booking flow</h3>
+                  <p class="small" style="margin-top:10px">This simulates the “display actual availability without forcing a redirect” concept.</p>
+                  <div class="stepper" style="margin-top:18px">
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">1</div><strong>Select trip type</strong></div></div>
+                      <div class="chip-grid" id="tripTypeButtons">
+                        <button data-trip="4-Hour Inshore">4-Hour Inshore</button>
+                        <button data-trip="6-Hour Offshore">6-Hour Offshore</button>
+                        <button data-trip="Dolphin Cruise">Dolphin Cruise</button>
+                        <button data-trip="Sunset Cruise">Sunset Cruise</button>
+                      </div>
+                    </div>
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">2</div><strong>Select date</strong></div></div>
+                      <div class="chip-grid" id="tripDateButtons">
+                        <button data-date="Thu, Aug 28">Thu, Aug 28</button>
+                        <button data-date="Fri, Aug 29">Fri, Aug 29</button>
+                        <button data-date="Sat, Aug 30">Sat, Aug 30</button>
+                        <button data-date="Sun, Aug 31">Sun, Aug 31</button>
+                      </div>
+                    </div>
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">3</div><strong>Select time</strong></div></div>
+                      <div class="time-grid" id="tripTimeButtons">
+                        <button data-time="8:00 AM">8:00 AM</button>
+                        <button data-time="11:00 AM">11:00 AM</button>
+                        <button data-time="2:00 PM">2:00 PM</button>
+                        <button data-time="5:00 PM">5:00 PM</button>
+                      </div>
+                    </div>
+                    <div class="step-box">
+                      <div class="step-title"><div style="display:flex;align-items:center;gap:10px"><div class="step-num">4</div><strong>Guests</strong></div></div>
+                      <div class="list-card">
+                        <label class="small">Adults
+                          <select id="guestCount" class="mode" style="width:100%;margin-top:8px">
+                            <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                    <button class="btn primary" id="charterCheck">Check Availability</button>
+                  </div>
+                </div>
+                <div class="app-card">
+                  <div class="kicker">Availability result</div>
+                  <h3 style="margin-top:10px">Results displayed in-page</h3>
+                  <div class="popup-panel" id="charterResults">
+                    <p class="small">Select a trip, date, and time, then click “Check Availability.”</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="kicker">Provider-neutral architecture</div>
+        <h2>The label the customer sees is not the system behind it.</h2>
+        <p class="lede">Ghost lets the business say “Book Now” or “Reserve” while mapping it to whichever provider is actually used behind the scenes.</p>
+
+        <div class="diagram">
+          <div class="diagram-card"><strong>Display Button</strong><small>“Book a Table”</small></div>
+          <div class="arrow">→</div>
+          <div class="diagram-card"><strong>Ghost Capability</strong><small>reservation.create</small></div>
+          <div class="arrow">→</div>
+          <div class="diagram-card"><strong>Provider Adapter</strong><small>Resy / OpenTable / Toast / Manual</small></div>
+        </div>
+
+        <div class="grid-3" style="margin-top:22px">
+          <div class="card">
+            <div class="icon">1</div>
+            <h3>Display Only</h3>
+            <p>Show availability, prices, menus, schedules or information while the provider still completes the transaction elsewhere.</p>
+          </div>
+          <div class="card">
+            <div class="icon">2</div>
+            <h3>Embedded Experience</h3>
+            <p>Keep the customer inside the branded page as long as possible and only hand off when a provider requires it.</p>
+          </div>
+          <div class="card">
+            <div class="icon">3</div>
+            <h3>Full Action</h3>
+            <p>If the business has proper access and the provider supports it, Ghost can complete the action directly through the same interface.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft">
+      <div class="wrap">
+        <div class="kicker">Where it can publish</div>
+        <h2>The same modules can appear in very different surfaces.</h2>
+        <p class="lede">The business logic stays stable. The UI layer can change depending on context.</p>
+        <div class="surface-grid">
+          <div class="surface"><div class="emoji">🔗</div><b>Link Page</b><p>Stacked button interface with popups or drawers.</p></div>
+          <div class="surface"><div class="emoji">📜</div><b>Scrollable Page</b><p>All modules rendered in a long-form landing page.</p></div>
+          <div class="surface"><div class="emoji">🌐</div><b>Website</b><p>Traditional pages and navigation using the same data.</p></div>
+          <div class="surface"><div class="emoji">▦</div><b>Widget</b><p>Embed menus, events, reviews or availability into another site.</p></div>
+          <div class="surface"><div class="emoji">▣</div><b>QR Experience</b><p>Scan and open a module-driven page instantly.</p></div>
+          <div class="surface"><div class="emoji">🔎</div><b>Directory</b><p>Structured business data feeds discovery/search experiences.</p></div>
+          <div class="surface"><div class="emoji">📱</div><b>Mobile</b><p>Optimized interface for fast taps and conversions.</p></div>
+          <div class="surface"><div class="emoji">💬</div><b>SMS / Voice</b><p>Structured facts and approved actions become conversational.</p></div>
+          <div class="surface"><div class="emoji">📺</div><b>Display / Signage</b><p>Specials, schedules and information on-screen.</p></div>
+          <div class="surface"><div class="emoji">✨</div><b>Future UI</b><p>New surfaces can be added without rebuilding the core business.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="foundation" class="section">
+      <div class="wrap">
+        <div class="kicker">The permanent layer</div>
+        <h2>The foundation is what makes the whole thing modular.</h2>
+        <p class="lede">
+          If the foundation is not right, every page, module, provider, and automation becomes spaghetti. Click the stages below.
+        </p>
+
+        <div class="pipeline" id="pipeline">
+          <button class="pipe active" data-pipe="identity"><b>1. Identity</b><span>Who owns what</span></button>
+          <button class="pipe" data-pipe="data"><b>2. Data</b><span>Canonical records</span></button>
+          <button class="pipe" data-pipe="apps"><b>3. Apps</b><span>Installable modules</span></button>
+          <button class="pipe" data-pipe="capabilities"><b>4. Capabilities</b><span>Provider-neutral actions</span></button>
+          <button class="pipe" data-pipe="providers"><b>5. Providers</b><span>External systems</span></button>
+          <button class="pipe" data-pipe="surfaces"><b>6. Surfaces</b><span>What people see</span></button>
+          <button class="pipe" data-pipe="verification"><b>7. Verification</b><span>Logs, approvals, evidence</span></button>
+        </div>
+        <div class="info-panel" id="pipeInfo"></div>
+
+        <div class="foundation-grid" style="margin-top:20px">
+          <div class="foundation-card"><b>Identity & Tenancy</b><p>Organizations, businesses, locations, users, roles, customers, agents, devices, and ownership boundaries.</p></div>
+          <div class="foundation-card"><b>Canonical Data</b><p>Structured menus, pricing, availability, reviews, events, customers, media, policies, bookings, products and more.</p></div>
+          <div class="foundation-card"><b>App / Package System</b><p>Installable modules that reuse the same foundation instead of creating isolated silos.</p></div>
+          <div class="foundation-card"><b>Capability Registry</b><p>What the system can do: reservation.create, availability.search, review.respond, message.send, etc.</p></div>
+          <div class="foundation-card"><b>Provider Adapters</b><p>Connects business capabilities to actual vendors, APIs, feeds or manual data sources.</p></div>
+          <div class="foundation-card"><b>Verification & Ledger</b><p>Approvals, evidence, action logs, usage records and trusted results.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="build" class="section soft">
+      <div class="wrap">
+        <div class="kicker">Build flow</div>
+        <h2>How a developer should think about building it.</h2>
+        <p class="lede">This is the step-by-step product flow behind what the page is showing.</p>
+
+        <div class="build-steps">
+          <div class="build-step"><div class="card"><h3>Create the workspace</h3><p>Business, locations, users, roles, permissions and ownership boundaries are created first.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Define canonical data models</h3><p>Menus, events, pricing, availability, inventory, reviews, packages, forms, customers and any business-specific entities must be structured.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Install app modules</h3><p>Menu, Booking, Events, Reviews, Loyalty, Song Requests, CRM, Messaging, Availability, Directory Profile, Widget and more.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Map capabilities to providers</h3><p>Example: “Book a Table” maps to reservation.create and can route to Resy, OpenTable, Toast, or a manual booking workflow.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Render public surfaces</h3><p>Link-page, scroll-page, full website, QR page, widgets, directory outputs and future interfaces all consume the same foundation.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Set automation, approvals and publishing rules</h3><p>Define what updates automatically, what needs approval, and what gets published where.</p></div></div>
+          <div class="build-step"><div class="card"><h3>Keep everything replaceable</h3><p>The business should be able to change UI, modules, or providers later without rebuilding the whole platform.</p></div></div>
+        </div>
+
+        <div class="note" style="margin-top:18px">
+          Best practical product rule: keep the business data and capabilities independent from the page design. The page is a surface, not the source of truth.
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="quote">“The customer sees one smooth branded experience. The business keeps full control behind the scenes.”</div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="wrap">
+        <div class="cta-box">
+          <div class="eyebrow">Ghost / CyberCheck</div>
+          <h2 style="margin-top:16px">Build the foundation once.<br><span class="gradient">Render it anywhere.</span></h2>
+          <p>
+            This page now includes clickable examples and live flows built directly into the HTML.
+            It is meant to help you show a developer and a customer exactly how the concept works.
+          </p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="btn primary" href="#live-demo">Use the live demo</a>
+            <a class="btn secondary" href="#examples">Open the embedded examples</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">Ghost / CyberCheck — Clickable modular platform sales page.</div>
+  </footer>
+
+  <script>
+    const industries = {
+      restaurant: {
+        tab:"Restaurant", tag:"RESTAURANT", name:"Harbor House Seafood",
+        subtitle:"Fresh Gulf seafood • Waterfront dining • Live music",
+        metrics:[["24","Bookings today"],["87","Verified reviews"],["4.9★","Rating"]],
+        providers:["Toast","Resy","Google Business","Gmail","Calendar"],
+        minis:["5","6","3","0"],
+        modules:[
+          {key:"about",label:"About",desc:"Hours, location, profile, story",mode:"Popup",on:true},
+          {key:"menu",label:"View Menu",desc:"Canonical menu and pricing",mode:"Popup",on:true},
+          {key:"booking",label:"Book a Table",desc:"Availability and reservation capability",mode:"Drawer",on:true},
+          {key:"events",label:"Events & Live Music",desc:"Upcoming entertainment",mode:"Popup",on:true},
+          {key:"specials",label:"Happy Hour",desc:"Specials and recurring offers",mode:"Inline",on:true},
+          {key:"reviews",label:"Reviews",desc:"Verified reviews and reputation",mode:"Popup",on:true},
+          {key:"loyalty",label:"Join Rewards",desc:"Loyalty and repeat visit flow",mode:"Popup",on:false}
+        ]
+      },
+      charter: {
+        tab:"Fishing Charter", tag:"CHARTER", name:"Island Adventure Charters",
+        subtitle:"Offshore • Inshore • Family trips",
+        metrics:[["6","Trips today"],["3","Open slots"],["4.9★","Rating"]],
+        providers:["FareHarbor","Google Calendar","Gmail","Manual Inventory"],
+        minis:["4","5","2","0"],
+        modules:[
+          {key:"trips",label:"View Trips",desc:"Trip types and durations",mode:"Popup",on:true},
+          {key:"availability",label:"Check Availability",desc:"Live slot display",mode:"Drawer",on:true},
+          {key:"pricing",label:"Pricing",desc:"Trip and package pricing",mode:"Popup",on:true},
+          {key:"fleet",label:"Our Boats",desc:"Fleet and equipment info",mode:"Popup",on:true},
+          {key:"booking",label:"Book Now",desc:"Reservation workflow",mode:"Drawer",on:true},
+          {key:"reviews",label:"Reviews",desc:"Customer proof",mode:"Popup",on:true}
+        ]
+      },
+      rental: {
+        tab:"Boat Rental", tag:"BOAT RENTAL", name:"Coastal Boat & Jet Ski Rentals",
+        subtitle:"Pontoons • Jet skis • Half day • Full day",
+        metrics:[["18","Units"],["7","Available now"],["92%","Utilization"]],
+        providers:["FareHarbor","iCal","Manual Inventory","Stripe"],
+        minis:["4","6","2","0"],
+        modules:[
+          {key:"inventory",label:"Choose a Rental",desc:"Units and categories",mode:"Popup",on:true},
+          {key:"availability",label:"Live Availability",desc:"Availability by unit",mode:"Drawer",on:true},
+          {key:"pricing",label:"Prices",desc:"Half day / full day pricing",mode:"Popup",on:true},
+          {key:"rules",label:"Rules & Requirements",desc:"Policies and restrictions",mode:"Popup",on:true},
+          {key:"booking",label:"Book Now",desc:"Rental checkout flow",mode:"Drawer",on:true},
+          {key:"reviews",label:"Reviews",desc:"Customer experiences",mode:"Popup",on:true}
+        ]
+      },
+      artist: {
+        tab:"Artist", tag:"ARTIST", name:"Jordan Miller Live",
+        subtitle:"Request a song • Send a shoutout • Tip the artist",
+        metrics:[["27","Requests"],["$416","Tips tonight"],["+34","Followers"]],
+        providers:["Cash App","Venmo","Calendar","Gmail"],
+        minis:["4","5","1","0"],
+        modules:[
+          {key:"song",label:"Request a Song",desc:"Song request queue",mode:"Popup",on:true},
+          {key:"shoutout",label:"Send a Shoutout",desc:"Dedications and messages",mode:"Popup",on:true},
+          {key:"tip",label:"Tip the Artist",desc:"Support flow",mode:"Popup",on:true},
+          {key:"events",label:"Upcoming Shows",desc:"Performance calendar",mode:"Inline",on:true},
+          {key:"follow",label:"Follow Updates",desc:"Audience re-engagement",mode:"Popup",on:true}
+        ]
+      },
+      photographer: {
+        tab:"Photographer", tag:"PHOTOGRAPHER", name:"Coastal Light Photography",
+        subtitle:"Beach sessions • Weddings • Family photography",
+        metrics:[["8","Sessions this week"],["3","Open sunsets"],["4.9★","Rating"]],
+        providers:["Google Calendar","Stripe","Gmail","Gallery Provider"],
+        minis:["4","6","1","0"],
+        modules:[
+          {key:"portfolio",label:"Portfolio",desc:"Media and example work",mode:"Inline",on:true},
+          {key:"packages",label:"Packages",desc:"Session and wedding packages",mode:"Popup",on:true},
+          {key:"availability",label:"Availability",desc:"Open dates and times",mode:"Drawer",on:true},
+          {key:"booking",label:"Reserve a Session",desc:"Inquiry or booking flow",mode:"Drawer",on:true},
+          {key:"reviews",label:"Reviews",desc:"Client proof",mode:"Popup",on:true},
+          {key:"inquiry",label:"Ask a Question",desc:"Lead capture form",mode:"Popup",on:true}
+        ]
+      },
+      dealer: {
+        tab:"Auto Dealer", tag:"AUTO DEALER", name:"Coastal Motor Company",
+        subtitle:"Inventory • Trade values • Test drives",
+        metrics:[["143","Vehicles"],["23","Leads today"],["11","Appointments"]],
+        providers:["CRM","Facebook","Google Business","Gmail","Inventory Feed"],
+        minis:["5","6","4","0"],
+        modules:[
+          {key:"inventory",label:"Browse Inventory",desc:"Vehicles, photos and pricing",mode:"Inline",on:true},
+          {key:"trade",label:"Value My Trade",desc:"Trade-in lead flow",mode:"Popup",on:true},
+          {key:"testdrive",label:"Schedule Test Drive",desc:"Appointment workflow",mode:"Drawer",on:true},
+          {key:"finance",label:"Get Prequalified",desc:"Finance lead handoff",mode:"Popup",on:true},
+          {key:"message",label:"Message Sales",desc:"Message the dealer",mode:"Popup",on:true},
+          {key:"reviews",label:"Reviews",desc:"Customer proof",mode:"Popup",on:true}
+        ]
+      }
+    };
+
+    const panelData = {
+      about:`<div class="list-card"><b>Harbor House Seafood</b><br>Open daily • Waterfront • Orange Beach, AL</div><div class="list-card">Hours today <span class="price">11:00 AM – 11:00 PM</span></div>`,
+      menu:`<div class="list-card">Blackened Grouper <span class="price">$30</span></div><div class="list-card">Gulf Shrimp Basket <span class="price">$22</span></div><div class="list-card">Key Lime Pie <span class="price">$9</span></div>`,
+      booking:`<p class="small">Party of 4 • Tonight</p><div class="time-grid"><button>6:30</button><button>7:00</button><button>7:30</button><button>8:00</button></div><div class="summary"><b>Behind the scenes</b>availability.search → configured provider → normalized result → displayed here</div>`,
+      events:`<div class="list-card"><b>Tonight • 7:00 PM</b><br>Jordan Miller — Live on the Dock</div><div class="list-card"><b>Friday • 8:00 PM</b><br>Coastal Sessions</div>`,
+      specials:`<div class="list-card"><b>Happy Hour • 3–6 PM Daily</b><br>$5 house drinks • $8 oysters • rotating food specials</div>`,
+      reviews:`<div class="list-card"><b>★★★★★</b><br>“Loved seeing everything on one page.”</div><div class="list-card"><b>★★★★★</b><br>“Booking and menu were super easy.”</div>`,
+      loyalty:`<div class="list-card"><b>Join Rewards</b><br>Enter phone number to collect points and receive specials.</div>`,
+      trips:`<div class="list-card">4-Hour Inshore <span class="price">$750</span></div><div class="list-card">6-Hour Offshore <span class="price">$1,200</span></div><div class="list-card">Dolphin Cruise <span class="price">$95/person</span></div>`,
+      availability:`<div class="list-card"><b>Tomorrow</b><br>8:00 AM — Available<br>11:00 AM — 2 spots left<br>2:00 PM — Waitlist</div>`,
+      pricing:`<div class="list-card">Half Day <span class="price">$399</span></div><div class="list-card">Full Day <span class="price">$599</span></div>`,
+      fleet:`<div class="list-card"><b>27' Center Console</b><br>Offshore • up to 6 guests</div><div class="list-card"><b>24' Bay Boat</b><br>Inshore • up to 4 guests</div>`,
+      inventory:`<div class="list-card"><b>24' Pontoon</b><br>12 seats <span class="price">$399+</span></div><div class="list-card"><b>Jet Ski</b><br>3 available <span class="price">$149+</span></div>`,
+      rules:`<div class="list-card">Driver age: 21+<br>Deposit: $250<br>Waiver required: Yes</div>`,
+      song:`<div class="list-card"><b>Song Request</b><br>Pick a song and tip the artist without leaving the page.</div>`,
+      shoutout:`<div class="list-card"><b>Shoutout</b><br>Send a birthday, anniversary or dedication message.</div>`,
+      tip:`<div class="time-grid"><button>$5</button><button>$10</button><button>$20</button><button>$50</button></div>`,
+      follow:`<div class="list-card">Collect opt-ins so fans can get show alerts and updates.</div>`,
+      portfolio:`<div class="list-card"><b>Beach Sessions</b><br>Sunset family sessions</div><div class="list-card"><b>Weddings</b><br>Full-day wedding coverage</div>`,
+      packages:`<div class="list-card">Mini Session <span class="price">$175</span></div><div class="list-card">Sunset Session <span class="price">$425</span></div><div class="list-card">Wedding Day <span class="price">$3,500</span></div>`,
+      inquiry:`<div class="list-card">Name • Phone • Email • Session Type • Message</div>`,
+      trade:`<div class="list-card">Year • Make • Model • Mileage • Condition</div>`,
+      testdrive:`<div class="time-grid"><button>10:00</button><button>11:30</button><button>2:00</button></div>`,
+      finance:`<div class="list-card">Pre-qualification lead flow routed to the configured finance workflow.</div>`,
+      message:`<div class="list-card">Message is routed to the business's preferred inbox, CRM or SMS workflow.</div>`
+    };
+
+    let activeIndustry = "restaurant";
+
+    const tabs = document.getElementById("industryTabs");
+    const publicModules = document.getElementById("publicModules");
+    const backendModules = document.getElementById("backendModules");
+    const providerPills = document.getElementById("providerPills");
+
+    function renderIndustryTabs(){
+      tabs.innerHTML = "";
+      Object.entries(industries).forEach(([key,val])=>{
+        const btn = document.createElement("button");
+        btn.className = "tab" + (key===activeIndustry ? " active" : "");
+        btn.textContent = val.tab;
+        btn.type = "button";
+        btn.addEventListener("click", ()=>{ activeIndustry = key; renderIndustry(); });
+        tabs.appendChild(btn);
+      });
+    }
+
+    function renderIndustry(){
+      renderIndustryTabs();
+      const data = industries[activeIndustry];
+      document.getElementById("publicTag").textContent = data.tag;
+      document.getElementById("publicTag2").textContent = data.tag;
+      document.getElementById("publicName").textContent = data.name;
+      document.getElementById("publicSubtitle").textContent = data.subtitle;
+      document.getElementById("backendTitle").textContent = data.name + " Workspace";
+      data.metrics.forEach((m,i)=>{
+        document.getElementById("metric"+(i+1)).textContent = m[0];
+        document.getElementById("metric"+(i+1)+"Label").textContent = m[1];
+      });
+      document.getElementById("mini1").textContent = data.minis[0];
+      document.getElementById("mini2").textContent = data.modules.filter(m=>m.on).length;
+      document.getElementById("mini3").textContent = data.minis[2];
+      document.getElementById("mini4").textContent = data.minis[3];
+
+      providerPills.innerHTML = "";
+      data.providers.forEach(p=>{
+        const s = document.createElement("span");
+        s.className = "pill";
+        s.textContent = p + " ✓";
+        providerPills.appendChild(s);
+      });
+
+      publicModules.innerHTML = "";
+      data.modules.forEach(m=>{
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "module-btn" + (m.on ? "" : " hidden-demo");
+        b.dataset.key = m.key;
+        b.innerHTML = `<span>${m.label}<small>${m.desc}</small></span><b>＋</b>`;
+        b.addEventListener("click", ()=>openInlineModule(m.key, m.label));
+        publicModules.appendChild(b);
+      });
+
+      backendModules.innerHTML = "";
+      data.modules.forEach(m=>{
+        const row = document.createElement("div");
+        row.className = "module-row";
+        row.innerHTML = `
+          <div><b>${m.label}</b><small>${m.desc}</small></div>
+          <button type="button" class="toggle ${m.on ? "on" : ""}" aria-pressed="${m.on}"></button>
+          <select class="mode">
+            <option ${m.mode==="Popup" ? "selected" : ""}>Popup</option>
+            <option ${m.mode==="Drawer" ? "selected" : ""}>Drawer</option>
+            <option ${m.mode==="Inline" ? "selected" : ""}>Inline</option>
+            <option>Full Page</option>
+          </select>
+        `;
+        const t = row.querySelector(".toggle");
+        const sel = row.querySelector("select");
+        t.addEventListener("click", ()=>{
+          m.on = !m.on;
+          t.classList.toggle("on", m.on);
+          t.setAttribute("aria-pressed", String(m.on));
+          const btn = publicModules.querySelector(`[data-key="${m.key}"]`);
+          if(btn) btn.classList.toggle("hidden-demo", !m.on);
+          document.getElementById("mini2").textContent = data.modules.filter(x=>x.on).length;
+        });
+        sel.addEventListener("change",(e)=> m.mode = e.target.value);
+        backendModules.appendChild(row);
+      });
+
+      document.getElementById("liveExplanation").textContent =
+        data.tab + " example: the business uses connected tools behind the scenes, but customers interact through one branded experience.";
+    }
+
+    function openInlineModule(key, label){
+      const map = {
+        restaurantDemoTarget: "restaurantPanel",
+      };
+      alertlessOpen(label, panelData[key] || `<p class="small">This module is driven by Ghost data and capabilities.</p>`);
+    }
+
+    // simple floating drawer for main live demo and hero
+    let liveDrawer;
+    function ensureDrawer(){
+      if(liveDrawer) return liveDrawer;
+      liveDrawer = document.createElement("div");
+      liveDrawer.style.cssText = `
+        position:fixed; right:18px; bottom:18px; z-index:100;
+        width:min(420px,92vw); max-height:78vh; overflow:auto;
+        border:1px solid #365673; border-radius:24px; background:#0a1828; box-shadow:0 25px 80px rgba(0,0,0,.45);
+        padding:18px; display:none;`;
+      liveDrawer.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div><div class="kicker" id="drawerKicker">Ghost Module</div><h3 id="drawerTitle" style="margin-top:6px">Module</h3></div>
+          <button type="button" id="drawerClose" class="btn ghost" style="min-height:40px;padding:8px 12px">Close</button>
+        </div>
+        <div id="drawerBody" class="small" style="color:#bed2e2"></div>
+      `;
+      document.body.appendChild(liveDrawer);
+      liveDrawer.querySelector("#drawerClose").addEventListener("click", ()=> liveDrawer.style.display = "none");
+      return liveDrawer;
+    }
+    function alertlessOpen(title, html){
+      const dr = ensureDrawer();
+      dr.querySelector("#drawerTitle").textContent = title;
+      dr.querySelector("#drawerBody").innerHTML = html;
+      dr.style.display = "block";
+    }
+
+    document.querySelectorAll(".hero-open").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        alertlessOpen(btn.textContent.trim(), panelData[btn.dataset.key] || "<p>Module</p>");
+      });
+    });
+
+    // restaurant embedded example
+    const restPanel = document.getElementById("restaurantPanel");
+    const restTitle = document.getElementById("restaurantPanelTitle");
+    function loadRestaurantExample(key){
+      const titles = {menu:"View Menu",booking:"Book a Table",specials:"Happy Hour",events:"Events",reviews:"Reviews"};
+      restTitle.textContent = titles[key] || "Module";
+      restPanel.innerHTML = panelData[key] || `<p class="small">Example content</p>`;
+    }
+    document.querySelectorAll(".rest-link").forEach(btn=>{
+      btn.addEventListener("click", ()=> loadRestaurantExample(btn.dataset.key));
+    });
+    loadRestaurantExample("menu");
+
+    // example tab switching
+    document.querySelectorAll("#exampleTabs .tab").forEach(tab=>{
+      tab.addEventListener("click", ()=>{
+        document.querySelectorAll("#exampleTabs .tab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+        document.querySelectorAll(".example").forEach(ex=>ex.classList.remove("active"));
+        document.getElementById(tab.dataset.example).classList.add("active");
+      });
+    });
+
+    // artist example
+    let artistType = "song";
+    let artistTip = "$10";
+    function selectButton(groupSelector, datasetKey, value){
+      document.querySelectorAll(groupSelector).forEach(btn=>{
+        btn.classList.toggle("selected", btn.dataset[datasetKey] === value);
+      });
+    }
+    document.querySelectorAll("#artistTypeButtons button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        artistType = btn.dataset.type;
+        selectButton("#artistTypeButtons button","type",artistType);
+      });
+    });
+    document.querySelectorAll("#artistTipButtons button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        artistTip = "$" + btn.dataset.tip;
+        selectButton("#artistTipButtons button","tip",btn.dataset.tip);
+      });
+    });
+    selectButton("#artistTypeButtons button","type","song");
+    selectButton("#artistTipButtons button","tip","10");
+
+    document.getElementById("artistSubmit").addEventListener("click", ()=>{
+      const input = document.getElementById("artistInput").value.trim();
+      const labelMap = {song:"Song Request", shoutout:"Shoutout", tip:"Tip Only", follow:"Follow Updates"};
+      const desc = input || (artistType === "follow" ? "Join my updates list" : "No custom message entered");
+      const box = document.getElementById("artistResults");
+      box.innerHTML = `
+        <div class="summary">
+          <b>Submitted successfully</b>
+          Type: ${labelMap[artistType]}<br>
+          Details: ${desc}<br>
+          Tip: ${artistTip}
+        </div>
+        <div class="list-card"><b>Artist queue entry</b><br>${labelMap[artistType]} — ${desc}</div>
+        <div class="list-card"><b>Business side effect</b><br>Request stored, payment attached if applicable, and can trigger notification/queue automation.</div>
+      `;
+    });
+
+    // charter example
+    let selectedTrip = "4-Hour Inshore";
+    let selectedDate = "Thu, Aug 28";
+    let selectedTime = "8:00 AM";
+
+    document.querySelectorAll("#tripTypeButtons button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        selectedTrip = btn.dataset.trip;
+        selectButton("#tripTypeButtons button","trip",selectedTrip);
+      });
+    });
+    document.querySelectorAll("#tripDateButtons button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        selectedDate = btn.dataset.date;
+        selectButton("#tripDateButtons button","date",selectedDate);
+      });
+    });
+    document.querySelectorAll("#tripTimeButtons button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        selectedTime = btn.dataset.time;
+        selectButton("#tripTimeButtons button","time",selectedTime);
+      });
+    });
+    selectButton("#tripTypeButtons button","trip","4-Hour Inshore");
+    selectButton("#tripDateButtons button","date","Thu, Aug 28");
+    selectButton("#tripTimeButtons button","time","8:00 AM");
+
+    document.getElementById("charterCheck").addEventListener("click", ()=>{
+      const guests = document.getElementById("guestCount").value;
+      const box = document.getElementById("charterResults");
+      box.innerHTML = `
+        <div class="summary">
+          <b>Availability Found</b>
+          ${selectedTrip}<br>
+          ${selectedDate} • ${selectedTime}<br>
+          Guests: ${guests}
+        </div>
+        <div class="list-card"><b>Displayed result</b><br>Available • Requires deposit to confirm</div>
+        <div class="list-card"><b>Behind the scenes</b><br>availability.search + pricing.resolve + rule.check → provider/manual inventory → normalized result displayed in page</div>
+        <div class="time-grid"><button>Reserve Slot</button><button>Ask a Question</button><button>Join Waitlist</button></div>
+      `;
+    });
+
+    // foundation pipeline
+    const pipeInfoMap = {
+      identity:`<b>Identity & Tenancy</b><br><span class="small">This is who owns what. Businesses, users, roles, customers, agents and devices all need clean boundaries.</span>`,
+      data:`<b>Canonical Data</b><br><span class="small">Menu items, trip inventory, pricing, events, reviews, availability and customer records are stored as structured business data.</span>`,
+      apps:`<b>Apps / Packages</b><br><span class="small">Apps do not become the source of truth. They are installable modules that use the shared foundation.</span>`,
+      capabilities:`<b>Capabilities</b><br><span class="small">A capability is the provider-neutral action: reservation.create, availability.search, song_request.submit, review.respond.</span>`,
+      providers:`<b>Providers</b><br><span class="small">Providers are the actual tools or sources: Resy, Toast, OpenTable, FareHarbor, Gmail, Calendar, Stripe, manual inventory, etc.</span>`,
+      surfaces:`<b>Surfaces</b><br><span class="small">This is how the customer or staff interacts with it: link page, website, widget, QR experience, directory, dashboard or future interface.</span>`,
+      verification:`<b>Verification & Ledger</b><br><span class="small">Important actions can be logged with evidence, approval state, provider used, result returned and usage records.</span>`
+    };
+    const pipeInfo = document.getElementById("pipeInfo");
+    function setPipeInfo(key){
+      pipeInfo.innerHTML = pipeInfoMap[key];
+      document.querySelectorAll(".pipe").forEach(p=>p.classList.toggle("active", p.dataset.pipe===key));
+    }
+    document.querySelectorAll(".pipe").forEach(p=>p.addEventListener("click", ()=> setPipeInfo(p.dataset.pipe)));
+    setPipeInfo("identity");
+
+    // layout mode display
+    document.getElementById("surfaceMode").addEventListener("change",(e)=>{
+      document.getElementById("layoutModeText").textContent = e.target.value;
+    });
+
+    renderIndustry();
+  </script>
+</body>
+</html>
