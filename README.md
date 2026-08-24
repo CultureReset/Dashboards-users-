@@ -211,4 +211,13 @@ extracted product spec, the module-source analysis, and the reconciliation of
 the 244-table design against the 563-table live database. Open it in a browser;
 it needs no server and no network.
 
+`docs/ghost-uiux/` is where this dashboard is going — 176 clickable reference
+screens for the whole platform, filed by architecture layer, with the six
+installable ecosystems (Data Modules, Ghost Apps, Connections, Device Apps,
+Plugins, Automations) kept separate the way they have to stay separate. Today
+`src/` implements the first of those six. `screens/03-owner-dashboard/` is the
+target shape; its README explains which folders are this repo's job and which
+belong to `Admin-dashboard-main` and `gcr-unified`. Open
+`docs/ghost-uiux/index.html`.
+
 `docs/PORT_REVIEW.md` lists what this port is missing and what to fix first.

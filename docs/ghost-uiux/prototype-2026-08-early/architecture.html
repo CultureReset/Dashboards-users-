@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Architecture — Ghost</title><style>
+
+:root{
+  --bg:#f6f8fb;
+  --panel:#ffffff;
+  --panel-2:#f8fafc;
+  --ink:#102033;
+  --muted:#6b7280;
+  --line:#e5eaf1;
+  --brand:#0ea5a6;
+  --brand-2:#2563eb;
+  --navy:#0f2748;
+  --violet:#8b5cf6;
+  --orange:#f59e0b;
+  --red:#ef4444;
+  --green:#16a34a;
+  --shadow:0 10px 30px rgba(15,39,72,.08);
+  --radius:18px;
+  --radius-sm:12px;
+  --sidebar:246px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.tiny{font-size:.75rem}
+.row{display:flex;align-items:center;gap:12px}
+.row.wrap{flex-wrap:wrap}
+.between{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.stack{display:grid;gap:14px}
+.grid{display:grid;gap:14px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid.cards{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.page-shell{min-height:100vh}
+.sidebar{
+  position:fixed;inset:0 auto 0 0;width:var(--sidebar);
+  background:#0e2038;color:#d9e5f3;padding:18px 14px;z-index:30;
+  display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06)
+}
+.brand{display:flex;align-items:center;gap:11px;padding:10px 10px 18px}
+.ghost-mark{
+  width:36px;height:36px;border-radius:13px 13px 8px 8px;background:linear-gradient(135deg,var(--brand),#73d5ce);
+  position:relative;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)
+}
+.ghost-mark:before,.ghost-mark:after{content:"";position:absolute;bottom:-5px;width:10px;height:10px;background:inherit;border-radius:50%}
+.ghost-mark:before{left:4px}.ghost-mark:after{right:4px}
+.ghost-mark i{position:absolute;width:5px;height:5px;border-radius:50%;background:white;top:12px}
+.ghost-mark i:first-child{left:9px}.ghost-mark i:last-child{right:9px}
+.brand strong{font-size:1.15rem;letter-spacing:.04em;color:#fff}
+.workspace-mini{
+  padding:11px 12px;border:1px solid rgba(255,255,255,.12);border-radius:14px;
+  background:rgba(255,255,255,.05);margin-bottom:14px
+}
+.nav-section{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#7890ad;margin:15px 10px 7px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:12px;color:#b8c8db;margin:2px 0;
+  transition:.2s
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:linear-gradient(90deg,rgba(14,165,166,.28),rgba(37,99,235,.12));color:#fff;border:1px solid rgba(94,234,212,.16)}
+.nav-ico{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-size:.85rem}
+.nav-spacer{flex:1}
+.sidebar-footer{padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+.app-main{margin-left:var(--sidebar);min-height:100vh}
+.topbar{
+  position:sticky;top:0;z-index:20;background:rgba(246,248,251,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:space-between
+}
+.mobile-menu{display:none;border:0;background:white;border-radius:10px;padding:9px 11px;box-shadow:var(--shadow)}
+.search{
+  min-width:320px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 13px;color:var(--muted)
+}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#e6f5f4,#dce7ff);display:grid;place-items:center;font-weight:800;color:var(--navy)}
+.content{padding:24px;max-width:1450px;margin:auto}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:4px 0 20px}
+.page-head h1{font-size:clamp(1.65rem,2.2vw,2.35rem);margin:0 0 6px}
+.page-head p{margin:0;color:var(--muted);max-width:760px}
+.kicker{color:var(--brand);font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px
+}
+.card.flush{padding:0;overflow:hidden}
+.card.soft{background:linear-gradient(180deg,#fff,#fbfdff)}
+.card h2,.card h3{margin-top:0}
+.stat{padding:16px;background:#fff;border:1px solid var(--line);border-radius:15px}
+.stat strong{font-size:1.5rem}
+.stat .label{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.stat.good strong{color:var(--green)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:.74rem;font-weight:700;background:#eef2f7;color:#475569}
+.badge.green{background:#e9f9ef;color:#16803a}
+.badge.blue{background:#eaf1ff;color:#1d4ed8}
+.badge.orange{background:#fff4df;color:#b45309}
+.badge.red{background:#ffe9e9;color:#b91c1c}
+.badge.violet{background:#f2ebff;color:#6d28d9}
+.badge.teal{background:#e7fbfa;color:#0f766e}
+.btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 14px;border-radius:11px;font-weight:700;box-shadow:0 2px 0 rgba(15,39,72,.02)
+}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{border:0;color:#fff;background:linear-gradient(135deg,var(--brand-2),#1782ef)}
+.btn.teal{border:0;color:#fff;background:linear-gradient(135deg,var(--brand),#0f766e)}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.danger{color:#b91c1c;background:#fff5f5;border-color:#fecaca}
+.btn.block{width:100%}
+.btn.sm{padding:7px 10px;font-size:.82rem}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;color:#64748b;font-weight:700;font-size:.86rem}
+.tab.active{background:#eaf4ff;color:#1d4ed8;border-color:#cbdcff}
+.input,select,textarea{
+  width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;outline:0
+}
+.input:focus,select:focus,textarea:focus{border-color:#9ac5ff;box-shadow:0 0 0 3px #eaf3ff}
+.field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:6px;color:#475569}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.list{display:grid;gap:10px}
+.list-item{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#fff
+}
+.list-item:hover{border-color:#cfd9e7}
+.item-main{display:flex;align-items:center;gap:12px;min-width:0}
+.iconbox{
+  width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:900;color:#0f2748;background:#edf6ff;flex:0 0 auto
+}
+.iconbox.teal{background:#e8fbf9;color:#0f766e}
+.iconbox.violet{background:#f2eaff;color:#6d28d9}
+.iconbox.orange{background:#fff3df;color:#c26503}
+.iconbox.red{background:#ffe9e9;color:#b91c1c}
+.item-title{font-weight:800}
+.item-sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+.metric-bar{height:8px;border-radius:999px;background:#edf2f7;overflow:hidden}
+.metric-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand),#6ee7b7)}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.module-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:15px}
+.module-card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.module-card h3{margin:0;font-size:1rem}
+.module-card p{margin:6px 0 0;color:var(--muted);font-size:.84rem}
+.market-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;display:flex;flex-direction:column;gap:12px}
+.market-card .app-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem;background:#eef6ff}
+.market-card h3{margin:0}
+.market-card p{margin:0;color:var(--muted);font-size:.85rem;min-height:40px}
+.market-card .grow{flex:1}
+.install-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step-pill{padding:7px 10px;border-radius:999px;background:#f4f6f9;color:#64748b;font-size:.75rem;font-weight:700}
+.step-pill.done{background:#e8faf0;color:#16743a}
+.step-pill.active{background:#eaf3ff;color:#1d4ed8}
+.conn-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:16px}
+.device-screen{
+  min-height:300px;border-radius:22px;background:linear-gradient(180deg,#172a45,#0b1320);padding:14px;color:#fff;
+  position:relative;overflow:hidden
+}
+.phone-ui{width:72%;max-width:290px;aspect-ratio:9/18;margin:auto;border:5px solid #090d14;border-radius:32px;background:linear-gradient(180deg,#f8cbd2,#e2defe 32%,#d1e6ef);position:relative;padding:16px}
+.phone-ui .apps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px}
+.phone-ui .appdot{aspect-ratio:1;border-radius:13px;background:rgba(255,255,255,.82);box-shadow:0 4px 8px rgba(0,0,0,.12)}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow .node{padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:13px;min-width:120px;text-align:center}
+.flow .arrow{color:#94a3b8;font-weight:900}
+.timeline{position:relative;padding-left:24px}
+.timeline:before{content:"";position:absolute;left:8px;top:5px;bottom:5px;width:2px;background:#dde5ef}
+.timeline-item{position:relative;margin-bottom:12px}
+.timeline-item:before{content:"";position:absolute;left:-21px;top:11px;width:10px;height:10px;background:var(--brand);border-radius:50%;box-shadow:0 0 0 4px #e5fbfa}
+.receipt{
+  border:1px solid var(--line);border-radius:15px;padding:14px;background:#fff
+}
+.builder-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.preview-phone{
+  max-width:340px;margin:auto;border:7px solid #162033;border-radius:36px;background:#fff;overflow:hidden;min-height:650px;box-shadow:0 12px 30px rgba(15,39,72,.16)
+}
+.preview-top{padding:30px 18px 20px;color:#fff;background:linear-gradient(135deg,#134e4a,#166534)}
+.preview-tabs{display:flex;gap:7px;padding:12px;overflow:auto;border-bottom:1px solid var(--line)}
+.preview-tabs span{white-space:nowrap;font-size:.72rem;padding:6px 9px;border-radius:999px;background:#f3f6f8}
+.menu-item{display:flex;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid #eef1f5}
+.menu-item strong{display:block}
+.menu-thumb{width:62px;height:62px;border-radius:12px;background:linear-gradient(135deg,#e7d1ad,#a86f2f)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #d7dde6}
+.swatch.s1{background:#0ea5a6}.swatch.s2{background:#0f2748}.swatch.s3{background:#2563eb}.swatch.s4{background:#8b5cf6}.swatch.s5{background:#f59e0b}
+.switch{position:relative;width:42px;height:24px;border-radius:999px;background:#d9e1eb;flex:0 0 auto}
+.switch:after{content:"";position:absolute;width:18px;height:18px;top:3px;left:3px;border-radius:50%;background:white;box-shadow:0 2px 5px rgba(0,0,0,.15);transition:.2s}
+.switch.on{background:var(--brand)}
+.switch.on:after{left:21px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,20,35,.48);display:grid;place-items:center;z-index:80;padding:18px}
+.modal{background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.25);width:min(640px,100%);max-height:90vh;overflow:auto;padding:20px}
+.modal h2{margin-top:0}
+.toast{
+  position:fixed;right:18px;bottom:18px;z-index:100;background:#102033;color:#fff;border-radius:13px;padding:12px 16px;box-shadow:var(--shadow);
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s
+}
+.toast.show{opacity:1;transform:none}
+.auth-shell{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:#fff}
+.auth-visual{
+  padding:46px;background:radial-gradient(circle at 20% 10%,rgba(14,165,166,.18),transparent 40%),linear-gradient(145deg,#0b1b31,#163456);
+  color:white;display:flex;flex-direction:column;justify-content:space-between
+}
+.auth-visual h1{font-size:clamp(2.3rem,4vw,4.6rem);line-height:1.02;margin:.2em 0}
+.auth-card-wrap{display:grid;place-items:center;padding:28px;background:#f8fafc}
+.auth-card{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow)}
+.progress{display:flex;gap:8px;margin-bottom:22px}
+.progress span{height:6px;border-radius:999px;background:#e7edf4;flex:1}
+.progress span.active{background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.source-tile{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}
+.source-tile strong{display:block;margin:5px 0}
+.domain-chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:7px 10px;border-radius:999px;background:#eafaf9;color:#0f766e;border:1px solid #cdf0ed;font-size:.8rem;font-weight:700}
+.bottom-nav{display:none}
+.mobile-only{display:none}
+@media (max-width: 980px){
+  :root{--sidebar:214px}
+  .grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .conn-grid,.builder-layout{grid-template-columns:1fr}
+  .search{min-width:220px}
+}
+@media (max-width: 760px){
+  body{background:#f7f9fc}
+  .sidebar{transform:translateX(-105%);transition:.25s;width:min(86vw,300px);box-shadow:20px 0 50px rgba(0,0,0,.22)}
+  .sidebar.open{transform:none}
+  .app-main{margin-left:0;padding-bottom:74px}
+  .mobile-menu{display:inline-flex}
+  .desktop-only{display:none!important}
+  .mobile-only{display:block}
+  .topbar{padding:10px 12px}
+  .topbar .search{display:none}
+  .content{padding:16px 12px}
+  .page-head{margin-bottom:14px}
+  .grid.two,.grid.three,.grid.four{grid-template-columns:1fr}
+  .grid.cards{grid-template-columns:1fr}
+  .module-grid{grid-template-columns:1fr}
+  .card{padding:15px;border-radius:16px}
+  .list-item{align-items:flex-start}
+  .item-main{align-items:flex-start}
+  .bottom-nav{
+    display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;z-index:40;background:rgba(255,255,255,.97);
+    border-top:1px solid var(--line);padding:8px 5px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -8px 20px rgba(15,39,72,.05)
+  }
+  .bottom-nav a{display:grid;place-items:center;gap:2px;font-size:.68rem;color:#6b7280}
+  .bottom-nav a.active{color:var(--brand)}
+  .bottom-nav .bn-ico{font-size:1.05rem}
+  .auth-shell{grid-template-columns:1fr}
+  .auth-visual{display:none}
+  .auth-card-wrap{min-height:100vh;padding:14px}
+  .auth-card{padding:18px;border-radius:20px}
+  .builder-layout{grid-template-columns:1fr}
+  .preview-phone{max-width:100%;min-height:540px}
+  .phone-ui{width:70%}
+  .page-head .actions{display:none}
+  .install-steps{display:grid;grid-template-columns:repeat(2,1fr)}
+  .flow{display:grid;grid-template-columns:1fr}
+  .flow .arrow{transform:rotate(90deg);text-align:center}
+}
+
+</style></head>
+<body><div class="page-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="ghost-mark"><i></i><i></i></span><strong>GHOST</strong></div>
+      <div class="workspace-mini">
+        <div class="tiny" style="color:#7f97b4">WORKSPACE</div>
+        <div class="between"><strong>Acme Coffee Co.</strong><span>⌄</span></div>
+        <div class="tiny" style="color:#9bb0c8;margin-top:3px">Owner workspace</div>
+      </div>
+      <div class="nav-section">Workspace</div>
+      <a class="nav-item " href="dashboard.html"><span class="nav-ico">⌂</span><span>Home</span></a><a class="nav-item " href="business-data.html"><span class="nav-ico">▥</span><span>Business Data</span></a><a class="nav-item " href="apps.html"><span class="nav-ico">▦</span><span>Apps</span></a><a class="nav-item " href="connections.html"><span class="nav-ico">↗</span><span>Connections</span></a><a class="nav-item " href="android.html"><span class="nav-ico">▣</span><span>Android & Devices</span></a><a class="nav-item " href="automations.html"><span class="nav-ico">⚡</span><span>Automations</span></a><a class="nav-item " href="activity.html"><span class="nav-ico">✓</span><span>Activity & Receipts</span></a>
+      <div class="nav-section">Build & Extend</div>
+      <a class="nav-item active" href="marketplace.html"><span class="nav-ico">+</span><span>Marketplace</span></a><a class="nav-item " href="qr-menu-builder.html"><span class="nav-ico">✦</span><span>Builder</span></a>
+      <div class="nav-spacer"></div>
+      <div class="sidebar-footer small"><div class="between"><span>System healthy</span><span class="badge green">Live</span></div></div>
+    </aside>
+    <main class="app-main">
+    <header class="topbar">
+      <div class="row">
+        <button class="mobile-menu" data-menu>☰</button>
+        <div>
+          <div class="small muted">Acme Coffee Co.</div>
+          <strong>Architecture</strong>
+        </div>
+      </div>
+      <div class="row">
+        <input class="search" placeholder="Search Ghost...">
+        <button class="btn sm desktop-only">Notifications <span class="badge red">3</span></button>
+        <div class="avatar">AJ</div>
+      </div>
+    </header>
+    <div class="content">
+<div class="page-head"><div><div class="kicker">Reference</div><h1>How every layer connects</h1><p>This page exists to make the boundaries visible in the UI prototype.</p></div></div>
+<div class="card">
+ <div class="flow">
+   <div class="node">Business Data<br><span class="tiny muted">facts / modules</span></div><div class="arrow">→</div>
+   <div class="node">Apps / Automations<br><span class="tiny muted">independent packages</span></div><div class="arrow">→</div>
+   <div class="node">Capability Registry<br><span class="tiny muted">what can do what</span></div><div class="arrow">→</div>
+   <div class="node">Execution Router<br><span class="tiny muted">choose path</span></div><div class="arrow">→</div>
+   <div class="node">API / Browser / Android<br><span class="tiny muted">perform work</span></div><div class="arrow">→</div>
+   <div class="node">Verify + Receipt<br><span class="tiny muted">prove outcome</span></div>
+ </div>
+</div>
+<div class="grid four" style="margin-top:16px">
+ <div class="card"><h3>Modules</h3><p class="muted small">Real structured business data. Appears from actual rows.</p></div>
+ <div class="card"><h3>Apps</h3><p class="muted small">Standalone products. Installed into workspaces.</p></div>
+ <div class="card"><h3>Connections</h3><p class="muted small">Composio/API/MCP access to external systems.</p></div>
+ <div class="card"><h3>Android Integrations</h3><p class="muted small">Third-party UI packages + AppMaps.</p></div>
+ <div class="card"><h3>Automations</h3><p class="muted small">Reusable workflows and scripts.</p></div>
+ <div class="card"><h3>Plugins</h3><p class="muted small">Small reusable capabilities.</p></div>
+ <div class="card"><h3>Executors</h3><p class="muted small">Mechanisms that perform an action.</p></div>
+ <div class="card"><h3>Devices</h3><p class="muted small">Cloud/physical execution environments.</p></div>
+</div>
+</div><nav class="bottom-nav"><a href="dashboard.html" class=""><span class="bn-ico">⌂</span><span>Home</span></a><a href="business-data.html" class=""><span class="bn-ico">▥</span><span>Data</span></a><a href="apps.html" class=""><span class="bn-ico">▦</span><span>Apps</span></a><a href="automations.html" class=""><span class="bn-ico">⚡</span><span>Automate</span></a><a href="marketplace.html" class="active"><span class="bn-ico">•••</span><span>More</span></a></nav></main></div>
+<script>
+
+const G = {
+  installedApps: JSON.parse(localStorage.getItem('ghost_installed_apps') || '["qr-menu","reviews","loyalty","song-request"]'),
+  connections: JSON.parse(localStorage.getItem('ghost_connections') || '["google-business","gmail","calendar"]'),
+  android: JSON.parse(localStorage.getItem('ghost_android') || '["facebook-android"]'),
+  automations: JSON.parse(localStorage.getItem('ghost_automations') || '["review-followup","sync-hours"]'),
+  save(){
+    localStorage.setItem('ghost_installed_apps', JSON.stringify(this.installedApps));
+    localStorage.setItem('ghost_connections', JSON.stringify(this.connections));
+    localStorage.setItem('ghost_android', JSON.stringify(this.android));
+    localStorage.setItem('ghost_automations', JSON.stringify(this.automations));
+  }
+};
+
+function toast(msg){
+  let el=document.querySelector('.toast');
+  if(!el){el=document.createElement('div');el.className='toast';document.body.appendChild(el);}
+  el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800)
+}
+function qs(s,p=document){return p.querySelector(s)}
+function qsa(s,p=document){return [...p.querySelectorAll(s)]}
+function openSidebar(){qs('.sidebar')?.classList.add('open')}
+function closeSidebar(){qs('.sidebar')?.classList.remove('open')}
+
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-menu]')) openSidebar();
+  if(e.target.closest('[data-close-menu]')) closeSidebar();
+  if(e.target.classList.contains('modal-backdrop')) e.target.remove();
+  const sw=e.target.closest('.switch'); if(sw){sw.classList.toggle('on');toast(sw.classList.contains('on')?'Enabled':'Disabled')}
+  const tab=e.target.closest('[data-tab]'); if(tab){
+    const group=tab.dataset.group; qsa(`[data-group="${group}"]`).forEach(x=>x.classList.remove('active')); tab.classList.add('active');
+    qsa(`[data-panel-group="${group}"]`).forEach(p=>p.classList.add('hidden'));
+    qs(`[data-panel="${tab.dataset.tab}"]`)?.classList.remove('hidden');
+  }
+  const act=e.target.closest('[data-action]'); if(act) handleAction(act);
+});
+
+function modal(title,html){
+  const wrap=document.createElement('div');wrap.className='modal-backdrop';
+  wrap.innerHTML=`<div class="modal"><div class="between"><h2>${title}</h2><button class="btn sm" onclick="this.closest('.modal-backdrop').remove()">Close</button></div>${html}</div>`;
+  document.body.appendChild(wrap);return wrap;
+}
+function handleAction(el){
+  const a=el.dataset.action, id=el.dataset.id;
+  if(a==='install-app'){
+    if(!G.installedApps.includes(id)) G.installedApps.push(id);
+    G.save(); el.textContent='Installed';el.disabled=true;toast('App installed');
+  }
+  if(a==='remove-app'){
+    G.installedApps=G.installedApps.filter(x=>x!==id);G.save();toast('App removed');setTimeout(()=>location.reload(),350)
+  }
+  if(a==='connect'){
+    modal('Connect account',`
+      <div class="stack">
+        <p class="muted">Authorize <strong>${el.dataset.name}</strong>. This demo simulates OAuth / provider authorization.</p>
+        <div class="field"><label>Account email</label><input class="input" value="owner@business.com"></div>
+        <div class="field"><label>Connection method</label><select><option>Composio / OAuth</option><option>Native API</option><option>MCP</option></select></div>
+        <button class="btn primary block" onclick="G.connections=[...new Set([...G.connections,'${id}'])];G.save();toast('Connection authorized');this.closest('.modal-backdrop').remove();setTimeout(()=>location.reload(),400)">Authorize connection</button>
+      </div>`)
+  }
+  if(a==='install-android'){
+    if(!G.android.includes(id))G.android.push(id);G.save();toast('Android integration installed');setTimeout(()=>location.reload(),400)
+  }
+  if(a==='install-auto'){
+    if(!G.automations.includes(id))G.automations.push(id);G.save();toast('Automation installed');setTimeout(()=>location.reload(),400)
+  }
+  if(a==='approve'){el.closest('.approval')?.remove();toast('Approved')}
+  if(a==='reject'){el.closest('.approval')?.remove();toast('Rejected')}
+  if(a==='publish'){toast('Published successfully')}
+  if(a==='save'){toast('Changes saved')}
+}
+
+function filterCards(inputSel, cardSel){
+  const q=(qs(inputSel)?.value||'').toLowerCase();
+  qsa(cardSel).forEach(c=>{c.style.display=c.innerText.toLowerCase().includes(q)?'':'none'})
+}
+window.G=G;window.toast=toast;window.filterCards=filterCards;
+
+</script></body></html>
