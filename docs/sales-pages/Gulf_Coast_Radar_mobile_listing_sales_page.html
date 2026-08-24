@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CyberCheck — Live Business Listings</title>
+<meta name="description" content="Turn your existing website and business tools into a live, structured business listing with current availability, hours, reviews, menus, bookings and more.">
+<style>
+:root{
+  --navy:#081a2f;--navy2:#0d2845;--blue:#1769e0;--blue2:#eaf3ff;--ink:#132235;
+  --muted:#68798c;--line:#dce5ee;--soft:#f6f9fc;--white:#fff;--green:#119a68;
+  --red:#d74657;--gold:#e69b2d;--shadow:0 18px 55px rgba(8,26,47,.12);--r:22px
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.5}
+a{text-decoration:none;color:inherit}
+button{font:inherit}
+.wrap{width:min(1200px,calc(100% - 30px));margin:auto}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-size:20px;font-weight:950;letter-spacing:-.03em;color:var(--navy)} .brand span{color:var(--blue)}
+.navlinks{display:flex;gap:22px;color:var(--muted);font-size:14px;font-weight:700}
+.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:850;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn.primary{background:var(--blue);color:#fff;box-shadow:0 10px 25px rgba(23,105,224,.2)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+.hero{padding:80px 0 55px;background:radial-gradient(circle at 80% 8%,#dfeeff,transparent 34%),linear-gradient(180deg,#f9fbff,#fff)}
+.heroGrid{display:grid;grid-template-columns:1.02fr .98fr;gap:44px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--blue);font-size:12px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
+h1{font-size:clamp(44px,6.5vw,76px);line-height:.98;letter-spacing:-.055em;margin:13px 0 20px;color:var(--navy)}
+.lead{font-size:20px;line-height:1.62;color:#52667c;max-width:760px}
+.actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:26px}
+.heroPhone{max-width:430px;margin:auto;background:#071524;padding:10px;border-radius:34px;box-shadow:0 28px 75px rgba(8,26,47,.23)}
+.phoneInner{background:#fff;border-radius:26px;overflow:hidden}
+.phoneTop{display:flex;justify-content:space-between;padding:11px 16px;font-size:12px;font-weight:800}
+.heroPic{height:205px;background:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=82') center/cover}
+.phoneBody{padding:18px}
+.businessTitle{font-size:24px;font-weight:950;letter-spacing:-.03em}.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.q{background:var(--soft);border-radius:10px;padding:9px;text-align:center}.q b{display:block;font-size:13px}.q span{font-size:10px;color:var(--muted)}
+.liveBox{margin-top:14px;border:1px solid var(--line);border-radius:14px;padding:13px}.liveHead{display:flex;justify-content:space-between;font-weight:850}.liveHead span{color:var(--green);font-size:12px}
+.slot{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #edf1f5;font-size:13px}.slot:first-of-type{margin-top:8px}.left small{display:block;color:var(--muted)}.available{color:var(--green);font-weight:850}.sold{color:var(--red);font-weight:850}
+.section{padding:76px 0}.alt{background:var(--soft);border-top:1px solid #edf1f5;border-bottom:1px solid #edf1f5}
+.kicker{font-size:12px;color:var(--blue);font-weight:950;letter-spacing:.11em;text-transform:uppercase}
+h2{font-size:clamp(34px,4.6vw,54px);line-height:1.04;letter-spacing:-.045em;color:var(--navy);margin:9px 0 16px}
+.intro{font-size:18px;color:var(--muted);max-width:880px;line-height:1.65}
+.connectGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:28px}
+.connect{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:16px;padding:15px;background:#fff;box-shadow:0 6px 18px rgba(8,26,47,.04);transition:.18s}
+.connect:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.connect img{width:35px;height:35px;border-radius:9px;object-fit:contain;background:#fff}
+.connect strong{display:block;font-size:14px}.connect small{color:var(--muted)}
+.statusDot{margin-left:auto;width:9px;height:9px;border-radius:50%;background:var(--green)}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}.flowCard{border:1px solid var(--line);border-radius:20px;background:#fff;padding:22px}.step{color:var(--blue);font-size:11px;font-weight:950;letter-spacing:.1em}.flowCard h3{margin:8px 0 6px}.flowCard p{color:var(--muted);font-size:14px;margin:0}
+.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 12px;margin-top:28px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--muted);padding:10px 14px;border-radius:999px;font-weight:850;cursor:pointer}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.previewShell{display:grid;grid-template-columns:330px 1fr;gap:22px;margin-top:12px;align-items:start}
+.sideCard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;position:sticky;top:92px}.sideCard h3{font-size:27px;line-height:1.07;margin:8px 0}.sideCard p{color:var(--muted)}.checks{display:grid;gap:9px;margin-top:16px}.checks div:before{content:"✓";color:var(--green);font-weight:950;margin-right:8px}
+.listing{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:var(--shadow)}
+.cover{height:310px;background-size:cover;background-position:center;position:relative}.cover:after{content:"";position:absolute;inset:55% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.coverText{position:absolute;left:24px;right:24px;bottom:22px;z-index:2;color:#fff}.coverText h3{font-size:35px;letter-spacing:-.04em;margin:0}.coverText p{margin:3px 0 0;color:#e9f2fb}
+.listingNav{display:flex;gap:20px;overflow:auto;padding:14px 22px;border-bottom:1px solid var(--line);font-size:13px;font-weight:850;white-space:nowrap;scrollbar-width:none}.listingNav::-webkit-scrollbar{display:none}
+.listBody{padding:22px}.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.fact{padding:13px;border:1px solid var(--line);border-radius:12px;background:#fbfdff}.fact small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.fact b{display:block;margin-top:3px}
+.sectionTitle{display:flex;justify-content:space-between;gap:12px;align-items:end;margin:26px 0 12px}.sectionTitle h4{font-size:22px;margin:0}.sectionTitle span{font-size:12px;color:var(--muted)}
+.calendarArea{display:grid;grid-template-columns:1fr 1fr;gap:18px}.calendar,.dayDetails{border:1px solid var(--line);border-radius:16px;padding:16px}.calTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.calTop button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px}.week,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.week span{text-align:center;color:var(--muted);font-size:10px;font-weight:850}.day{min-height:38px;border-radius:8px;display:grid;place-items:center;font-size:11px;background:#eaf7f0;border:1px solid #d9eee3}.busy{background:#ffe1e4;border-color:#f4cbd0}.hold{background:#ffedce;border-color:#f1dbb8}.selected{background:#dbeaff;border-color:#b8d3f6;color:#0a55b6;font-weight:900}.empty{background:transparent;border:0}
+.detailRow{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #edf1f5}.detailRow:first-child{border-top:0}.detailRow small{display:block;color:var(--muted)}.ctaRow{display:flex;gap:10px;margin-top:15px}.ctaRow .btn{flex:1}
+.gallery{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;height:220px}.g{background-size:cover;background-position:center;border-radius:12px}.g1{grid-row:span 2}
+.review{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}.stars{color:#f1a623;font-size:14px}.review p{margin:6px 0;color:#4f6175}.review small{color:var(--muted)}
+.mobileNote{display:none}
+.ctaBig{padding:45px;border-radius:28px;background:linear-gradient(135deg,var(--navy),#0b4386);color:#fff;text-align:center}.ctaBig h2{color:#fff;margin-top:0}.ctaBig p{color:#dbe8f6;max-width:760px;margin:0 auto 22px;font-size:18px}
+footer{padding:38px 0;color:#75869a;font-size:13px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:980px){
+ .heroGrid,.previewShell{grid-template-columns:1fr}.heroPhone{max-width:460px}.connectGrid{grid-template-columns:repeat(3,1fr)}.sideCard{position:relative;top:auto}.flow{grid-template-columns:1fr 1fr}.calendarArea{grid-template-columns:1fr}.cover{height:270px}.facts{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+ .wrap{width:min(100% - 20px,1200px)}.navlinks{display:none}.hero{padding-top:50px}.lead{font-size:17px}.connectGrid{grid-template-columns:1fr 1fr}.flow{grid-template-columns:1fr}.previewShell{gap:14px}.sideCard{display:none}.listing{border-radius:18px}.cover{height:240px}.coverText{left:16px;right:16px}.coverText h3{font-size:28px}.listBody{padding:15px}.facts{grid-template-columns:1fr 1fr}.calendarArea{display:block}.dayDetails{margin-top:12px;max-height:330px;overflow:auto}.days .day{min-height:36px}.gallery{height:180px;grid-template-columns:2fr 1fr}.gallery .g:nth-child(n+4){display:none}.mobileNote{display:block;color:var(--muted);font-size:12px;margin-top:8px}.ctaBig{padding:30px 20px}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><div class="brand">GULF COAST <span>RADAR</span></div><nav class="navlinks"><a href="#connect">Connections</a><a href="#examples">Examples</a><a href="#how">How it works</a></nav><a class="btn primary" href="#demo">See your business</a></div></header>
+
+<section class="hero"><div class="wrap heroGrid">
+<div><div class="eyebrow">A live listing, not another static directory page</div>
+<h1>Make your business page work like your business.</h1>
+<p class="lead">Gulf Coast Radar can turn the information you already publish — hours, photos, bookings, availability, menus, reviews, events, services and more — into one clean business page that stays useful on desktop and mobile.</p>
+<div class="actions"><a class="btn primary" href="#examples">See live-style examples</a><a class="btn ghost" href="#connect">See connections</a></div></div>
+<div class="heroPhone"><div class="phoneInner"><div class="phoneTop"><span>9:41</span><span>Gulf Coast Radar</span><span>•••</span></div><div class="heroPic"></div><div class="phoneBody">
+<div class="businessTitle">Orange Beach Adventures</div><div class="sub">Dolphin Cruises • Boat Rentals • Gulf Coast</div>
+<div class="quick"><div class="q"><b>Open</b><span>Today</span></div><div class="q"><b>4.8 ★</b><span>Reviews</span></div><div class="q"><b>Live</b><span>Availability</span></div></div>
+<div class="liveBox"><div class="liveHead"><b>Today's Availability</b><span>● LIVE</span></div>
+<div class="slot"><div class="left"><b>1:00 PM Dolphin Cruise</b><small>50-seat vessel</small></div><div class="available">19 left</div></div>
+<div class="slot"><div class="left"><b>3:30 PM Parasailing</b><small>Next departure</small></div><div class="available">4 open</div></div>
+<div class="slot"><div class="left"><b>5:00 PM Sunset Cruise</b><small>Popular</small></div><div class="sold">Sold out</div></div>
+<a class="btn primary" style="width:100%;margin-top:8px" href="#examples">Check availability</a>
+</div></div></div></div>
+</div></section>
+
+<section class="section alt" id="connect"><div class="wrap">
+<div class="kicker">Connect what you already use</div><h2>Your business tools become sources for one better listing.</h2>
+<p class="intro">The business chooses its current platforms. Gulf Coast Radar uses the approved information to power one structured page instead of making the owner maintain another disconnected profile.</p>
+<div class="connectGrid">
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=google.com&sz=128"><div><strong>Google Business</strong><small>Hours & business info</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=facebook.com&sz=128"><div><strong>Facebook</strong><small>Posts & public updates</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=instagram.com&sz=128"><div><strong>Instagram</strong><small>Photos & social content</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=yelp.com&sz=128"><div><strong>Yelp</strong><small>Business presence</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=fareharbor.com&sz=128"><div><strong>FareHarbor</strong><small>Bookings & schedules</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=peek.com&sz=128"><div><strong>Peek Pro</strong><small>Tours & activities</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=opentable.com&sz=128"><div><strong>OpenTable</strong><small>Restaurant reservations</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=toasttab.com&sz=128"><div><strong>Toast</strong><small>Restaurant operations</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=airbnb.com&sz=128"><div><strong>Airbnb</strong><small>Property calendar</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=vrbo.com&sz=128"><div><strong>Vrbo</strong><small>Property calendar</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=squareup.com&sz=128"><div><strong>Square</strong><small>POS & business tools</small></div><i class="statusDot"></i></div>
+<div class="connect"><img src="https://www.google.com/s2/favicons?domain=calendar.google.com&sz=128"><div><strong>Google Calendar</strong><small>Schedules & events</small></div><i class="statusDot"></i></div>
+</div></div></section>
+
+<section class="section" id="how"><div class="wrap">
+<div class="kicker">How it works</div><h2>Keep the website feel. Upgrade what is behind it.</h2>
+<div class="flow">
+<div class="flowCard"><div class="step">01 — EXISTING BUSINESS</div><h3>Start with what already exists</h3><p>The current website, photos, business listings, booking pages, calendars and other public information provide the starting point.</p></div>
+<div class="flowCard"><div class="step">02 — STRUCTURED PROFILE</div><h3>Organize the business by section</h3><p>Hours, pricing, services, inventory, availability, menus, captains, amenities, policies, events and more become reusable business data.</p></div>
+<div class="flowCard"><div class="step">03 — LIVE PAGE</div><h3>Display it like a real website</h3><p>The listing becomes a complete responsive page with the sections that actually apply to that business — including live-style booking and availability interfaces.</p></div>
+</div></div></section>
+
+<section class="section alt" id="examples"><div class="wrap">
+<div class="kicker">Real page examples</div><h2>Every industry gets the page it actually needs.</h2>
+<p class="intro">Choose an example. The outer design stays clean and consistent, but the sections, facts and booking experience change based on the business.</p>
+
+<div class="tabs">
+<button class="tab active" data-type="charter">Fishing Charter</button>
+<button class="tab" data-type="condo">Condo Rental</button>
+<button class="tab" data-type="restaurant">Restaurant</button>
+<button class="tab" data-type="water">Water Activities</button>
+</div>
+
+<div class="previewShell">
+<div class="sideCard">
+<div class="kicker" id="sideKicker">Fishing Charter</div>
+<h3 id="sideTitle">A charter page that shows the trip — not just a phone number.</h3>
+<p id="sideText">The page can combine the business story, boat, captain, trip types, policies and live-style availability into one customer experience.</p>
+<div class="checks" id="sideChecks">
+<div>Full month availability</div><div>Trip times and capacity</div><div>Boat & captain sections</div><div>Pricing, policies and reviews</div>
+</div>
+</div>
+
+<div class="listing">
+<div class="cover" id="cover" style="background-image:url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1400&q=82')">
+<div class="coverText"><h3 id="bizName">Gulf Coast Offshore Charters</h3><p id="bizSub">Orange Beach, Alabama • Offshore & Inshore Fishing</p></div></div>
+<div class="listingNav" id="listingNav"><span>Overview</span><span>Availability</span><span>Trips</span><span>Boat</span><span>Captain</span><span>Photos</span><span>Reviews</span><span>FAQ</span></div>
+<div class="listBody">
+<div class="facts" id="facts">
+<div class="fact"><small>Trip Type</small><b>Offshore / Inshore</b></div>
+<div class="fact"><small>Capacity</small><b>Up to 6 guests</b></div>
+<div class="fact"><small>Duration</small><b>4–8 hours</b></div>
+<div class="fact"><small>Departure</small><b>Orange Beach Marina</b></div>
+</div>
+
+<div class="sectionTitle"><h4 id="availTitle">Availability</h4><span id="availSub">Choose a date to see trips</span></div>
+<div class="calendarArea">
+<div class="calendar">
+<div class="calTop"><button>‹</button><b>August 2026</b><button>›</button></div>
+<div class="week"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+<div class="days" id="days">
+<span class="empty"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span><span class="day">1</span>
+<span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day">5</span><span class="day">6</span><span class="day">7</span><span class="day">8</span>
+<span class="day busy">9</span><span class="day busy">10</span><span class="day">11</span><span class="day">12</span><span class="day">13</span><span class="day">14</span><span class="day selected">15</span>
+<span class="day">16</span><span class="day">17</span><span class="day hold">18</span><span class="day">19</span><span class="day">20</span><span class="day">21</span><span class="day">22</span>
+<span class="day">23</span><span class="day">24</span><span class="day">25</span><span class="day">26</span><span class="day">27</span><span class="day">28</span><span class="day">29</span>
+<span class="day">30</span><span class="day">31</span>
+</div>
+<div class="mobileNote">Tap a date, then scroll the availability below.</div>
+</div>
+<div class="dayDetails" id="details">
+<div class="detailRow"><div><b>6:00 AM — 6 Hour Offshore</b><small>Up to 6 guests</small></div><div class="available">2 spots left</div></div>
+<div class="detailRow"><div><b>8:00 AM — 4 Hour Inshore</b><small>Up to 6 guests</small></div><div class="available">Available</div></div>
+<div class="detailRow"><div><b>12:00 PM — Offshore</b><small>6 hour trip</small></div><div class="sold">Sold out</div></div>
+<div class="detailRow"><div><b>4:30 PM — Sunset Fishing</b><small>4 hour trip</small></div><div class="available">3 spots left</div></div>
+<div class="ctaRow"><button class="btn primary">Check availability</button><button class="btn ghost">Call</button></div>
+</div>
+</div>
+
+<div class="sectionTitle"><h4>Photos</h4><span>View all</span></div>
+<div class="gallery" id="gallery">
+<div class="g g1" style="background-image:url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80')"></div>
+<div class="g" style="background-image:url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=600&q=80')"></div>
+<div class="g" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80')"></div>
+<div class="g" style="background-image:url('https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=600&q=80')"></div>
+<div class="g" style="background-image:url('https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=600&q=80')"></div>
+</div>
+
+<div class="sectionTitle"><h4>Reviews</h4><span>Recent</span></div>
+<div class="review"><div class="stars">★★★★★</div><p>“Easy to find the trip options, what was still open, and exactly what we needed to bring.”</p><small>Example customer review</small></div>
+</div>
+</div>
+</div>
+</div></section>
+
+<section class="section" id="demo"><div class="wrap"><div class="ctaBig">
+<h2>Show us your current website.</h2>
+<p>See how the same business could look with a cleaner structured listing, current business information, and a booking or availability experience that actually fits what you sell.</p>
+<div class="actions" style="justify-content:center"><a class="btn primary" style="background:#fff;color:#0b4386" href="mailto:hello@example.com?subject=Gulf%20Coast%20Radar%20Listing%20Demo">Request a demo</a><a class="btn ghost" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff" href="mailto:hello@example.com?subject=Send%20My%20Website">Send your website</a></div>
+</div></div></section>
+
+<footer><div class="wrap foot"><b>Gulf Coast Radar</b><span>Structured local business listings • Live-style availability • Mobile-first pages</span></div></footer>
+
+<script>
+const data={
+charter:{
+ kicker:"Fishing Charter",title:"A charter page that shows the trip — not just a phone number.",
+ text:"The page can combine the business story, boat, captain, trip types, policies and live-style availability into one customer experience.",
+ checks:["Full month availability","Trip times and capacity","Boat & captain sections","Pricing, policies and reviews"],
+ name:"Gulf Coast Offshore Charters",sub:"Orange Beach, Alabama • Offshore & Inshore Fishing",
+ cover:"https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1400&q=82",
+ nav:["Overview","Availability","Trips","Boat","Captain","Photos","Reviews","FAQ"],
+ facts:[["Trip Type","Offshore / Inshore"],["Capacity","Up to 6 guests"],["Duration","4–8 hours"],["Departure","Orange Beach Marina"]],
+ title2:"Availability",sub2:"Choose a date to see trips",
+ details:[["6:00 AM — 6 Hour Offshore","Up to 6 guests","2 spots left","available"],["8:00 AM — 4 Hour Inshore","Up to 6 guests","Available","available"],["12:00 PM — Offshore","6 hour trip","Sold out","sold"],["4:30 PM — Sunset Fishing","4 hour trip","3 spots left","available"]]
+},
+condo:{
+ kicker:"Condo Rental",title:"A property page that finally shows the whole unit and the open dates.",
+ text:"The page can combine the gallery, bedrooms, bathrooms, square footage, amenities, building details, policies, rates and a full month availability calendar.",
+ checks:["Airbnb / Vrbo / iCal calendar inputs","Full month date availability","Bedrooms, bathrooms & amenities","Check-in, checkout, policies & reviews"],
+ name:"Phoenix Gulf Towers — Unit 1204",sub:"Orange Beach, Alabama • Gulf Front Condo",
+ cover:"https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=82",
+ nav:["Overview","Availability","Rates","Bedrooms","Amenities","Gallery","Reviews","Policies"],
+ facts:[["Bedrooms","3"],["Bathrooms","4"],["Sleeps","10"],["View","Gulf Front"]],
+ title2:"Check availability",sub2:"Select check-in and check-out dates",
+ details:[["Aug 14 → Aug 17","3 nights","Available","available"],["Check-in","Friday, Aug 14","4:00 PM","available"],["Check-out","Monday, Aug 17","10:00 AM","available"],["Booking source","Connected calendar","Synced","available"]]
+},
+restaurant:{
+ kicker:"Restaurant",title:"A restaurant page where the menu, hours, specials and reservations agree.",
+ text:"A complete restaurant page can show menus, happy hour, specials, live music, reservations, reviews, photos and service details in one place.",
+ checks:["Menu and pricing sections","Reservations / OpenTable connection","Happy hour & daily specials","Events, photos and reviews"],
+ name:"Coastal Kitchen & Oyster Bar",sub:"Orange Beach, Alabama • Seafood • Waterfront Dining",
+ cover:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=82",
+ nav:["Overview","Menu","Happy Hour","Reservations","Events","Photos","Reviews","Location"],
+ facts:[["Cuisine","Seafood"],["Reservations","Available"],["Happy Hour","3–6 PM"],["Dining","Waterfront"]],
+ title2:"Reservations",sub2:"Choose a date and time",
+ details:[["5:30 PM","Party of 4","Available","available"],["6:00 PM","Party of 4","Available","available"],["6:30 PM","Party of 4","Limited","available"],["7:00 PM","Party of 4","Booked","sold"]]
+},
+water:{
+ kicker:"Water Activities",title:"One page for dolphin cruises, parasailing, pontoons, jet skis and excursions.",
+ text:"Capacity and inventory businesses need customers to see departure times, remaining seats or units, rules, pricing, and booking choices without hunting across multiple pages.",
+ checks:["Departure and rental time slots","Seats or units remaining","Age / weight / capacity rules","Photos, pricing, FAQs and booking links"],
+ name:"Orange Beach Water Adventures",sub:"Dolphin Cruises • Parasailing • Pontoon & Jet Ski Rentals",
+ cover:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=82",
+ nav:["Overview","Availability","Activities","Pricing","Rules","Photos","Reviews","FAQ"],
+ facts:[["Activities","4"],["Cruise Capacity","50"],["Rental Type","Hourly / Half Day"],["Location","Orange Beach"]],
+ title2:"Today's availability",sub2:"Select a date to see departures",
+ details:[["1:00 PM — Dolphin Cruise","50-seat vessel","19 seats left","available"],["2:30 PM — Parasailing","Next departure","4 openings","available"],["3:00 PM — Jet Ski","1 hour","Sold out","sold"],["5:00 PM — Sunset Cruise","Evening departure","8 seats left","available"]]
+}
+};
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+ const d=data[btn.dataset.type];
+ sideKicker.textContent=d.kicker;sideTitle.textContent=d.title;sideText.textContent=d.text;
+ sideChecks.innerHTML=d.checks.map(x=>`<div>${x}</div>`).join("");
+ bizName.textContent=d.name;bizSub.textContent=d.sub;cover.style.backgroundImage=`url('${d.cover}')`;
+ listingNav.innerHTML=d.nav.map(x=>`<span>${x}</span>`).join("");
+ facts.innerHTML=d.facts.map(x=>`<div class="fact"><small>${x[0]}</small><b>${x[1]}</b></div>`).join("");
+ availTitle.textContent=d.title2;availSub.textContent=d.sub2;
+ details.innerHTML=d.details.map((x,i)=>`<div class="detailRow"><div><b>${x[0]}</b><small>${x[1]}</small></div><div class="${x[3]}">${x[2]}</div></div>`).join("")+`<div class="ctaRow"><button class="btn primary">${btn.dataset.type==="restaurant"?"Reserve":"Check availability"}</button><button class="btn ghost">Call</button></div>`;
+}));
+</script>
+</body></html>

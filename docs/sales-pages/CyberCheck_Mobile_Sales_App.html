@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<title>CyberCheck — Your Last Business Dashboard</title>
+<meta name="description" content="Connect every tool you use. Install business apps. Add plugins. Automate workflows. Build anything else with AI. Control it all from one modular dashboard — by screen, text, phone, API, or MCP.">
+<style>
+:root{
+  --bg:#07111f;--bg2:#0b1728;--panel:#0e2035;--panel2:#122943;--line:rgba(255,255,255,.09);
+  --text:#f7fbff;--muted:#9fb3c9;--blue:#337cff;--cyan:#40dcff;--purple:#845cff;--green:#36d27f;
+  --orange:#ffb34c;--max:1180px;--r:22px;--safe-bottom:max(16px,env(safe-area-inset-bottom));
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:
+ radial-gradient(circle at 15% -5%,rgba(51,124,255,.16),transparent 27%),
+ radial-gradient(circle at 90% 3%,rgba(132,92,255,.14),transparent 25%),var(--bg);
+ color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.48}
+a{text-decoration:none;color:inherit}.wrap{width:min(var(--max),calc(100% - 30px));margin:auto}
+.top{position:sticky;top:0;z-index:40;background:rgba(7,17,31,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.topin{height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:850}.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple))}
+.desktop-nav{display:flex;gap:19px;color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 17px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-weight:760}
+.primary{background:linear-gradient(135deg,var(--blue),var(--purple));border-color:transparent}
+.soft{background:rgba(64,220,255,.07);border-color:rgba(64,220,255,.17)}
+.hero{padding:72px 0 50px}.hero-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:42px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(64,220,255,.18);background:rgba(64,220,255,.07);color:#c4f3ff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800}
+h1{font-size:clamp(43px,6.4vw,78px);line-height:.97;letter-spacing:-3px;margin:18px 0 20px}
+.grad{background:linear-gradient(90deg,#fff 2%,var(--cyan) 42%,#a28dff 84%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:19px;color:var(--muted);max-width:680px}.hero-actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:25px}
+.small{font-size:12px;color:#788ea6;margin-top:15px}
+.phone{max-width:390px;margin:auto;background:#050b13;border:1px solid rgba(255,255,255,.17);border-radius:40px;padding:8px;box-shadow:0 28px 90px rgba(0,0,0,.45)}
+.screen{background:#f7f9fc;color:#101a27;border-radius:33px;overflow:hidden;min-height:650px}
+.status{height:30px;background:#fff;display:flex;justify-content:space-between;padding:8px 18px;font-size:10px;font-weight:800}
+.mhead{padding:15px 18px;background:#0d1b2d;color:#fff}.mhead .tiny{color:#89a1ba;font-size:10px}.mhead h3{margin:3px 0 0;font-size:20px}
+.mtabs{display:flex;gap:6px;overflow:hidden;padding:11px 12px;background:#fff;border-bottom:1px solid #e6ebf1}
+.mtabs span{white-space:nowrap;border:1px solid #e3e8ef;border-radius:999px;padding:6px 9px;font-size:9px}.mtabs .on{background:#eaf2ff;color:#1c61cf;border-color:#cfe0ff}
+.mbody{padding:13px}.mcard{background:#fff;border:1px solid #e6ebf1;border-radius:15px;padding:12px;margin-bottom:10px}
+.mrow{display:flex;justify-content:space-between;gap:8px;align-items:center}.micon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#edf4ff}
+.mtitle{font-size:12px;font-weight:800}.msub{font-size:9px;color:#667789;margin-top:2px}.mstate{font-size:9px;color:#13894e;background:#e8f8ef;padding:5px 7px;border-radius:999px}
+.bottom{height:61px;background:white;border-top:1px solid #e5eaf0;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;text-align:center;font-size:9px;color:#607184}.bottom .active{color:#2569df;font-weight:800}
+section{padding:66px 0}.section-head{max-width:820px;margin-bottom:28px}.section-head h2{font-size:clamp(34px,4.5vw,55px);line-height:1.03;letter-spacing:-2px;margin:12px 0}.section-head p{font-size:17px;color:var(--muted)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:linear-gradient(180deg,rgba(18,41,67,.9),rgba(11,28,47,.88))}
+.ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(64,220,255,.16),rgba(132,92,255,.19));margin-bottom:14px;font-size:19px}
+.card h3{margin:0 0 7px;font-size:19px}.card p{margin:0;color:var(--muted)}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.step{position:relative;border:1px solid var(--line);border-radius:18px;padding:20px;background:#0d1d31}.n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--blue);font-size:11px;font-weight:850;margin-bottom:11px}.step b{display:block;margin-bottom:5px}.step small{color:var(--muted)}
+.step:not(:last-child):after{content:"→";position:absolute;right:-13px;top:48%;color:#6683a3}
+.store{border:1px solid var(--line);border-radius:24px;overflow:hidden;background:#09192a}.store-head{padding:19px 20px;background:#0d1d31;border-bottom:1px solid var(--line)}.store-head h3{margin:2px 0;font-size:25px}.store-head p{margin:0;color:var(--muted)}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}.item{border:1px solid var(--line);border-radius:15px;padding:14px;background:#0d2036}.item b{display:block}.item small{display:block;color:var(--muted);margin:4px 0 11px}.chip{display:inline-block;font-size:10px;padding:5px 7px;border-radius:999px;background:rgba(51,124,255,.13);color:#a9c8ff}
+.dual{display:grid;grid-template-columns:1fr 70px 1fr;gap:12px;align-items:center}.vs{text-align:center;color:#7f95ad;font-weight:900}
+.list{display:grid;gap:10px;margin-top:14px}.li{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06)}.tick{width:23px;height:23px;min-width:23px;border-radius:8px;display:grid;place-items:center;background:rgba(54,210,127,.13);color:var(--green);font-size:12px}.li b{display:block}.li span{font-size:13px;color:var(--muted)}
+.arch{border:1px solid var(--line);border-radius:24px;padding:20px;background:#081827}.arch-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.node{border:1px solid var(--line);background:#10243b;border-radius:15px;padding:12px 14px;text-align:center;min-width:132px}.arr{text-align:center;color:#6683a3;font-size:22px;padding:7px}
+.callout{border:1px solid rgba(64,220,255,.18);background:linear-gradient(135deg,rgba(64,220,255,.07),rgba(132,92,255,.08));border-radius:24px;padding:28px}
+.callout h3{font-size:30px;letter-spacing:-1px;margin:0 0 8px}.callout p{color:var(--muted);margin:0}
+.compare{overflow:auto;border:1px solid var(--line);border-radius:20px}table{width:100%;border-collapse:collapse;min-width:780px;background:#09192a}th,td{padding:14px 15px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#0d1d31;color:#8fa6bd}.yes{color:var(--green);font-weight:800}
+.cta{text-align:center;border:1px solid rgba(64,220,255,.18);border-radius:28px;padding:45px 25px;background:radial-gradient(circle at 20% 0,rgba(64,220,255,.12),transparent 34%),linear-gradient(135deg,#102640,#161d4e)}
+.cta h2{font-size:clamp(35px,5vw,58px);letter-spacing:-2px;line-height:1;margin:0 0 12px}.cta p{color:#b5c7d9;font-size:17px;max-width:740px;margin:0 auto 22px}
+.faq{display:grid;gap:9px}details{border:1px solid var(--line);border-radius:16px;padding:17px 18px;background:#0d1d31}summary{font-weight:800;cursor:pointer}details p{color:var(--muted);margin-bottom:0}
+footer{padding:30px 0 100px;border-top:1px solid var(--line);color:#7e91a6;font-size:12px}
+.mobile-nav{display:none}
+@media(max-width:900px){.desktop-nav{display:none}.hero-grid,.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(2,1fr)}.phone{margin-top:14px}.dual{grid-template-columns:1fr}.vs{padding:4px}.vs:after{content:"↓";display:block}.vs{font-size:0}.vs:after{font-size:22px}}
+@media(max-width:640px){
+ body{padding-bottom:72px}.wrap{width:calc(100% - 22px)}.topin{height:60px}.top .btn{padding:9px 12px;font-size:12px}
+ .hero{padding:45px 0 33px}h1{letter-spacing:-2px}.lead{font-size:17px}
+ section{padding:48px 0}.section-head h2{letter-spacing:-1.5px}.section-head p{font-size:15px}
+ .grid4,.grid3,.flow,.items{grid-template-columns:1fr}.step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-19px}
+ .phone{max-width:360px}.screen{min-height:620px}
+ .mobile-nav{display:grid;position:fixed;z-index:60;left:9px;right:9px;bottom:calc(8px + env(safe-area-inset-bottom));grid-template-columns:repeat(5,1fr);border:1px solid rgba(255,255,255,.12);background:rgba(10,23,39,.94);backdrop-filter:blur(18px);border-radius:20px;padding:8px 5px;box-shadow:0 15px 45px rgba(0,0,0,.38)}
+ .mobile-nav a{text-align:center;color:#9fb3c9;font-size:9px}.mobile-nav i{display:block;font-style:normal;font-size:18px;margin-bottom:2px}.mobile-nav a:nth-child(3){color:white}
+ footer{padding-bottom:30px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="wrap topin">
+  <a class="brand" href="#top"><span class="logo"></span><span>CyberCheck</span></a>
+  <nav class="desktop-nav">
+   <a href="#product">Product</a><a href="#stores">Stores</a><a href="#build">Build</a><a href="#data">Data Layer</a><a href="#cloud">Infrastructure</a>
+  </nav>
+  <a class="btn primary" href="#contact">Get Started</a>
+ </div>
+</header>
+
+<main id="top">
+<section class="hero">
+ <div class="wrap hero-grid">
+  <div>
+   <span class="badge">⚡ CONNECT EVERYTHING. CONTROL IT ONE WAY.</span>
+   <h1>Your <span class="grad">last business dashboard.</span></h1>
+   <p class="lead">Connect every tool your business already uses. Install functionality from the App Store. Add outside services from the Plugin Store. Automate the work between them. If what you need does not exist, describe it and build it with AI.</p>
+   <div class="hero-actions"><a class="btn primary" href="#contact">Build My Dashboard</a><a class="btn soft" href="#product">See What I’m Buying</a></div>
+   <div class="small">Use it visually, text it, call it, connect an agent to it, or use its API/MCP layer.</div>
+  </div>
+  <div class="phone">
+   <div class="screen">
+    <div class="status"><span>9:41</span><span>5G ▰</span></div>
+    <div class="mhead"><div class="tiny">SEA BREEZE CHARTERS</div><h3>Your Business Dashboard</h3></div>
+    <div class="mtabs"><span class="on">Home</span><span>Apps</span><span>Plugins</span><span>Automations</span><span>Build</span></div>
+    <div class="mbody">
+     <div class="mcard"><div class="mrow"><div><div class="mtitle">Today</div><div class="msub">Everything happening across your connected business</div></div><span class="mstate">Live</span></div></div>
+     <div class="mcard"><div class="mrow"><div style="display:flex;gap:9px;align-items:center"><span class="micon">📅</span><div><div class="mtitle">Bookings</div><div class="msub">12 today · 3 openings</div></div></div><b>›</b></div></div>
+     <div class="mcard"><div class="mrow"><div style="display:flex;gap:9px;align-items:center"><span class="micon">⭐</span><div><div class="mtitle">Reviews</div><div class="msub">4 new · 21 requests queued</div></div></div><b>›</b></div></div>
+     <div class="mcard"><div class="mrow"><div style="display:flex;gap:9px;align-items:center"><span class="micon">🔌</span><div><div class="mtitle">Connected Plugins</div><div class="msub">Gmail · Calendar · Instagram · Payments</div></div></div><b>›</b></div></div>
+     <div class="mcard"><div class="mrow"><div style="display:flex;gap:9px;align-items:center"><span class="micon">⚙️</span><div><div class="mtitle">Automations</div><div class="msub">18 active workflows</div></div></div><b>›</b></div></div>
+     <div class="mcard" style="background:#eef4ff;border-color:#ccddff"><div class="mtitle" style="color:#1c56b7">✦ Tell CyberCheck what you want to build...</div><div class="msub">“Build a last-minute opening app and text customers when a boat becomes available.”</div></div>
+    </div>
+    <div class="bottom"><div class="active">⌂<br>Home</div><div>▦<br>Apps</div><div>🔌<br>Plugins</div><div>⚙<br>Automate</div><div>✦<br>Build</div></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="product">
+ <div class="wrap">
+  <div class="section-head"><span class="badge">WHAT YOU ARE SELLING</span><h2>One modular operating dashboard for the entire business.</h2><p>CyberCheck is not another closed SaaS tool. It is the common operating layer that lets a business connect what it already uses, add new capabilities, and interact with the same structured business data through many interfaces.</p></div>
+  <div class="grid4">
+   <div class="card"><div class="ico">🧩</div><h3>One Modular Dashboard</h3><p>Every business gets one workspace that changes based on the apps, plugins, data and workflows it actually uses.</p></div>
+   <div class="card"><div class="ico">📱</div><h3>Private + Public</h3><p>Apps can have a private owner side and a public customer side. Manage it once; expose only what customers should see.</p></div>
+   <div class="card"><div class="ico">📞</div><h3>Call or Text It</h3><p>The dashboard is not only a screen. Approved business data and actions can be reached by phone, SMS, AI, API or MCP.</p></div>
+   <div class="card"><div class="ico">🔄</div><h3>No Single-System Lock-In</h3><p>Keep your current providers. CyberCheck normalizes their data and actions behind one business-facing layer.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="stores">
+ <div class="wrap">
+  <div class="section-head"><span class="badge">TWO DIFFERENT STORES</span><h2>The App Store and Plugin Store are not the same thing.</h2><p>This distinction makes the platform easier to understand and more powerful to use.</p></div>
+  <div class="dual">
+   <div class="store">
+    <div class="store-head"><span class="badge">APP STORE</span><h3>Install functionality</h3><p>Apps become part of the CyberCheck workspace.</p></div>
+    <div class="items">
+     <div class="item"><b>Booking</b><small>Availability, resources, booking workflows.</small><span class="chip">Install App</span></div>
+     <div class="item"><b>Authentic Reviews</b><small>Requests, evidence, responses, publishing.</small><span class="chip">Install App</span></div>
+     <div class="item"><b>Song Requests</b><small>Songs, prices, queue, tips, public form.</small><span class="chip">Install App</span></div>
+     <div class="item"><b>Menu + Specials</b><small>Menu, happy hour, specials, events.</small><span class="chip">Install App</span></div>
+    </div>
+   </div>
+   <div class="vs">≠</div>
+   <div class="store">
+    <div class="store-head"><span class="badge">PLUGIN STORE</span><h3>Connect outside tools</h3><p>Plugins connect CyberCheck to software the business already uses.</p></div>
+    <div class="items">
+     <div class="item"><b>Gmail</b><small>Email, confirmations, customer messages.</small><span class="chip">Connect</span></div>
+     <div class="item"><b>Google Calendar</b><small>Schedules, calendar events, availability.</small><span class="chip">Connect</span></div>
+     <div class="item"><b>Instagram / Facebook</b><small>Authorized social actions and content.</small><span class="chip">Connect</span></div>
+     <div class="item"><b>CRM / Payments</b><small>Customer systems, payment providers, business tools.</small><span class="chip">Connect</span></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="wrap">
+  <div class="section-head"><span class="badge">HOW THE TWO STORES WORK TOGETHER</span><h2>Apps use capabilities. Plugins supply external capabilities.</h2></div>
+  <div class="arch">
+   <div class="arch-row"><div class="node"><b>Booking App</b><small>CyberCheck module</small></div><div class="node"><b>Reviews App</b><small>CyberCheck module</small></div><div class="node"><b>Custom App</b><small>AI-built module</small></div></div>
+   <div class="arr">↓</div>
+   <div class="arch-row"><div class="node"><b>CyberCheck Core</b><small>Identity · permissions · data · actions</small></div></div>
+   <div class="arr">↓</div>
+   <div class="arch-row"><div class="node"><b>Gmail Plugin</b><small>Composio/native</small></div><div class="node"><b>Calendar Plugin</b><small>Composio/native</small></div><div class="node"><b>Payment Plugin</b><small>native/other</small></div><div class="node"><b>Booking Plugin</b><small>API/email/iCal</small></div></div>
+  </div>
+ </div>
+</section>
+
+<section id="build">
+ <div class="wrap grid2">
+  <div>
+   <div class="section-head"><span class="badge">BUILD ANYTHING ELSE</span><h2>Use Grok Build as the construction engine — not the product.</h2><p>The customer never needs to understand the coding agent underneath. They simply describe what they want.</p></div>
+   <div class="list">
+    <div class="li"><span class="tick">1</span><div><b>Understand the request</b><span>“Build a customer waitlist that texts people when availability opens.”</span></div></div>
+    <div class="li"><span class="tick">2</span><div><b>Search first</b><span>Check the App Store, Plugin Store, existing automation templates and reusable components.</span></div></div>
+    <div class="li"><span class="tick">3</span><div><b>Reuse what already exists</b><span>Do not regenerate Gmail, payments, customers, booking data or messaging if those capabilities are already available.</span></div></div>
+    <div class="li"><span class="tick">4</span><div><b>Grok Build creates the missing pieces</b><span>Frontend, backend, schema changes, MCP actions, automation steps and tests.</span></div></div>
+    <div class="li"><span class="tick">5</span><div><b>Install it into the same dashboard</b><span>The output becomes another governed module instead of another disconnected SaaS product.</span></div></div>
+   </div>
+  </div>
+  <div class="callout">
+   <span class="badge">EXAMPLE</span>
+   <h3>“Build me a song request app.”</h3>
+   <p>CyberCheck can reuse identity, customers, payments, SMS, public-page blocks and permissions. Grok Build only has to generate the application-specific pieces.</p>
+   <div style="height:18px"></div>
+   <div class="items" style="padding:0">
+    <div class="item"><b>Private Side</b><small>Song manager · queue · prices · analytics</small></div>
+    <div class="item"><b>Public Side</b><small>Search songs · request · tip · confirmation</small></div>
+    <div class="item"><b>Automation</b><small>Request → notify artist → status update</small></div>
+    <div class="item"><b>Plugins</b><small>Payments · SMS · social · calendar</small></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="data">
+ <div class="wrap">
+  <div class="section-head"><span class="badge">THE INPUT LAYER</span><h2>Your strongest position is the structured business-data layer.</h2><p>Cloud infrastructure companies can host agents, convert content, expose MCP endpoints, and route execution. CyberCheck's defensible layer is the business-specific input: converting messy real-world information into structured, permissioned facts and actions that agents can actually use.</p></div>
+  <div class="grid4">
+   <div class="card"><div class="ico">🏢</div><h3>Entity Graph</h3><p>Businesses, locations, parent/child relationships, resources, artists, units, venues and ownership.</p></div>
+   <div class="card"><div class="ico">💲</div><h3>Operational Facts</h3><p>Pricing, duration, capacity, rules, menus, policies, offerings, hours, events and specials.</p></div>
+   <div class="card"><div class="ico">📅</div><h3>Live Availability</h3><p>Bookings, quantity remaining, time slots, resources, calendars, source freshness and overrides.</p></div>
+   <div class="card"><div class="ico">✓</div><h3>Evidence + Provenance</h3><p>Where the fact came from, when it changed, how trustworthy it is, and who is allowed to modify it.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="cloud">
+ <div class="wrap grid2">
+  <div class="card">
+   <span class="badge">CYBERCHECK</span>
+   <h2 style="font-size:38px;letter-spacing:-1.5px">Input + business operating layer</h2>
+   <div class="list">
+    <div class="li"><span class="tick">✓</span><div><b>Structure business data</b><span>Turn email, APIs, calendars, websites and manual updates into canonical business facts.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Give every fact context</b><span>Entity, ownership, permissions, source, freshness and relationships.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Expose usable capabilities</b><span>API and MCP tools for availability, menus, reviews, bookings, customers, pricing and more.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Own the customer relationship</b><span>The business interacts with CyberCheck regardless of which infrastructure executes underneath.</span></div></div>
+   </div>
+  </div>
+  <div class="card">
+   <span class="badge">CLOUDFLARE / INFRASTRUCTURE</span>
+   <h2 style="font-size:38px;letter-spacing:-1.5px">Transport + execution + agent infrastructure</h2>
+   <div class="list">
+    <div class="li"><span class="tick">✓</span><div><b>Agent and MCP hosting</b><span>Deploy agent runtimes and remote MCP servers.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Content transformation</b><span>Serve agent-friendly representations such as Markdown from web content.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Edge execution and state</b><span>Workers, Durable Objects, Containers/Sandbox and related infrastructure.</span></div></div>
+    <div class="li"><span class="tick">✓</span><div><b>Monetized content access</b><span>Cloudflare has experimented with allowing publishers to charge AI crawlers for access; that is content-access infrastructure, not the same thing as your operational business-data model.</span></div></div>
+   </div>
+  </div>
+ </div>
+ <div class="wrap" style="margin-top:18px">
+  <div class="callout"><h3>The clean strategic framing</h3><p><strong style="color:white">You structure the business world. Infrastructure providers move and execute it.</strong> CyberCheck can publish its structured facts and business actions through MCP/API, while Cloudflare or another provider can host, route, cache, execute, secure, or monetize access. That makes Cloudflare a possible infrastructure partner underneath you — not a replacement for your input layer.</p></div>
+ </div>
+</section>
+
+<section>
+ <div class="wrap">
+  <div class="section-head"><span class="badge">ONE COMMON LANGUAGE</span><h2>Everything communicates through CyberCheck instead of directly with everything else.</h2></div>
+  <div class="arch">
+   <div class="arch-row"><div class="node">Dashboard</div><div class="node">Phone</div><div class="node">SMS</div><div class="node">AI Agent</div><div class="node">Developer</div></div>
+   <div class="arr">↓</div>
+   <div class="arch-row"><div class="node"><b>API + MCP</b><small>Common control interface</small></div></div>
+   <div class="arr">↓</div>
+   <div class="arch-row"><div class="node"><b>CyberCheck Core</b><small>Identity · permissions · structured business data · orchestration</small></div></div>
+   <div class="arr">↓</div>
+   <div class="arch-row"><div class="node">Apps</div><div class="node">Plugins</div><div class="node">Automations</div><div class="node">Public Pages</div><div class="node">GCR</div></div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="wrap">
+  <div class="section-head"><span class="badge">THE SALES PITCH</span><h2>What the customer actually hears.</h2></div>
+  <div class="callout">
+   <h3>Your business already has enough software. CyberCheck makes it work together.</h3>
+   <p>Connect the tools you already use from the Plugin Store. Install the business features you want from the App Store. Automate the work between them. Build anything else with AI. Then control the entire business from one modular dashboard — or just call or text it when you do not want to open another app.</p>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="wrap">
+  <div class="section-head"><span class="badge">WHY THE STRUCTURE MATTERS</span><h2>Apps and providers can change. Your business layer stays.</h2></div>
+  <div class="compare">
+   <table>
+    <thead><tr><th>Layer</th><th>Can Change?</th><th>What CyberCheck Keeps Stable</th></tr></thead>
+    <tbody>
+     <tr><td>Booking provider</td><td class="yes">Yes</td><td>Canonical booking, offering, resource and availability model</td></tr>
+     <tr><td>Email provider</td><td class="yes">Yes</td><td>Customers, messages, events and parsed business facts</td></tr>
+     <tr><td>AI provider</td><td class="yes">Yes</td><td>MCP/API capabilities, permissions and business context</td></tr>
+     <tr><td>Cloud provider</td><td class="yes">Yes</td><td>CyberCheck contracts, data model and module definitions</td></tr>
+     <tr><td>Public website</td><td class="yes">Yes</td><td>Structured business data and reusable public app modules</td></tr>
+     <tr><td>Business identity</td><td>No</td><td>Your durable organization/entity/permission graph</td></tr>
+    </tbody>
+   </table>
+  </div>
+ </div>
+</section>
+
+<section id="contact">
+ <div class="wrap">
+  <div class="cta">
+   <span class="badge">THE LAST DASHBOARD YOU SHOULD NEED</span>
+   <h2>Plug everything in. Then run your business your way.</h2>
+   <p>Screen. Phone. Text. AI. API. MCP. One structured operating layer underneath all of it.</p>
+   <div class="hero-actions" style="justify-content:center"><a class="btn primary" href="mailto:hello@example.com?subject=CyberCheck%20Demo">Request a Demo</a><a class="btn soft" href="mailto:hello@example.com?subject=CyberCheck%20Workspace">Build My Workspace</a></div>
+   <div class="small">Replace the placeholder email before publishing.</div>
+  </div>
+ </div>
+</section>
+
+<section id="faq">
+ <div class="wrap">
+  <div class="section-head"><span class="badge">FAQ</span><h2>Simple answers for customers.</h2></div>
+  <div class="faq">
+   <details open><summary>What is the difference between an App and a Plugin?</summary><p>An App adds functionality inside CyberCheck. A Plugin connects CyberCheck to an outside service the business already uses. For example, Booking can be an App; Gmail can be a Plugin.</p></details>
+   <details><summary>Do I have to replace my current software?</summary><p>No. The core idea is to connect what you already use and make it communicate through one operating layer.</p></details>
+   <details><summary>What if the app I need does not exist?</summary><p>CyberCheck searches existing apps, plugins, automations and components first. If the capability is still missing, the AI builder can use Grok Build to generate the missing pieces and install them into the workspace.</p></details>
+   <details><summary>Can I really call or text my dashboard?</summary><p>That is part of the intended interface. Phone and SMS become alternative clients for the same permissioned business data and actions used by the visual dashboard.</p></details>
+   <details><summary>Is Cloudflare the database?</summary><p>No. Cloudflare can provide infrastructure for agents, MCP, containers, edge execution, state and agent-friendly content delivery. CyberCheck's business database remains the structured input and operating layer.</p></details>
+  </div>
+ </div>
+</section>
+</main>
+
+<footer><div class="wrap"><strong style="color:#dbe7f2">CyberCheck</strong> — Connect · Install · Automate · Build · Control</div></footer>
+
+<nav class="mobile-nav" aria-label="Mobile navigation">
+ <a href="#product"><i>⌂</i>Product</a>
+ <a href="#stores"><i>▦</i>Stores</a>
+ <a href="#build"><i>✦</i>Build</a>
+ <a href="#data"><i>◇</i>Data</a>
+ <a href="#contact"><i>→</i>Start</a>
+</nav>
+</body>
+</html>
