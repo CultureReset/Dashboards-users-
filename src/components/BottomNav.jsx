@@ -3,7 +3,7 @@
 // Add is always present, including when a business has no sections at all —
 // that is the whole point of it. A business that has never entered anything
 // still gets a way in.
-export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps }) {
+export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onDevices, devices }) {
   return (
     <nav className="bottom-nav">
       {sections.map((s) => (
@@ -23,6 +23,15 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
         >
           <span className="bottom-nav-icon">🧩</span>
           <span className="bottom-nav-label">Tools</span>
+        </button>
+      )}
+      {onDevices && (
+        <button
+          className={`bottom-nav-item${devices ? ' active' : ''}`}
+          onClick={onDevices}
+        >
+          <span className="bottom-nav-icon">📱</span>
+          <span className="bottom-nav-label">Devices</span>
         </button>
       )}
       {onAdd && (

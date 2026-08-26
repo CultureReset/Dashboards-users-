@@ -19,6 +19,7 @@ const BUSINESS = '/api/business'
 const BUSINESS_AUTH = '/api/business-auth'
 const AUTH = '/api/auth'
 const GCR = '/api/gcr'
+const DEVICES = '/api/devices'
 
 /** Encode a path segment so slugs and ids with odd characters stay valid. */
 const seg = (value) => encodeURIComponent(String(value ?? ''))
@@ -63,6 +64,19 @@ export const endpoints = {
     remove: (table, id) => `${BUSINESS}/${seg(table)}/${seg(id)}`,
     /** Distinct entity_type values, read live rather than hardcoded. */
     industries: () => `${BUSINESS}/industries`,
+  },
+
+  // ------------------------------------------------------------- devices ---
+  // routes/devices.js — this business's cloud Android, browser worker and
+  // physical phones. Every path is scoped server-side to the signed-in
+  // business, so no slug or site id appears here either.
+  devices: {
+    /** Every device, with liveness computed from its last heartbeat. */
+    list: () => DEVICES,
+    /** One device, plus its installed apps and any open session. */
+    one: (id) => `${DEVICES}/${seg(id)}`,
+    /** POST opens a view or control session; DELETE ends it. */
+    session: (id) => `${DEVICES}/${seg(id)}/session`,
   },
 
   // ------------------------------------------------------- the App Store ---

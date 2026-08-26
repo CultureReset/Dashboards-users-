@@ -13,6 +13,7 @@ import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
+import Devices from './Devices'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
+  const [showDevices, setShowDevices] = useState(false)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -143,8 +145,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showApps ? (
+      <MainContent empty={!adding && !showApps && !showDevices && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showDevices ? (
+          <Devices />
+        ) : showApps ? (
           <AppStore />
         ) : adding ? (
           <AddSection
@@ -176,16 +180,19 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps ? null : activeKey}
+        activeKey={showApps || showDevices ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowDevices(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowDevices(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowDevices(false); setShowApps(true) }}
         apps={showApps}
+        onDevices={() => { setAdding(false); setShowApps(false); setShowDevices(true) }}
+        devices={showDevices}
       />
     </div>
   )
