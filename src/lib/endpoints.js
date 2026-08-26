@@ -77,6 +77,9 @@ export const endpoints = {
     one: (id) => `${DEVICES}/${seg(id)}`,
     /** POST opens a view or control session; DELETE ends it. */
     session: (id) => `${DEVICES}/${seg(id)}/session`,
+    /** The Linux boxes phones are plugged into. POST enrols one. */
+    hosts: () => `${DEVICES}/hosts`,
+    host: (id) => `${DEVICES}/hosts/${seg(id)}`,
   },
 
   // ------------------------------------------------------- the App Store ---
