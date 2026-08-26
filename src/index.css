@@ -941,3 +941,77 @@ input { font: inherit; }
   word-break: break-all; padding: 9px 11px; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--border); width: 100%;
 }
+
+/* ── Settings ──────────────────────────────────────────────────────────── */
+
+.settings { max-width: 720px; margin: 0 auto; padding: 1rem 1rem 5rem; }
+.settings-loading { padding: 2rem 1rem; color: var(--muted); }
+.settings-head h2 { margin: 0 0 0.25rem; }
+.settings-head p { margin: 0 0 1.25rem; color: var(--muted); }
+
+.settings-error,
+.settings-saved {
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+.settings-error { background: var(--panel); border: 1px solid var(--danger); color: var(--danger); }
+.settings-saved { background: var(--accent-bg); border: 1px solid var(--accent); color: var(--accent); }
+
+.settings-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 0.75rem 1rem 1rem;
+  margin: 0 0 1rem;
+}
+.settings-group legend { padding: 0 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--muted); }
+
+.settings-field { display: block; margin-bottom: 0.85rem; }
+.settings-field > span { display: block; margin-bottom: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.settings-field input,
+.settings-field textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+}
+.settings-field textarea { resize: vertical; }
+
+/* An edited field is marked so "Save 3" and the form agree about which three. */
+.settings-field--dirty input,
+.settings-field--dirty textarea { border-color: var(--accent); }
+
+.settings-actions { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+.settings-note { color: var(--muted); font-size: 0.8rem; margin: -1.5rem 0 2rem; }
+
+.hours-edit {
+  display: grid;
+  grid-template-columns: 5.5rem auto 1fr auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.hours-edit-day { font-size: 0.9rem; }
+.hours-edit-closed { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+.hours-edit-to { color: var(--muted); font-size: 0.8rem; }
+.hours-edit input[type='time'] {
+  width: 100%;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+}
+.hours-edit input[type='time']:disabled { opacity: 0.4; }
+
+@media (max-width: 540px) {
+  .hours-edit { grid-template-columns: 4.5rem 1fr 1fr; }
+  .hours-edit-closed { grid-column: 2 / -1; }
+  .hours-edit-to { display: none; }
+}

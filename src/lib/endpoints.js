@@ -20,6 +20,7 @@ const BUSINESS_AUTH = '/api/business-auth'
 const AUTH = '/api/auth'
 const GCR = '/api/gcr'
 const DEVICES = '/api/devices'
+const USER = '/api/user'
 
 /** Encode a path segment so slugs and ids with odd characters stay valid. */
 const seg = (value) => encodeURIComponent(String(value ?? ''))
@@ -64,6 +65,20 @@ export const endpoints = {
     remove: (table, id) => `${BUSINESS}/${seg(table)}/${seg(id)}`,
     /** Distinct entity_type values, read live rather than hardcoded. */
     industries: () => `${BUSINESS}/industries`,
+  },
+
+  // ---------------------------------------------------- the business itself ---
+  // routes/user.js. This is the only router in gcr-api-clean that can write the
+  // `entity` row. /api/business deliberately cannot: lib/businessTables.js
+  // builds its allow-list from tables carrying an `entity_slug` column, and
+  // `entity` is keyed by `slug`, so `entity` is not a "business section" there.
+  profile: {
+    /** The entity row, the account's profile row, its hours and its modules. */
+    read: () => `${USER}/profile`,
+    /** PUT with any of the fields routes/user.js allows; others are ignored. */
+    write: () => `${USER}/profile`,
+    /** Opening hours, one row per stretch — split days are legal. */
+    hours: () => `${USER}/hours`,
   },
 
   // ------------------------------------------------------------- devices ---

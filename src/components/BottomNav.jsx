@@ -1,9 +1,18 @@
-// One tab per discovered section, plus a permanent Add tab.
+// One tab per discovered section, then the fixed tabs, then Add.
 //
 // Add is always present, including when a business has no sections at all —
 // that is the whole point of it. A business that has never entered anything
 // still gets a way in.
-export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onDevices, devices }) {
+
+// The tabs that are not a section. Driven by a list rather than repeated
+// markup so a new one is a line here, not another copy of the same button.
+const OVERLAYS = [
+  { name: 'apps', icon: '🧩', label: 'Tools' },
+  { name: 'devices', icon: '📱', label: 'Devices' },
+  { name: 'settings', icon: '⚙️', label: 'Settings' },
+]
+
+export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, overlay, onOverlay }) {
   return (
     <nav className="bottom-nav">
       {sections.map((s) => (
@@ -16,24 +25,16 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
           <span className="bottom-nav-label">{s.label}</span>
         </button>
       ))}
-      {onApps && (
+      {onOverlay && OVERLAYS.map(({ name, icon, label }) => (
         <button
-          className={`bottom-nav-item${apps ? ' active' : ''}`}
-          onClick={onApps}
+          key={name}
+          className={`bottom-nav-item${overlay === name ? ' active' : ''}`}
+          onClick={() => onOverlay(name)}
         >
-          <span className="bottom-nav-icon">🧩</span>
-          <span className="bottom-nav-label">Tools</span>
+          <span className="bottom-nav-icon">{icon}</span>
+          <span className="bottom-nav-label">{label}</span>
         </button>
-      )}
-      {onDevices && (
-        <button
-          className={`bottom-nav-item${devices ? ' active' : ''}`}
-          onClick={onDevices}
-        >
-          <span className="bottom-nav-icon">📱</span>
-          <span className="bottom-nav-label">Devices</span>
-        </button>
-      )}
+      ))}
       {onAdd && (
         <button
           className={`bottom-nav-item bottom-nav-add${adding ? ' active' : ''}`}

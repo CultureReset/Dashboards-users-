@@ -14,6 +14,7 @@ import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
 import Devices from './Devices'
+import Settings from './Settings'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,8 +27,10 @@ export default function Dashboard() {
   const [reloadKey, setReloadKey] = useState(0) // bumped after an edit saves
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
-  const [showApps, setShowApps] = useState(false)
-  const [showDevices, setShowDevices] = useState(false)
+  // One full-width view at a time: 'apps' | 'devices' | 'settings' | null.
+  // A boolean per view meant every new one had to clear all the others, and
+  // each place that forgot left two of them on screen at once.
+  const [overlay, setOverlay] = useState(null)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -136,7 +139,7 @@ export default function Dashboard() {
         activeKey={adding ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
-          setShowApps(false)
+          setOverlay(null)
           setActiveKey(key)
         }}
       />
@@ -145,10 +148,12 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showDevices && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showDevices ? (
+      <MainContent empty={!adding && !overlay && sections.length === 0} onAdd={() => setAdding(true)}>
+        {overlay === 'devices' ? (
           <Devices />
-        ) : showApps ? (
+        ) : overlay === 'settings' ? (
+          <Settings />
+        ) : overlay === 'apps' ? (
           <AppStore />
         ) : adding ? (
           <AddSection
@@ -180,19 +185,16 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showDevices ? null : activeKey}
+        activeKey={overlay ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
-          setShowApps(false)
-          setShowDevices(false)
+          setOverlay(null)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowDevices(false); setAdding(true) }}
+        onAdd={() => { setOverlay(null); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowDevices(false); setShowApps(true) }}
-        apps={showApps}
-        onDevices={() => { setAdding(false); setShowApps(false); setShowDevices(true) }}
-        devices={showDevices}
+        overlay={overlay}
+        onOverlay={(name) => { setAdding(false); setOverlay(name) }}
       />
     </div>
   )
