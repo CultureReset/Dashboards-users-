@@ -476,3 +476,55 @@
 }
 
 .booking-add h4 { margin: 0; font-size: 0.9rem; }
+
+/* ── the month at a glance ──────────────────────────────────────────── */
+/*
+ * Only the nights that differ from the normal rate are filled in. A grid
+ * where every square is coloured tells an owner nothing; a grid where six
+ * squares are coloured tells them exactly which six they changed.
+ */
+
+.booking-month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.booking-month-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 4px 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.booking-month-day.set {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.booking-month-day.set.closed {
+  border-color: var(--danger);
+  background: var(--panel);
+  color: var(--danger);
+}
+
+.booking-month-day strong { font-size: 0.78rem; font-weight: 600; }
+.booking-month-day em { font-style: normal; font-size: 0.7rem; }
+
+/* The small uppercase caption used above a group of controls. */
+.booking-lbl {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 6px;
+}

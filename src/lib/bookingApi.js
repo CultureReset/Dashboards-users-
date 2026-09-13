@@ -15,6 +15,7 @@ import { api } from './apiClient'
 import { endpoints } from './endpoints'
 
 const booking = endpoints.booking
+const BOOKING_ROOT = '/api/booking'
 
 /* ── setup ──────────────────────────────────────────────────────────── */
 
@@ -118,6 +119,82 @@ export const stripeLoginLink = () => api.post(booking.stripeLogin(), {})
 
 export const fetchSettings = () => api.get(booking.settings())
 export const saveSettings = (body) => api.patch(booking.settings(), body)
+
+
+/* ── the rate calendar and channels ─────────────────────────────────── */
+
+export const fetchRateCalendar = (productId, from, to) =>
+  api.get(`${booking.product(productId)}/calendar`, { query: { from, to } })
+
+/**
+ * Set a run of dates in one call.
+ *
+ * Owners think in spans — "August is $320 a night, three-night minimum" —
+ * so the API takes a span, optionally narrowed to certain weekdays. That
+ * is how a weekend rate is set across a whole season without touching
+ * sixty individual days.
+ */
+export const setRateCalendar = (productId, body) =>
+  api.put(`${booking.product(productId)}/calendar`, body)
+
+export const clearRateCalendar = (productId, from, to) =>
+  api.del(`${booking.product(productId)}/calendar`, { query: { from, to } })
+
+export const fetchChannels = () => api.get(`${BOOKING_ROOT}/channels`)
+export const createChannel = (body) => api.post(`${BOOKING_ROOT}/channels`, body)
+export const updateChannel = (id, patch) => api.patch(`${BOOKING_ROOT}/channels/${id}`, patch)
+export const deleteChannel = (id) => api.del(`${BOOKING_ROOT}/channels/${id}`)
+export const syncChannel = (id) => api.post(`${BOOKING_ROOT}/channels/${id}/sync`, {})
+
+/* ── wording ────────────────────────────────────────────────────────── */
+
+/**
+ * What this business calls the thing it sells.
+ *
+ * A charter operator has "Trips"; a beach house has "Stays"; a salon has
+ * "Appointments". Calling everything "Trips" is the one piece of
+ * hardwiring that survived the first pass, and it is wrong on screen for
+ * most businesses.
+ *
+ * Derived from the products themselves rather than from a list of trades,
+ * so a vertical nobody has thought of yet still gets sensible wording.
+ */
+const NOUNS = {
+  date_range: { one: 'Stay', many: 'Stays', verb: 'book' },
+  request: { one: 'Enquiry', many: 'Enquiries', verb: 'request' },
+  open_date: { one: 'Ticket', many: 'Tickets', verb: 'book' },
+  duration_slots: { one: 'Session', many: 'Sessions', verb: 'book' },
+  fixed_times: { one: 'Trip', many: 'Trips', verb: 'book' },
+}
+
+export function wordingFor(products) {
+  const list = products || []
+  if (!list.length) return { one: 'Booking', many: 'Bookings', verb: 'book', icon: '📅' }
+
+  // The most common schedule_mode wins; a mixed business gets the neutral
+  // word rather than one of its halves.
+  const counts = {}
+  for (const product of list) {
+    const mode = product.schedule_mode || 'fixed_times'
+    counts[mode] = (counts[mode] || 0) + 1
+  }
+  const modes = Object.keys(counts)
+  if (modes.length > 1) return { one: 'Booking', many: 'Bookings', verb: 'book', icon: '📅' }
+
+  const noun = NOUNS[modes[0]] || NOUNS.fixed_times
+  // The icon comes from the products' own template, so a parasail
+  // business gets its own emoji rather than a fishing rod.
+  const icon = list.find((p) => p.icon)?.icon || ICONS[modes[0]] || '📅'
+  return { ...noun, icon }
+}
+
+const ICONS = {
+  date_range: '🏖️',
+  request: '✉️',
+  open_date: '🎟️',
+  duration_slots: '🗓️',
+  fixed_times: '⛵',
+}
 
 /* ── display helpers ────────────────────────────────────────────────── */
 //

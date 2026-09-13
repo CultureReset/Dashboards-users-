@@ -4,6 +4,7 @@ import {
   rates as ratesApi, extras as extrasApi, schedules as schedulesApi,
   money, depositLabel, SCHEDULE_MODES, CAPACITY_MODES,
 } from '../lib/bookingApi'
+import BookingRates from './BookingRates'
 
 /**
  * The trips, their prices and their hours.
@@ -14,7 +15,7 @@ import {
  * only thing that changes between them is which words the labels use, and
  * those come from the product's own schedule_mode.
  */
-export default function BookingProducts({ onChanged }) {
+export default function BookingProducts({ onChanged, wording }) {
   const [products, setProducts] = useState(null)
   const [templates, setTemplates] = useState([])
   const [openId, setOpenId] = useState(null)
@@ -55,6 +56,7 @@ export default function BookingProducts({ onChanged }) {
             open={openId === product.id}
             onToggle={() => setOpenId(openId === product.id ? null : product.id)}
             onChanged={changed}
+            wording={wording}
           />
         ))}
       </div>
@@ -62,12 +64,13 @@ export default function BookingProducts({ onChanged }) {
       {adding ? (
         <AddProduct
           templates={templates}
+          wording={wording}
           onCancel={() => setAdding(false)}
           onDone={() => { setAdding(false); changed() }}
         />
       ) : (
         <button type="button" className="booking-btn booking-btn-ghost" onClick={() => setAdding(true)}>
-          ＋ Add another trip or service
+          ＋ Add another
         </button>
       )}
     </div>
@@ -76,7 +79,7 @@ export default function BookingProducts({ onChanged }) {
 
 /* ── one product ────────────────────────────────────────────────────── */
 
-function ProductCard({ product, open, onToggle, onChanged }) {
+function ProductCard({ product, open, onToggle, onChanged, wording }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -140,11 +143,15 @@ function ProductCard({ product, open, onToggle, onChanged }) {
         <div className="booking-card-body">
           <ProductSettings product={product} onChanged={onChanged} />
           <RateList product={product} onChanged={onChanged} />
+          {/* Only a product sold by the night has seasons to set. */}
+          {product.schedule_mode === 'date_range' && (
+            <BookingRates product={product} onChanged={onChanged} />
+          )}
           <ScheduleList product={product} onChanged={onChanged} />
           <ExtraList product={product} onChanged={onChanged} />
           <div className="booking-card-danger">
             <button type="button" className="booking-btn booking-btn-danger" disabled={busy} onClick={remove}>
-              Remove this trip
+              Remove this {(wording?.one || 'item').toLowerCase()}
             </button>
           </div>
         </div>
@@ -724,7 +731,7 @@ function ExtraRow({ extra, currency, onChanged }) {
 
 /* ── adding another ─────────────────────────────────────────────────── */
 
-function AddProduct({ templates, onCancel, onDone }) {
+function AddProduct({ templates, wording, onCancel, onDone }) {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
 
@@ -743,6 +750,11 @@ function AddProduct({ templates, onCancel, onDone }) {
   return (
     <div className="booking-add">
       <h4>What are you adding?</h4>
+      {wording?.many && (
+        <p className="booking-note">
+          It will sit alongside your other {wording.many.toLowerCase()}.
+        </p>
+      )}
       {error && <p className="auth-error">{error}</p>}
       <div className="booking-template-grid booking-template-grid-small">
         {templates.map((template) => (
