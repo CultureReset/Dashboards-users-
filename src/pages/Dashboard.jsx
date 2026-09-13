@@ -13,6 +13,7 @@ import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
+import Pages from './Pages'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
+  const [showPages, setShowPages] = useState(false)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -120,6 +122,24 @@ export default function Dashboard() {
     )
   }
 
+  // Picking a discovered section leaves whichever permanent view was open.
+  // One function so a fourth of them cannot be added and half-wired.
+  const openSection = (key) => {
+    setAdding(false)
+    setShowApps(false)
+    setShowPages(false)
+    setActiveKey(key)
+  }
+
+  /** Open one permanent view, closing the others. */
+  const openOnly = (which) => {
+    setAdding(which === 'add')
+    setShowApps(which === 'apps')
+    setShowPages(which === 'pages')
+  }
+
+  const onPermanentView = adding || showApps || showPages
+
   const active = sections.find((s) => s.key === activeKey)
   // Columns for the table behind this section, so the renderer can be chosen
   // from its shape rather than from its name.
@@ -131,28 +151,26 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={adding ? null : activeKey}
-        onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setActiveKey(key)
-        }}
+        activeKey={onPermanentView ? null : activeKey}
+        onSelect={openSection}
       />
       {sweep && (
         <div className="sweep-status">
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showApps ? (
+      <MainContent empty={!onPermanentView && sections.length === 0} onAdd={() => openOnly('add')}>
+        {showPages ? (
+          <Pages />
+        ) : showApps ? (
           <AppStore />
         ) : adding ? (
           <AddSection
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
-            onCancel={() => setAdding(false)}
+            onCancel={() => openOnly(null)}
             onDone={(table) => {
-              setAdding(false)
+              openOnly(null)
               // The new row makes this table a section on the next pass.
               setActiveKey(TABLE_TO_API_KEY[table] || table)
               setReloadKey((k) => k + 1)
@@ -176,16 +194,14 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps ? null : activeKey}
-        onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setActiveKey(key)
-        }}
-        onAdd={() => { setShowApps(false); setAdding(true) }}
+        activeKey={onPermanentView ? null : activeKey}
+        onSelect={openSection}
+        onAdd={() => openOnly('add')}
         adding={adding}
-        onApps={() => { setAdding(false); setShowApps(true) }}
+        onApps={() => openOnly('apps')}
         apps={showApps}
+        onPages={() => openOnly('pages')}
+        pages={showPages}
       />
     </div>
   )

@@ -63,6 +63,14 @@ export const endpoints = {
     remove: (table, id) => `${BUSINESS}/${seg(table)}/${seg(id)}`,
     /** Distinct entity_type values, read live rather than hardcoded. */
     industries: () => `${BUSINESS}/industries`,
+    /**
+     * The business's own links — Facebook, Instagram, TikTok, website.
+     *
+     * The only path here that touches `entity` rather than a slug table.
+     * Those columns live on the entity row itself, so discovery cannot find
+     * them and /api/business/:table cannot reach them. GET and PATCH.
+     */
+    profile: () => `${BUSINESS}/profile`,
   },
 
   // ------------------------------------------------------- the App Store ---
