@@ -51,7 +51,15 @@ Two sources, merged:
 | Source | Covers |
 |---|---|
 | `GET /api/gcr/entity/:slug` on **gcr-api-clean** | The ~60 domains the API knows about, pre-joined — menu sections with their items nested, offerings with their price tiers |
-| Direct PostgREST sweep of the GCR Supabase | Everything else — any table with an `entity_slug` column |
+| `GET /api/business/schema` + the sweep behind it, also on **gcr-api-clean** | Everything else — any table with an `entity_slug` column |
+
+**Both go through the API.** This used to say the second one was a direct
+PostgREST sweep of Supabase, which it was: the browser held the anon key and
+pulled the whole database schema on every load. That key is gone and the
+sweep moved server-side, where the service key can see tables the browser was
+never allowed to and the reply is a short list instead of the entire schema.
+Nothing in `src/` opens a database connection — see the note at the top of
+`src/lib/config.js` before adding a host back to it.
 
 Where both carry the same table, the API version wins because it arrives better
 shaped.
@@ -81,7 +89,7 @@ already be a real table name, so a table added tomorrow still works untouched.
 
 | File | What it does |
 |---|---|
-| `schemaDiscovery.js` | Reads the live PostgREST OpenAPI spec every load. Finds every table with an `entity_slug` column, and each table's columns — which is how edit forms build themselves. |
+| `schemaDiscovery.js` | Asks `GET /api/business/schema` which tables carry an `entity_slug` column, and what columns each has — which is how edit forms build themselves. Cached in localStorage for first paint. |
 | `entityTables.js` | Sweeps those tables for one slug. Tries the `entity_sections` RPC first (one call); falls back to 12-at-a-time streaming requests when it isn't installed. |
 | `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
 | `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Holds back internal tables (AI indexes, bookings, customer records, access control, backups). |
@@ -89,7 +97,7 @@ already be a real table name, so a table added tomorrow still works untouched.
 | `gcrApi.js` | The three gcr-api-clean calls: entity, search, claim. |
 | `writeEntityData.js` | **Every write goes through here.** Forces the business's own slug onto inserts; filters updates and deletes by slug as well as row id. |
 | `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
-| `config.js` | API host, Supabase host and key, login domain. |
+| `config.js` | API host, login domain, request timeout. No database host and no key — deliberately, and the file says so. |
 
 **Screens — `src/pages/`** — `Login`, `Claim`, `Dashboard`, `BusinessPicker` (admin only).
 
