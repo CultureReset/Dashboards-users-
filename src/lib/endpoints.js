@@ -10,6 +10,7 @@
  * to GCR_API_BASE and mirror the routers mounted in gcr-api-clean/server.js:
  *
  *   /api/business       → routes/business-data.js   (this business's own data)
+ *   /api/business/automations → routes/automations.js (what was pushed to it)
  *   /api/business-auth  → routes/business-auth.js   (phone sign-up and sign-in)
  *   /api/auth           → routes/auth.js            (invite links)
  *   /api/gcr            → routes/gcr.js             (public listings, claims)
@@ -73,6 +74,18 @@ export const endpoints = {
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,
     refresh: (toolId) => `/api/connections/${seg(toolId)}/refresh`,
     disconnect: (toolId) => `/api/connections/${seg(toolId)}`,
+  },
+
+  // --------------------------------------------------------- automations ---
+  // What the operator pushed to this business, at the version it was given.
+  // Scoped by the session, like everything under /api/business.
+  automations: {
+    list: () => `${BUSINESS}/automations`,
+    update: (id) => `${BUSINESS}/automations/${seg(id)}`,
+    run: (id) => `${BUSINESS}/automations/${seg(id)}/run`,
+    runs: (id) => `${BUSINESS}/automations/${seg(id)}/runs`,
+    upgrade: (id) => `${BUSINESS}/automations/${seg(id)}/update`,
+    rotateHook: (id) => `${BUSINESS}/automations/${seg(id)}/hook/rotate`,
   },
 
   // ------------------------------------------------------ public listings ---
