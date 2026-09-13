@@ -167,9 +167,17 @@ export async function request(path, options = {}) {
   // see a business's data and gets a 403 the moment they try to change any of
   // it. The server ignores this for everyone platform_admins does not vouch
   // for, so attaching it is never a grant.
+  //
+  // The same applies to the booking platform's owner routes, which resolve a
+  // business the same way. Its /api/booking/public/ routes name their slug in
+  // the path and ignore this, so they are left out rather than relying on the
+  // server to overlook a parameter it was not sent.
   const acting = getActingSlug()
+  const needsActingSlug =
+    path.startsWith('/api/business/') ||
+    (path.startsWith('/api/booking/') && !path.startsWith('/api/booking/public/'))
   const withActing =
-    acting && path.startsWith('/api/business/') && !query?.slug
+    acting && needsActingSlug && !query?.slug
       ? { ...query, slug: acting }
       : query
 

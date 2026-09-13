@@ -19,6 +19,7 @@ const BUSINESS = '/api/business'
 const BUSINESS_AUTH = '/api/business-auth'
 const AUTH = '/api/auth'
 const GCR = '/api/gcr'
+const BOOKING = '/api/booking'
 
 /** Encode a path segment so slugs and ids with odd characters stay valid. */
 const seg = (value) => encodeURIComponent(String(value ?? ''))
@@ -73,6 +74,48 @@ export const endpoints = {
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,
     refresh: (toolId) => `/api/connections/${seg(toolId)}/refresh`,
     disconnect: (toolId) => `/api/connections/${seg(toolId)}`,
+  },
+
+  // ---------------------------------------------------- booking platform ---
+  // The modular booking engine in gcr-api-clean (routes/booking.js).
+  //
+  // Same rule as everything above: no owner path carries a slug. The API
+  // resolves which business is calling from the session through
+  // entity_owners, so there is nothing this dashboard could put in a
+  // request that would let it configure, read or refund for another one.
+  //
+  // The only slug that appears here is in `publicPage`, which is the
+  // customer-facing preview of a page this business publishes — the same
+  // URL a stranger would open.
+  booking: {
+    /** The vertical catalogue: charter, parasail, jet ski, tour, … */
+    templates: () => `${BOOKING}/templates`,
+    /** Is this business ready to take bookings, and how is it doing? */
+    summary: () => `${BOOKING}/summary`,
+
+    products: () => `${BOOKING}/products`,
+    product: (id) => `${BOOKING}/products/${seg(id)}`,
+
+    // Rates, schedules, extras and resources are the same four verbs each.
+    collection: (name) => `${BOOKING}/${seg(name)}`,
+    collectionItem: (name, id) => `${BOOKING}/${seg(name)}/${seg(id)}`,
+
+    orders: () => `${BOOKING}/orders`,
+    order: (id) => `${BOOKING}/orders/${seg(id)}`,
+    refund: (id) => `${BOOKING}/orders/${seg(id)}/refund`,
+    calendar: () => `${BOOKING}/calendar`,
+
+    // Stripe Connect. The dashboard never sees a key or an account token —
+    // it asks for a one-time link and sends the owner to Stripe.
+    paymentAccount: () => `${BOOKING}/payments/account`,
+    onboard: () => `${BOOKING}/payments/account/onboard`,
+    refreshAccount: () => `${BOOKING}/payments/account/refresh`,
+    stripeLogin: () => `${BOOKING}/payments/account/login-link`,
+
+    settings: () => `${BOOKING}/settings`,
+
+    /** The public booking page, as a customer sees it. */
+    publicPage: (slug) => `${BOOKING}/public/${seg(slug)}`,
   },
 
   // ------------------------------------------------------ public listings ---

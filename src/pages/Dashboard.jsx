@@ -13,6 +13,7 @@ import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
+import Bookings from './Bookings'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,6 +27,13 @@ export default function Dashboard() {
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
+  // Bookings is a module, not a section: it has its own tables and its own
+  // API, so section discovery never finds it and never should. It gets a
+  // permanent tab instead, the same way the App Store does — a business
+  // that does not take bookings simply never opens it.
+  const [showBookings, setShowBookings] = useState(
+    () => location.hash.replace(/^#/, '').split('/')[0] === 'bookings',
+  )
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -135,6 +143,7 @@ export default function Dashboard() {
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowBookings(false)
           setActiveKey(key)
         }}
       />
@@ -143,8 +152,13 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showApps ? (
+      <MainContent
+        empty={!adding && !showApps && !showBookings && sections.length === 0}
+        onAdd={() => setAdding(true)}
+      >
+        {showBookings ? (
+          <Bookings />
+        ) : showApps ? (
           <AppStore />
         ) : adding ? (
           <AddSection
@@ -176,16 +190,19 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps ? null : activeKey}
+        activeKey={showApps || showBookings ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowBookings(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowBookings(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowBookings(false); setShowApps(true) }}
         apps={showApps}
+        onBookings={() => { setAdding(false); setShowApps(false); setShowBookings(true) }}
+        bookings={showBookings}
       />
     </div>
   )
