@@ -33,6 +33,8 @@ export default function Ghost() {
   const [busy, setBusy] = useState(false)
   const [log, setLog] = useState([]) // most recent first
   const [approvals, setApprovals] = useState([])
+  const [boxName, setBoxName] = useState('')
+  const [phrases, setPhrases] = useState([]) // sentences this box's own maps understand
 
   const load = useCallback(async () => {
     try {
@@ -55,8 +57,9 @@ export default function Ghost() {
   async function enrol() {
     setBusy(true)
     try {
-      const result = await api.post(endpoints.nodes.enrol(), { name: 'Ghost' })
+      const result = await api.post(endpoints.nodes.enrol(), boxName.trim() ? { name: boxName.trim() } : {})
       setEnrolled(result)
+      setBoxName('')
       await load()
     } catch (err) {
       setError(err.message)
@@ -105,6 +108,22 @@ export default function Ghost() {
   }
 
   const node = nodes?.find((n) => n.id === selected)
+  const nodeOnline = !!node && online(node)
+
+  // What this box can do comes from the box itself (its map catalog), never
+  // from this screen, so a new map shows up here the moment it is installed.
+  useEffect(() => {
+    setPhrases([])
+    if (!selected || !nodeOnline) return
+    let cancelled = false
+    ask('GET', '/capabilities')
+      .then((answer) => {
+        const byCapability = answer.response_body?.phrases || {}
+        if (!cancelled) setPhrases(Object.values(byCapability).flat())
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [selected, nodeOnline])
 
   return (
     <div className="panel ghost-page">
@@ -139,6 +158,13 @@ export default function Ghost() {
             {n.name} · {n.revoked_at ? 'revoked' : online(n) ? 'online' : `last seen ${since(n.last_seen_at)}`}
           </button>
         ))}
+        <input
+          className="ghost-name"
+          value={boxName}
+          onChange={(e) => setBoxName(e.target.value)}
+          placeholder="Name the box (optional)"
+          maxLength={80}
+        />
         <button onClick={enrol} disabled={busy}>+ Enrol a box</button>
       </div>
 
@@ -153,13 +179,24 @@ export default function Ghost() {
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder='Try "open display settings" or "text +1555… running late"'
+              placeholder={phrases.length ? `Try "${phrases[0]}"` : 'Tell your box what to do'}
               disabled={busy || !online(node)}
             />
             <button className="primary" type="submit" disabled={busy || !text.trim() || !online(node)}>
               {busy ? 'Working…' : 'Send'}
             </button>
           </form>
+
+          {phrases.length > 0 && (
+            <p className="claim-sub ghost-phrases">
+              It understands:{' '}
+              {phrases.map((phrase) => (
+                <button key={phrase} type="button" className="ghost-phrase" onClick={() => setText(phrase)}>
+                  {phrase}
+                </button>
+              ))}
+            </p>
+          )}
 
           {approvals.length > 0 && (
             <div className="panel">
