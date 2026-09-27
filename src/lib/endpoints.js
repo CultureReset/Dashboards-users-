@@ -75,6 +75,17 @@ export const endpoints = {
     disconnect: (toolId) => `/api/connections/${seg(toolId)}`,
   },
 
+  // ----------------------------------------------------- the Ghost box(es) ---
+  // Scoped to one business by the session. The box is reached through the
+  // relay: a request is queued here, the box pulls it, the answer comes back.
+  nodes: {
+    list: () => '/api/nodes',
+    enrol: () => '/api/nodes',
+    revoke: (id) => `/api/nodes/${seg(id)}`,
+    request: (id) => `/api/nodes/${seg(id)}/requests`,
+    requestStatus: (id, rid) => `/api/nodes/${seg(id)}/requests/${seg(rid)}`,
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,

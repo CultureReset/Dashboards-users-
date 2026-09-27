@@ -828,3 +828,10 @@ input { font: inherit; }
 }
 .store-btn.off { color: var(--muted); }
 .store-btn:disabled { opacity: 0.5; }
+
+/* My Ghost */
+.ghost-command { display: flex; gap: 8px; margin: 12px 0; }
+.ghost-command input { flex: 1; min-width: 0; padding: 10px 12px; font: inherit; }
+.ghost-token { user-select: all; word-break: break-all; padding: 10px; border-radius: 8px; background: rgba(0,0,0,.08); }
+.ghost-log { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+.ghost-log li { padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,.04); }

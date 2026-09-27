@@ -13,6 +13,7 @@ import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
+import Ghost from './Ghost'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
+  const [showGhost, setShowGhost] = useState(false)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -135,6 +137,7 @@ export default function Dashboard() {
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowGhost(false)
           setActiveKey(key)
         }}
       />
@@ -143,8 +146,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showApps ? (
+      <MainContent empty={!adding && !showApps && !showGhost && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showGhost ? (
+          <Ghost />
+        ) : showApps ? (
           <AppStore />
         ) : adding ? (
           <AddSection
@@ -176,16 +181,19 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps ? null : activeKey}
+        activeKey={showApps || showGhost ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowGhost(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowGhost(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowApps(true) }}
         apps={showApps}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowGhost(true) }}
+        ghost={showGhost}
       />
     </div>
   )
