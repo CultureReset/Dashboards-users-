@@ -58,13 +58,15 @@ including tables nobody has written any code for. Pick one, fill in the form
 built from that table's columns, and it becomes a live section. A business with
 nothing entered starts from that catalog rather than an empty screen.
 
+
+
 <!-- branches:start -->
 ## Branches
 
 *Read from GitHub on 2026-09-29. 12 branches.*
 
-- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`.
-- **`claude/repo-code-analysis-y4n1k7`** is where this README and the audit fixes live. It contains every commit on `claude/dashboard-inventory-purposes-m5wtba` and more (this README, the audit fixes and the screenshots).
+- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`. It does **not** yet have this README or the audit fixes; those are on `claude/repo-code-analysis-y4n1k7`, which contains every commit of `claude/dashboard-inventory-purposes-m5wtba` and more, so it can be fast-forwarded without losing anything.
+- **`claude/repo-code-analysis-y4n1k7`** is where the README audit, the screenshots and the fixes were made.
 - **7 other branches hold commits that `claude/repo-code-analysis-y4n1k7` does not have.** The newest is `claude/modular-booking-platform-wdq0kk` (last commit 2026-09-13, 2 commits not in the work branch). Check those before assuming the work branch is the whole story.
 
 <details><summary>All 12 branches</summary>
