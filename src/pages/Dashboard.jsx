@@ -14,6 +14,7 @@ import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
 import Ghost from './Ghost'
+import Store from './Store'
 import Automations from './Automations'
 import { fetchAutomations } from '../lib/automations'
 
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
   const [showGhost, setShowGhost] = useState(false)
+  const [showStore, setShowStore] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
 
@@ -151,7 +153,7 @@ export default function Dashboard() {
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
-          setShowGhost(false)
+          setShowGhost(false); setShowStore(false)
           setShowAutomations(false)
           setActiveKey(key)
         }}
@@ -161,8 +163,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showGhost ? (
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showStore ? (
+          <Store />
+        ) : showGhost ? (
           <Ghost />
         ) : showAutomations ? (
           <Automations onCountChange={setAutomationsCount} />
@@ -198,21 +202,23 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showGhost || showAutomations ? null : activeKey}
+        activeKey={showApps || showGhost || showStore || showAutomations ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
-          setShowGhost(false)
+          setShowGhost(false); setShowStore(false)
           setShowAutomations(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowGhost(false); setShowAutomations(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowAutomations(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowAutomations(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowAutomations(false); setShowApps(true) }}
         apps={showApps}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(true) }}
+        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(true) }}
+        store={showStore}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowGhost(true) }}
         ghost={showGhost}
-        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowAutomations(true) }}
+        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowAutomations(true) }}
         automations={showAutomations}
         automationsCount={automationsCount}
       />

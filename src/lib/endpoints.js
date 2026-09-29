@@ -69,6 +69,18 @@ export const endpoints = {
   // ------------------------------------------------------- the App Store ---
   // Scoped to one business. The API resolves which one from the session via
   // entity_owners, so no path here carries a slug either.
+  // -------------------------------------------------------------- store ---
+  // What the operator made available to this business, and what it has.
+  // Scoped by the session; no slug is ever sent.
+  store: {
+    list: () => '/api/store',
+    install: (id) => `/api/store/${seg(id)}/install`,
+    update: (id) => `/api/store/${seg(id)}/update`,
+    status: (id, verb) => `/api/store/${seg(id)}/${seg(verb)}`,
+    config: (id) => `/api/store/${seg(id)}/config`,
+    item: (id) => `/api/store/${seg(id)}`,
+  },
+
   connections: {
     list: () => '/api/connections',
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,

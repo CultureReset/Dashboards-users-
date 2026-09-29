@@ -990,3 +990,35 @@ input { font: inherit; }
 .auto-run-when { flex: 1; }
 .auto-run-how { color: var(--muted); font-size: 0.72rem; }
 .auto-run-caret { color: var(--muted); }
+
+/* Store — what the operator made available to this business, and what it has. */
+.store-list { list-style: none; padding: 0; margin: 8px 0 16px; display: grid; gap: 10px; }
+.store-card { border: 1px solid var(--border); border-radius: 13px; background: var(--panel); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.store-card.off { opacity: 0.72; }
+.store-head { display: flex; align-items: center; gap: 10px; }
+.store-icon { font-size: 1.4rem; flex: none; }
+.store-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.store-title span { font-size: 0.8rem; color: var(--muted); }
+.store-meta { font-size: 0.76rem; color: var(--muted); }
+.store-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.store-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 9px; background: var(--accent-bg); color: var(--accent); font-size: 0.8rem; font-weight: 600; }
+.store-note { font-weight: 600; color: var(--accent); }
+.store-consent ul { margin: 6px 0 10px; }
+.store-settings { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.store-settings label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
+.store-actions button, .store-banner button, .store-settings > button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+.store-actions button.primary, .store-settings > button.primary, .store-banner button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.store-actions button:disabled, .store-banner button:disabled { opacity: 0.6; }
+.store-settings input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
