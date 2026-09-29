@@ -65,7 +65,7 @@ nothing entered starts from that catalog rather than an empty screen.
 
 *Read from GitHub on 2026-09-29. 12 branches.*
 
-- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`. It does **not** yet have this README or the audit fixes; those are on `claude/repo-code-analysis-y4n1k7`, which contains every commit of `claude/dashboard-inventory-purposes-m5wtba` and more, so it can be fast-forwarded without losing anything.
+- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`. On 2026-09-29 it was fast-forwarded to `claude/repo-code-analysis-y4n1k7`, so it now has this README and the audit fixes; nothing was overwritten (it previously ended at `f323f55`).
 - **`claude/repo-code-analysis-y4n1k7`** is where the README audit, the screenshots and the fixes were made.
 - **7 other branches hold commits that `claude/repo-code-analysis-y4n1k7` does not have.** The newest is `claude/modular-booking-platform-wdq0kk` (last commit 2026-09-13, 2 commits not in the work branch). Check those before assuming the work branch is the whole story.
 
