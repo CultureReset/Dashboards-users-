@@ -9,7 +9,25 @@ name (`admin-dashboard-`, package `dashboard-shell`) read as an admin tool and
 sat one hyphen away from `Admin-dashboard-main`, which is a different product.
 Treat this copy as the one to work on.
 
-Both talk to the same backend, `gcr-api-clean`.
+Both talk to the same backend, `gcr-api-clean`. Production:
+`dashboards-users.vercel.app`. It is built phone-first: a bottom bar, no sidebar.
+
+| Store | My Ghost |
+| --- | --- |
+| ![Store: an update is ready, another app is available](docs/images/store.png) | ![My Ghost: the business's box, online, with a command bar](docs/images/my-ghost.png) |
+
+*Captured against a test backend with sample data (one installed app with an
+update waiting, one free app available, one online box).*
+
+**Store** shows what the operator made available to this business (free, in its
+plan, or granted), lets it install, switch off, configure and remove apps, and
+pull updates. An update that asks for more access is never applied without the
+owner saying yes. **My Ghost** is the business's own box, reachable from anywhere
+through the relay: enrol a box, see it online, tell it what to do, see whether
+it needs a YES text and the verified result. **Automations** lists what the
+operator pushed to this business.
+
+![Where this repo sits in the whole system](docs/images/where-it-fits.png)
 
 ---
 
@@ -39,41 +57,38 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
 npm run check    # discovery + table-mapping checks, no network needed
+npm run lint     # oxlint
 ```
 
-Deploy `dist/` anywhere static. Copy `.env.example` to `.env.local` only if you
-need to point at something other than the live GCR stack.
+Deploy `dist/` anywhere static. The only setting is `VITE_GCR_API_BASE` (copy
+`.env.example` to `.env.local`); it defaults to the live `gcr-api-clean`. This
+app holds **no database key and never talks to the database**: every read and
+every write goes through `gcr-api-clean`, which decides which business you are
+from your session, never from anything the browser sends.
 
 ## Where the data comes from
 
-Two sources, merged:
-
-| Source | Covers |
-|---|---|
-| `GET /api/gcr/entity/:slug` on **gcr-api-clean** | The ~60 domains the API knows about, pre-joined — menu sections with their items nested, offerings with their price tiers |
-| Direct PostgREST sweep of the GCR Supabase | Everything else — any table with an `entity_slug` column |
-
-Where both carry the same table, the API version wins because it arrives better
-shaped.
-
-Everything else this app talks to also goes through gcr-api-clean:
-
 | What | Endpoint |
-|---|---|
-| Load a business | `GET /api/gcr/entity/:slug` |
-| Admin business picker, claim search | `GET /api/gcr/entities?search=` |
-| Submit a claim | `POST /api/gcr/claim` |
+| --- | --- |
+| Who you are, what you own, admin or not | `GET /api/business/me` |
+| Which tables can be sections, and their columns | `GET /api/business/schema` |
+| Every section that has rows, in one call | `GET /api/business/sections` |
+| Create / update / delete a row | `POST/PATCH/DELETE /api/business/:table[/:id]` |
+| Sign up and sign in by phone code | `/api/business-auth/*` |
+| Claim a business | `GET /api/gcr/entities?search=`, `POST /api/gcr/claim` |
+| Store | `/api/store` (`GET`, `:id/install`, `:id/update`, `:id/disable`, `:id/enable`, `DELETE`, `PATCH :id/config`) |
+| My Ghost | `/api/nodes` (enrol, list, send a request, read the answer) |
+| Automations | `/api/business/automations` |
 
-Hosts live in `src/lib/config.js`, overridable with `VITE_*` variables.
+Hosts live in `src/lib/config.js`; every path lives once in `src/lib/endpoints.js`.
 
 ### The API renames tables
 
-`buildFullEntity()` in gcr-api-clean reshapes the database before sending it —
+`buildFullEntity()` in gcr-api-clean reshapes some tables before sending them —
 `entity_hours` arrives as `hours`, `entity_offer_fee` as `fees`. `src/lib/tableMap.js`
 maps those names back, which is what lets an API-supplied section be edited (the
-write has to name a real table) and what stops a swept table from appearing a
-second time next to its renamed twin. Anything not in the map is assumed to
-already be a real table name, so a table added tomorrow still works untouched.
+write has to name a real table). Anything not in the map is assumed to already be
+a real table name, so a table added tomorrow still works untouched.
 
 ## The files that matter
 
@@ -81,17 +96,18 @@ already be a real table name, so a table added tomorrow still works untouched.
 
 | File | What it does |
 |---|---|
-| `schemaDiscovery.js` | Reads the live PostgREST OpenAPI spec every load. Finds every table with an `entity_slug` column, and each table's columns — which is how edit forms build themselves. |
-| `entityTables.js` | Sweeps those tables for one slug. Tries the `entity_sections` RPC first (one call); falls back to 12-at-a-time streaming requests when it isn't installed. |
+| `schemaDiscovery.js` | Asks `GET /api/business/schema` which tables carry an `entity_slug` and what their columns are, so edit forms build themselves. |
+| `entityTables.js` | Loads every section that has rows with one call to `GET /api/business/sections` and caches it for five minutes. |
 | `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
 | `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Holds back internal tables (AI indexes, bookings, customer records, access control, backups). |
 | `tableMap.js` | API payload key ↔ real table name. |
-| `gcrApi.js` | The three gcr-api-clean calls: entity, search, claim. |
-| `writeEntityData.js` | **Every write goes through here.** Forces the business's own slug onto inserts; filters updates and deletes by slug as well as row id. |
+| `gcrApi.js` | The gcr-api-clean calls for entity search and claim. |
+| `writeEntityData.js` | **Every write goes through here.** It sends no slug: the API takes the business from the session and puts it in the WHERE clause itself. |
 | `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
-| `config.js` | API host, Supabase host and key, login domain. |
+| `config.js` | The API host and the sign-in login domain. No database host or key. |
+| `apiClient.js` / `endpoints.js` | The fetch wrapper (session token, typed errors) and every API path, once. |
 
-**Screens — `src/pages/`** — `Login`, `Claim`, `Dashboard`, `BusinessPicker` (admin only).
+**Screens — `src/pages/`** — `Login`, `SignUp`, `AcceptInvite`, `Claim`, `Dashboard`, `BusinessPicker` (admin only), `Store`, `Ghost` (My Ghost), `Automations`, `AppStore` (Tools, the Composio connections).
 
 **Layout — `src/components/`** — `TopBar`, `BottomNav` (one tab per discovered
 section plus a permanent Add tab; mobile-first, no sidebar), `MainContent`,
@@ -157,25 +173,25 @@ run they should read `artist_price_tiers` and `tip_links` instead. See
 
 ## Access
 
-1. `sql/ownership_and_write_access.sql` — **required before editing works.**
-   Locks `entity_owners`, creates `platform_admins` + `is_platform_admin()`,
-   creates `owns_entity(slug)`, and enables owner-scoped write policies on 8
-   starter tables while keeping public read intact.
-2. `sql/entity_sections.sql` — optional. One read-only `SECURITY INVOKER`
-   function returning all of a slug's data in a single call instead of ~305
-   requests. `entityTables.js` uses it automatically when present.
+Which business you are, and whether you are an admin, is decided by
+`gcr-api-clean` from your session: `entity_owners` links a login to a business,
+`platform_admins` lists admins. The database functions `owns_entity` and
+`is_platform_admin` from `sql/ownership_and_write_access.sql` exist on the live
+database. `sql/entity_sections.sql` is **not** applied and is no longer needed
+(the API does that sweep).
 
-**Neither has been run.** Both are proposals — read them before executing.
+**A login only reaches a dashboard once it has a row in `entity_owners`.** As of
+2026-09-29 that table has no rows on the live database, so no business owner can
+sign in to a business yet. Claims, invites and `sql/seed_first_owner.sql` are the
+ways to create the first ones.
 
-Provision logins once the SQL is in place:
+Provision logins with `scripts/provision-accounts.mjs` (dry-run first; it needs
+the service key in the environment, and writes credentials to
+`business-credentials.csv`, which is gitignored and should be treated as secret):
 
 ```bash
 SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs --dry-run --limit=5
-SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs
 ```
-
-Credentials land in `business-credentials.csv`, which is gitignored and should
-be treated as secret.
 
 **Admin deep link** — from CyberCheck admin, link each business row to
 `https://<dashboard-host>/?business=<slug>`. That opens that business's
@@ -210,16 +226,16 @@ is what creates the account and the `entity_owners` row.
 
 **Verified:** builds clean; `npm run check` passes; section discovery, table
 mapping and the add catalog tested against realistic restaurant and charter
-payloads.
+payloads. The Store, My Ghost and Automations tabs were driven in a real browser
+(Chromium) against a test backend running the real `gcr-api-clean` store routes.
+
+**Deployed** to production. **Not yet proven end to end on the live stack:** a
+real business signing in, because no login is linked to a business yet (see
+Access).
 
 **Note on writes:** the Add catalog offers every table the schema supports, but
-`sql/ownership_and_write_access.sql` only grants write access to 8 of them. Until
-that list is widened, most things a business picks will fail at save time with a
-permissions error. See `docs/PORT_REVIEW.md`.
-
-**Never run:** this app has not been opened in a browser against live data, has
-not authenticated against Supabase, and has not saved an edit. Treat every
-runtime path as unproven until it's deployed.
+what a business may actually write is decided by the API (`lib/businessTables.js`
+in gcr-api-clean holds the allow-list). See `docs/PORT_REVIEW.md`.
 
 `docs/everything.html` is the full record — the architecture write-up, the
 extracted product spec, the module-source analysis, and the reconciliation of
