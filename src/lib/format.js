@@ -20,3 +20,11 @@ export function fmtTime(t) {
 export function dayName(dayOfWeek) {
   return DAYS[dayOfWeek] || ''
 }
+
+/** A timestamp as the visitor's locale writes it; blank for nothing. */
+export function formatDateTime(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return String(value)
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}

@@ -14,6 +14,8 @@ import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
 import Ghost from './Ghost'
+import Automations from './Automations'
+import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -28,6 +30,8 @@ export default function Dashboard() {
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
   const [showGhost, setShowGhost] = useState(false)
+  const [showAutomations, setShowAutomations] = useState(false)
+  const [automationsCount, setAutomationsCount] = useState(0)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -93,6 +97,16 @@ export default function Dashboard() {
     }
   }, [gcrSlug, reloadKey])
 
+  // How many automations the operator has pushed here, for the tab badge.
+  // Failure is silent: the tab still opens, and the page explains itself.
+  useEffect(() => {
+    let cancelled = false
+    fetchAutomations()
+      .then((data) => { if (!cancelled) setAutomationsCount((data.automations || []).length) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [gcrSlug, reloadKey])
+
   const merged = useMemo(
     () => mergeEntitySources(entity, tableRows),
     [entity, tableRows]
@@ -138,6 +152,7 @@ export default function Dashboard() {
           setAdding(false)
           setShowApps(false)
           setShowGhost(false)
+          setShowAutomations(false)
           setActiveKey(key)
         }}
       />
@@ -146,9 +161,11 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && sections.length === 0} onAdd={() => setAdding(true)}>
+      <MainContent empty={!adding && !showApps && !showGhost && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
         {showGhost ? (
           <Ghost />
+        ) : showAutomations ? (
+          <Automations onCountChange={setAutomationsCount} />
         ) : showApps ? (
           <AppStore />
         ) : adding ? (
@@ -181,19 +198,23 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showGhost ? null : activeKey}
+        activeKey={showApps || showGhost || showAutomations ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
           setShowGhost(false)
+          setShowAutomations(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowGhost(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowGhost(false); setShowAutomations(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowAutomations(false); setShowApps(true) }}
         apps={showApps}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowGhost(true) }}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(true) }}
         ghost={showGhost}
+        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowAutomations(true) }}
+        automations={showAutomations}
+        automationsCount={automationsCount}
       />
     </div>
   )

@@ -182,6 +182,21 @@ be treated as secret.
 dashboard with an "Admin view" banner. With no `?business=`, admins land on the
 searchable picker.
 
+## Automations
+
+The operator builds automations and scripts in `Admin-dashboard-main` and
+pushes them here — a "cloud update" for dashboards. The **Automations** tab
+(`src/pages/Automations.jsx`) shows what was pushed to this business, at the
+version it was given: switch each one on or off, fill in the settings it asks
+for, run it now, pull a newer version when one is waiting, and open its run
+history to see what every step did.
+
+Nothing is built on this side. Everything goes through
+`/api/business/automations` on gcr-api-clean, scoped by the session like the
+rest of `/api/business`. The two tables behind it (`entity_automations`,
+`automation_runs`) carry `entity_slug` but are held back from section discovery
+by the API, so they never appear as editable sections or in the Add catalog.
+
 ## Claims
 
 A business without a login uses **Claim your business** on the sign-in screen.
