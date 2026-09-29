@@ -12,6 +12,11 @@ Treat this copy as the one to work on.
 Both talk to the same backend, `gcr-api-clean`. Production:
 `dashboards-users.vercel.app`. It is built phone-first: a bottom bar, no sidebar.
 
+In the Ghost system this is a cloud-side screen: a static React app that only
+calls `gcr-api-clean`. It never talks to a Ghost box directly; "My Ghost" queues
+a request at the API, the box pulls it over its own outbound link and posts the
+answer back (`src/pages/Ghost.jsx`).
+
 | Store | My Ghost |
 | --- | --- |
 | ![Store: an update is ready, another app is available](docs/images/store.png) | ![My Ghost: the business's box, online, with a command bar](docs/images/my-ghost.png) |
@@ -23,9 +28,12 @@ update waiting, one free app available, one online box).*
 plan, or granted), lets it install, switch off, configure and remove apps, and
 pull updates. An update that asks for more access is never applied without the
 owner saying yes. **My Ghost** is the business's own box, reachable from anywhere
-through the relay: enrol a box, see it online, tell it what to do, see whether
-it needs a YES text and the verified result. **Automations** lists what the
-operator pushed to this business.
+through the relay: enrol a box (the page shows a one-time token to put in
+`~/.config/ghost/ghost.env` as `NEXTGENT_NODE_TOKEN`), see it online, tell it
+what to do, see whether it needs a YES text and the verified result; the example
+phrases it suggests come from the box itself. **Automations** lists what the
+operator pushed to this business. **Tools** connects third-party accounts
+(Composio) through `/api/connections`.
 
 ![Where this repo sits in the whole system](docs/images/where-it-fits.png)
 
@@ -60,8 +68,10 @@ npm run check    # discovery + table-mapping checks, no network needed
 npm run lint     # oxlint
 ```
 
-Deploy `dist/` anywhere static. The only setting is `VITE_GCR_API_BASE` (copy
-`.env.example` to `.env.local`); it defaults to the live `gcr-api-clean`. This
+Deploy `dist/` anywhere static. Settings (all optional, copy `.env.example` to
+`.env.local`): `VITE_GCR_API_BASE` (defaults to `https://gcr-api-clean.vercel.app`),
+`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`) and
+`VITE_REQUEST_TIMEOUT_MS` (defaults to 30000). This
 app holds **no database key and never talks to the database**: every read and
 every write goes through `gcr-api-clean`, which decides which business you are
 from your session, never from anything the browser sends.
@@ -75,7 +85,11 @@ from your session, never from anything the browser sends.
 | Every section that has rows, in one call | `GET /api/business/sections` |
 | Create / update / delete a row | `POST/PATCH/DELETE /api/business/:table[/:id]` |
 | Sign up and sign in by phone code | `/api/business-auth/*` |
+| The business's public listing payload (`Dashboard.jsx`) | `GET /api/gcr/entity/:slug` |
+| Industry list, read live | `GET /api/business/industries` |
+| Invite links | `GET /api/auth/invite/:token`, `POST /api/auth/accept-invite` |
 | Claim a business | `GET /api/gcr/entities?search=`, `POST /api/gcr/claim` |
+| Tools (Composio connections) | `/api/connections` (`GET`, `:toolId/connect`, `:toolId/refresh`, `DELETE :toolId`) |
 | Store | `/api/store` (`GET`, `:id/install`, `:id/update`, `:id/disable`, `:id/enable`, `DELETE`, `PATCH :id/config`) |
 | My Ghost | `/api/nodes` (enrol, list, send a request, read the answer) |
 | Automations | `/api/business/automations` |
@@ -99,19 +113,23 @@ a real table name, so a table added tomorrow still works untouched.
 | `schemaDiscovery.js` | Asks `GET /api/business/schema` which tables carry an `entity_slug` and what their columns are, so edit forms build themselves. |
 | `entityTables.js` | Loads every section that has rows with one call to `GET /api/business/sections` and caches it for five minutes. |
 | `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
-| `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Holds back internal tables (AI indexes, bookings, customer records, access control, backups). |
+| `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Internal tables (AI indexes, access control, audit/log/analytics tables, other people's Trip Swipe data, SMS/message tables, backups) are hidden everywhere. Tables that other people write to (bookings, orders, customers, requests, leads and the like) still show as sections once they have rows but are never offered under Add. |
 | `tableMap.js` | API payload key ↔ real table name. |
 | `gcrApi.js` | The gcr-api-clean calls for entity search and claim. |
 | `writeEntityData.js` | **Every write goes through here.** It sends no slug: the API takes the business from the session and puts it in the WHERE clause itself. |
 | `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
-| `config.js` | The API host and the sign-in login domain. No database host or key. |
+| `config.js` | The API host, the sign-in login domain and the request timeout. No database host or key. |
 | `apiClient.js` / `endpoints.js` | The fetch wrapper (session token, typed errors) and every API path, once. |
+| `authStore.js` | Where the session lives (`localStorage`), token renewal, and the slug an admin is acting on. |
+| `shapes.js` | Works out from a table's columns and rows whether it is a progress bar, a price list or a fan-submitted inbox, and masks other people's contact details. |
+| `appStore.js` / `automations.js` / `industries.js` / `useTheme.js` | Calls and helpers for Tools, Automations, the industry list and the light/dark/auto theme. |
 
 **Screens — `src/pages/`** — `Login`, `SignUp`, `AcceptInvite`, `Claim`, `Dashboard`, `BusinessPicker` (admin only), `Store`, `Ghost` (My Ghost), `Automations`, `AppStore` (Tools, the Composio connections).
 
 **Layout — `src/components/`** — `TopBar`, `BottomNav` (one tab per discovered
 section plus a permanent Add tab; mobile-first, no sidebar), `MainContent`,
-`AddSection` (the catalog), `RowEditor` (builds a form from a table's columns).
+`AddSection` (the catalog), `RowEditor` (builds a form from a table's columns),
+`AppStoreView` (the Tools list).
 
 **Sections — `src/sections/`** — `GenericSection` renders *any* table by
 inspecting the shape of its rows. `registry.jsx` maps a handful of purpose-built
@@ -125,7 +143,8 @@ Most of the module already exists in the database (`artist_profiles`, `songs`,
 `artist_shows`, `artist_follows`, `artist_booking_requests`).
 
 What did not exist is the part the artist needs to control: **what anything
-costs.** `sql/artist_module.sql` adds it —
+costs.** `sql/artist_module.sql` adds it (the file's own header calls it a
+proposal: "NEVER RUN") —
 
 | Thing | Where the artist sets it |
 |---|---|
@@ -159,8 +178,10 @@ shape of the rows, in `src/lib/shapes.js`:
 A `merch_crowdfund` table invented tomorrow gets a progress bar. A
 `sponsor_tiers` table gets the grouped price layout. A `wish_wall` table with a
 `patron_phone` column is recognised as fan-submitted and held out of the Add
-catalog with its phone numbers masked. None of those names appear anywhere in
-`src/` — `npm run check` asserts exactly that.
+catalog with its phone numbers masked. None of those names is used in the code: the only
+mentions in `src/` are two example comments in `src/lib/shapes.js`. `npm run check`
+(`scripts/check-discovery.mjs`) feeds the detectors tables invented like these and
+asserts they get the right treatment.
 
 Fan-submitted tables still show as sections once they have rows (that's the
 artist's queue); they're just never offered as something to *add*, because the
@@ -193,6 +214,16 @@ the service key in the environment, and writes credentials to
 SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs --dry-run --limit=5
 ```
 
+`scripts/make-setup-links.mjs` (same key) writes one-time password-setup links to
+`setup-links.csv`, also gitignored. `scripts/reconcile-tables.mjs` and
+`scripts/build-reconciliation-page.mjs` read `docs/reconciliation/`, which is not
+in this repo, so they cannot run as checked in.
+
+Ways in, as built: a texted six-digit code (`Login.jsx`), a business login and
+password for provisioned or invited accounts, an invite link (`?token=`,
+`AcceptInvite.jsx`), a claim, or a new sign-up (`SignUp.jsx`: phone, code,
+business name, industry; the listing stays hidden until reviewed).
+
 **Admin deep link** — from CyberCheck admin, link each business row to
 `https://<dashboard-host>/?business=<slug>`. That opens that business's
 dashboard with an "Admin view" banner. With no `?business=`, admins land on the
@@ -204,8 +235,8 @@ The operator builds automations and scripts in `Admin-dashboard-main` and
 pushes them here — a "cloud update" for dashboards. The **Automations** tab
 (`src/pages/Automations.jsx`) shows what was pushed to this business, at the
 version it was given: switch each one on or off, fill in the settings it asks
-for, run it now, pull a newer version when one is waiting, and open its run
-history to see what every step did.
+for, run it now, pull a newer version when one is waiting, copy or replace the webhook
+URL that runs it, and open its run history to see what every step did.
 
 Nothing is built on this side. Everything goes through
 `/api/business/automations` on gcr-api-clean, scoped by the session like the
@@ -218,9 +249,12 @@ by the API, so they never appear as editable sections or in the Add catalog.
 A business without a login uses **Claim your business** on the sign-in screen.
 That searches `GET /api/gcr/entities` and posts to `POST /api/gcr/claim`, which
 writes a `business_claims` row with status `new`. It grants nothing on its own —
-an admin reviews it in cybercheck-login's `admin.html` GCR Claims panel
-(`GET /api/admin/gcr/claims`, `PATCH /api/admin/gcr/claims/:id`), and approving
-is what creates the account and the `entity_owners` row.
+an admin reviews it through `GET /api/admin/gcr/claims` and
+`PATCH /api/admin/gcr/claims/:id`. Those two only list the claims and set their
+status and notes; the login and the `entity_owners` row are created by a separate
+admin step (for example `POST /api/admin/link-user`). The `admin.html` GCR Claims
+panel in cybercheck-login that this flow was written against is not in this
+workspace, so its behaviour is not checked here.
 
 ## Status
 
@@ -242,4 +276,8 @@ extracted product spec, the module-source analysis, and the reconciliation of
 the 244-table design against the 563-table live database. Open it in a browser;
 it needs no server and no network.
 
-`docs/PORT_REVIEW.md` lists what this port is missing and what to fix first.
+`docs/PORT_REVIEW.md` lists what this port was missing and what to fix first. It
+was written before the switch to `gcr-api-clean` and parts are out of date: it still
+describes a browser Supabase client and anon key (none in `src/` now) and lists
+Composio connections and any app concept as "not built at all", although
+`src/pages/AppStore.jsx` and `src/pages/Store.jsx` now exist.
