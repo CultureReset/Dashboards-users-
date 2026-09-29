@@ -58,6 +58,36 @@ including tables nobody has written any code for. Pick one, fill in the form
 built from that table's columns, and it becomes a live section. A business with
 nothing entered starts from that catalog rather than an empty screen.
 
+<!-- branches:start -->
+## Branches
+
+*Read from GitHub on 2026-09-29. 12 branches.*
+
+- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`.
+- **`claude/repo-code-analysis-y4n1k7`** is where this README and the audit fixes live. It contains every commit on `claude/dashboard-inventory-purposes-m5wtba` and more (this README, the audit fixes and the screenshots).
+- **7 other branches hold commits that `claude/repo-code-analysis-y4n1k7` does not have.** The newest is `claude/modular-booking-platform-wdq0kk` (last commit 2026-09-13, 2 commits not in the work branch). Check those before assuming the work branch is the whole story.
+
+<details><summary>All 12 branches</summary>
+
+| Branch | Last commit | Not in the work branch | Last commit message |
+| --- | --- | --- | --- |
+| `claude/repo-code-analysis-y4n1k7` (work branch) | 2026-09-29 | - | this README and the audit fixes |
+| `claude/modular-booking-platform-wdq0kk` | 2026-09-13 | 2 | Dashboard: adaptive wording, nightly rates, and channel sync |
+| `claude/admin-dashboard-automation-builder-s0j5ht` | 2026-09-13 | 0 | Add the Automations tab: what the operator pushed to this business |
+| `claude/admin-dashboard-repo-review-47q2vc` | 2026-09-13 | 2 | Add Pages: where a business says its Facebook page is |
+| `claude/new-session-66c2e9` | 2026-08-26 | 3 | feat(settings): Add the Settings page |
+| `claude/dashboard-folder-structure-wqsm9i` | 2026-08-24 | 5 | Add session audit: every change with the command to verify it |
+| `claude/repo-inventory-audit-5zw4yw` | 2026-08-13 | 1 | Let a business fix its own availability |
+| `claude/gcr-api-claim-docs-g4e42t` | 2026-08-05 | 3 | Correct the tableMap entry count |
+| `build/nextgent-control-surface` | 2026-08-04 | 0 | Trigger a production deployment from main |
+| `claude/dashboard-inventory-purposes-m5wtba` (default) | 2026-08-04 | 0 | Trigger a production deployment from main |
+| `main` | 2026-08-04 | 0 | Trigger a production deployment from main |
+| `claude/new-session-1e1dj0` | 2026-08-04 | 1 | Make the App Store search find things |
+
+</details>
+
+<!-- branches:end -->
+
 ## Run it
 
 ```bash
