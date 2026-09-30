@@ -96,6 +96,9 @@ export const endpoints = {
     enrol: () => '/api/nodes',
     revoke: (id) => `/api/nodes/${seg(id)}`,
     request: (id) => `/api/nodes/${seg(id)}/requests`,
+    mcpTokens: (id) => `/api/nodes/${seg(id)}/mcp-tokens`,
+    createMcpToken: (id) => `/api/nodes/${seg(id)}/mcp-token`,
+    revokeMcpToken: (id, tokenId) => `/api/nodes/${seg(id)}/mcp-token/${seg(tokenId)}`,
     requestStatus: (id, rid) => `/api/nodes/${seg(id)}/requests/${seg(rid)}`,
   },
 

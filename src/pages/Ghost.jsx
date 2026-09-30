@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../lib/apiClient'
 import endpoints from '../lib/endpoints'
+import { GCR_API_BASE } from '../lib/config'
 
 // "My Ghost": the business's own box, reached from anywhere through the relay.
 //
@@ -35,6 +36,9 @@ export default function Ghost() {
   const [approvals, setApprovals] = useState([])
   const [boxName, setBoxName] = useState('')
   const [phrases, setPhrases] = useState([]) // sentences this box's own maps understand
+  const [mcpCredentials, setMcpCredentials] = useState([])
+  const [mcpTokenOnce, setMcpTokenOnce] = useState(null)
+  const [mcpError, setMcpError] = useState('')
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +69,57 @@ export default function Ghost() {
       setError(err.message)
     } finally {
       setBusy(false)
+    }
+  }
+
+  const loadMcpCredentials = useCallback(async (nodeId = selected) => {
+    if (!nodeId) { setMcpCredentials([]); return }
+    try {
+      const { credentials } = await api.get(endpoints.nodes.mcpTokens(nodeId))
+      setMcpCredentials(credentials || [])
+      setMcpError('')
+    } catch (err) {
+      setMcpCredentials([])
+      setMcpError(err.status === 404
+        ? 'Paperclip connection management is available after the GCR API update is deployed.'
+        : err.message)
+    }
+  }, [selected])
+
+  async function createMcpCredential() {
+    if (!selected) return
+    setBusy(true)
+    setMcpError('')
+    try {
+      const credential = await api.post(endpoints.nodes.createMcpToken(selected), { label: 'Paperclip' })
+      setMcpTokenOnce(credential)
+      await loadMcpCredentials(selected)
+    } catch (err) {
+      setMcpError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function revokeMcpCredential(tokenId) {
+    if (!selected || !window.confirm('Revoke this Paperclip connection? It will stop reaching this Ghost.')) return
+    setBusy(true)
+    try {
+      await api.del(endpoints.nodes.revokeMcpToken(selected, tokenId))
+      setMcpTokenOnce(null)
+      await loadMcpCredentials(selected)
+    } catch (err) {
+      setMcpError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function copyText(value) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      setMcpError('Clipboard access is unavailable here. Select the text and copy it manually.')
     }
   }
 
@@ -106,6 +161,11 @@ export default function Ghost() {
       /* the box is away; the list simply stays as it was */
     }
   }
+
+  useEffect(() => {
+    setMcpTokenOnce(null)
+    loadMcpCredentials(selected)
+  }, [selected, loadMcpCredentials])
 
   const node = nodes?.find((n) => n.id === selected)
   const nodeOnline = !!node && online(node)
@@ -174,6 +234,41 @@ export default function Ghost() {
             {node.name}: version {node.version || '—'} · {online(node) ? 'online' : 'offline'} ·
             core {node.health?.core || 'unknown'}
           </p>
+
+          <section className="panel ghost-mcp">
+            <h3>Connect this Ghost to Paperclip</h3>
+            <p className="claim-sub">
+              Paperclip connects through its own remote MCP app connection. This key can reach only this Ghost;
+              actions still go through its local policy and phone approval.
+            </p>
+            <button type="button" onClick={createMcpCredential} disabled={busy || !!node.revoked_at}>
+              + Create Paperclip connection
+            </button>
+            {mcpError && <p className="error">{mcpError}</p>}
+            {mcpTokenOnce && (
+              <div className="ghost-enrolled">
+                <p><strong>Copy this key now.</strong> It is shown once. Save it in Paperclip as the Authorization bearer value.</p>
+                <p>Server URL: <code>{GCR_API_BASE}/api/mcp/ghost</code></p>
+                <pre className="ghost-token">{mcpTokenOnce.token}</pre>
+                <button type="button" onClick={() => copyText(mcpTokenOnce.token)}>Copy key</button>
+                <button type="button" onClick={() => copyText(`${GCR_API_BASE}/api/mcp/ghost`)}>Copy server URL</button>
+                <button type="button" onClick={() => setMcpTokenOnce(null)}>I saved it</button>
+              </div>
+            )}
+            {mcpCredentials.filter((credential) => !credential.revoked_at).length > 0 && (
+              <ul className="ghost-log">
+                {mcpCredentials.filter((credential) => !credential.revoked_at).map((credential) => (
+                  <li key={credential.id}>
+                    <strong>{credential.label}</strong> · key ending {credential.token_hint}
+                    {credential.last_used_at ? ` · used ${since(credential.last_used_at)}` : ' · not used yet'}
+                    <button type="button" onClick={() => revokeMcpCredential(credential.id)} disabled={busy}>
+                      Revoke
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <form onSubmit={send} className="ghost-command">
             <input
