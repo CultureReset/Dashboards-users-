@@ -16,27 +16,125 @@ import { endpoints } from './endpoints'
 // returned an empty list to the browser, indistinguishable from "this business
 // has nothing here" — come back with their real contents now.
 
-const CACHE_PREFIX = 'gcr_tables_'
-const CACHE_TTL_MS = 1000 * 60 * 5
+// ---------------------------------------------------------------------------
+// The copy on this device.
+//
+// This was sessionStorage with a five-minute TTL, which is a paint-fast cache
+// and nothing more. Three things made it the wrong store once the data lives
+// on a box at the end of a domestic connection rather than in a cloud API:
+//
+//   sessionStorage is cleared when the tab closes. Come back tomorrow and
+//   there is nothing — the opposite of "cached at login".
+//
+//   The TTL treated a five-minute-old copy as absent, so a box that was
+//   unreachable meant a blank dashboard instead of yesterday's data.
+//
+//   ~5MB, and it fails by THROWING mid-write. A business with a real menu and
+//   a year of events goes past that, and the old code swallowed the error with
+//   "caching is optional" — so it silently stopped caching at exactly the size
+//   where caching started to matter.
+//
+// IndexedDB: async, room to spare, survives the tab closing. No TTL — a copy
+// is never treated as absent, only as old. Freshness is the revalidate's job,
+// which Dashboard.jsx already does by streaming rows in over the top.
+//
+// The exported functions keep their shapes. readTableCache stays synchronous
+// for its one caller, which paints from whatever primeTableCache last left in
+// memory; the write goes to IndexedDB in the background.
+// ---------------------------------------------------------------------------
 
-export function readTableCache(slug) {
+const DB_NAME = 'gcr-cache'
+const STORE = 'sections'
+const LEGACY_PREFIX = 'gcr_tables_'
+
+/** What readTableCache can answer from without awaiting. Filled by primeTableCache. */
+const memory = new Map()
+
+let dbPromise = null
+function openDb() {
+  if (dbPromise) return dbPromise
+  dbPromise = new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') return reject(new Error('no indexedDB'))
+    const req = indexedDB.open(DB_NAME, 1)
+    req.onupgradeneeded = () => {
+      const db = req.result
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE)
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+  return dbPromise
+}
+
+/**
+ * Load this business's copy into memory. Call once, before the dashboard
+ * paints — AuthContext after a successful sign-in is the right place.
+ *
+ * Resolves to the rows, or null. Never throws: a cache that can break the app
+ * is worse than no cache.
+ */
+export async function primeTableCache(slug) {
+  if (!slug) return null
   try {
-    const raw = sessionStorage.getItem(CACHE_PREFIX + slug)
-    if (!raw) return null
-    const { rows, at } = JSON.parse(raw)
-    if (Date.now() - at > CACHE_TTL_MS) return null
-    return rows
-  } catch {
-    return null
-  }
+    const db = await openDb()
+    const row = await new Promise((resolve, reject) => {
+      const t = db.transaction(STORE, 'readonly')
+      const r = t.objectStore(STORE).get(slug)
+      r.onsuccess = () => resolve(r.result)
+      r.onerror = () => reject(r.error)
+    })
+    if (row?.rows) {
+      memory.set(slug, { rows: row.rows, at: row.at })
+      return row.rows
+    }
+  } catch { /* fall through to the old store */ }
+
+  // One-time migration: anything sessionStorage still holds from before.
+  try {
+    const raw = sessionStorage.getItem(LEGACY_PREFIX + slug)
+    if (raw) {
+      const { rows } = JSON.parse(raw)
+      if (rows) {
+        memory.set(slug, { rows, at: Date.now() })
+        writeTableCache(slug, rows)
+        sessionStorage.removeItem(LEGACY_PREFIX + slug)
+        return rows
+      }
+    }
+  } catch { /* nothing to migrate */ }
+
+  return null
+}
+
+/** The copy, if this device has one. No TTL — old is not the same as absent. */
+export function readTableCache(slug) {
+  return memory.get(slug)?.rows ?? null
+}
+
+/** How old that copy is, in ms, for telling the owner what they're looking at. */
+export function tableCacheAge(slug) {
+  const at = memory.get(slug)?.at
+  return at ? Date.now() - at : null
 }
 
 function writeTableCache(slug, rows) {
+  memory.set(slug, { rows, at: Date.now() })
+  openDb()
+    .then((db) => {
+      const t = db.transaction(STORE, 'readwrite')
+      t.objectStore(STORE).put({ rows, at: Date.now() }, slug)
+    })
+    .catch(() => { /* private window, or storage denied. Memory copy still works. */ })
+}
+
+/** On sign-out, and on switching business. */
+export async function clearTableCache(slug) {
+  memory.delete(slug)
   try {
-    sessionStorage.setItem(CACHE_PREFIX + slug, JSON.stringify({ rows, at: Date.now() }))
-  } catch {
-    /* quota exceeded — caching is optional */
-  }
+    const db = await openDb()
+    const t = db.transaction(STORE, 'readwrite')
+    t.objectStore(STORE).delete(slug)
+  } catch { /* nothing to clear */ }
 }
 
 /**
