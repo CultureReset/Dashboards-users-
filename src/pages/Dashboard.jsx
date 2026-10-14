@@ -16,6 +16,7 @@ import AppStore from './AppStore'
 import Ghost from './Ghost'
 import Store from './Store'
 import Automations from './Automations'
+import Platform from './Platform'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [showApps, setShowApps] = useState(false)
   const [showGhost, setShowGhost] = useState(false)
   const [showStore, setShowStore] = useState(false)
+  const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
 
@@ -153,7 +155,7 @@ export default function Dashboard() {
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
-          setShowGhost(false); setShowStore(false)
+          setShowGhost(false); setShowStore(false); setShowPlatform(false)
           setShowAutomations(false)
           setActiveKey(key)
         }}
@@ -163,8 +165,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showStore ? (
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showPlatform ? (
+          <Platform />
+        ) : showStore ? (
           <Store />
         ) : showGhost ? (
           <Ghost />
@@ -202,23 +206,25 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showGhost || showStore || showAutomations ? null : activeKey}
+        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
-          setShowGhost(false); setShowStore(false)
+          setShowGhost(false); setShowStore(false); setShowPlatform(false)
           setShowAutomations(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowAutomations(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowAutomations(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowApps(true) }}
         apps={showApps}
-        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(true) }}
+        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(true) }}
+        platform={showPlatform}
+        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowStore(true) }}
         store={showStore}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowGhost(true) }}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowGhost(true) }}
         ghost={showGhost}
-        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowAutomations(true) }}
+        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(true) }}
         automations={showAutomations}
         automationsCount={automationsCount}
       />
