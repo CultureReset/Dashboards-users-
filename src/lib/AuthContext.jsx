@@ -3,6 +3,7 @@ import { api, onAuthFailure } from './apiClient'
 import { endpoints } from './endpoints'
 import { getSession, setSession, clearSession, onSessionChange, setActingSlug } from './authStore'
 import { LOGIN_DOMAIN } from './config'
+import { isOAuthReturn, completeOAuth, startOAuth } from './oauth'
 
 const AuthContext = createContext(null)
 
@@ -47,6 +48,17 @@ export function AuthProvider({ children }) {
   const [session, setSessionState] = useState(() => getSession() ?? null)
   const [access, setAccess] = useState(undefined)
   const [adminSlug, setAdminSlug] = useState(slugFromUrl())
+  const [oauthPending, setOauthPending] = useState(isOAuthReturn)
+  const [oauthError, setOauthError] = useState('')
+
+  // Page load after Google/GitHub: trade ?code= for a session before rendering.
+  useEffect(() => {
+    if (!oauthPending) return
+    completeOAuth()
+      .then((minted) => setSession(minted))
+      .catch((err) => setOauthError(err.message || 'That sign-in did not complete.'))
+      .finally(() => setOauthPending(false))
+  }, [oauthPending])
 
   // The store is the one copy of the session; this mirrors it into React so
   // the tree re-renders when a sign-in, a renewal or a sign-out changes it.
@@ -143,7 +155,9 @@ export function AuthProvider({ children }) {
   const value = {
     session,
     user: session?.user || null,
-    loading: !!session && access === undefined,
+    loading: oauthPending || (!!session && access === undefined),
+    oauthError,
+    signInWithOAuth: (provider) => startOAuth(provider),
     gcrSlug,
     businessName: access?.name || null,
     role: access?.role || null,

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { sendSigninCode, verifySigninCode } from '../lib/gcrApi'
+import { oauthProviders } from '../lib/oauth'
+
+const providerLabel = (p) => (p === 'github' ? 'GitHub' : p.charAt(0).toUpperCase() + p.slice(1))
 
 // Two ways in, because there are two kinds of account.
 //
@@ -11,7 +14,7 @@ import { sendSigninCode, verifySigninCode } from '../lib/gcrApi'
 // Phone is the default because it is the one that needs nothing remembered.
 
 export default function Login({ onClaim, onSignUp }) {
-  const { signIn, signInWithPhone } = useAuth()
+  const { signIn, signInWithPhone, signInWithOAuth, oauthError } = useAuth()
   const [mode, setMode] = useState('phone') // 'phone' | 'password'
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -71,6 +74,12 @@ export default function Login({ onClaim, onSignUp }) {
       <div className="auth-screen">
         <form className="auth-card" onSubmit={codeSent ? submitCode : requestCode}>
           <h1>Sign in</h1>
+          {oauthError && <p className="auth-error">{oauthError}</p>}
+          {oauthProviders.map((p) => (
+            <button key={p} type="button" disabled={busy} onClick={() => { setBusy(true); signInWithOAuth(p) }}>
+              Continue with {providerLabel(p)}
+            </button>
+          ))}
           {codeSent ? (
             <>
               <p className="claim-sub">We texted a code to {phone}.</p>
@@ -142,6 +151,12 @@ export default function Login({ onClaim, onSignUp }) {
     <div className="auth-screen">
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1>Sign in</h1>
+          {oauthError && <p className="auth-error">{oauthError}</p>}
+          {oauthProviders.map((p) => (
+            <button key={p} type="button" disabled={busy} onClick={() => { setBusy(true); signInWithOAuth(p) }}>
+              Continue with {providerLabel(p)}
+            </button>
+          ))}
         <p className="claim-sub">Use the business login you were given.</p>
         <label>
           Business login
