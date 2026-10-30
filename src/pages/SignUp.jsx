@@ -1,34 +1,33 @@
 import { useEffect, useState } from 'react'
 import {
-  sendSignupCode,
-  verifySignupCode,
   findSimilarBusinesses,
-  registerBusiness,
+  businessSignup,
 } from '../lib/gcrApi'
 import { useAuth } from '../lib/AuthContext'
 import { INDUSTRIES } from '../lib/industries'
 
 // Creating a brand-new business from scratch.
 //
-// Phone → six-digit code → business name → industry. Four steps, and the only
-// one that can fail on the way in is the code.
+// Email + password → business name → industry. Phone OTP was removed; this
+// reuses POST /api/auth/business-signup (entity + Auth user + entity_owners)
+// then signs in via the existing password path.
 //
 // This is for businesses that are NOT already on GCR. A business that already
-// has a listing goes through the invite link instead, because handing over an
-// existing profile needs its identity checked first. If someone types a name
-// that already exists, this screen says so and points them at the claim flow
-// rather than letting them build a second copy of a real business.
+// has a listing goes through the invite link or claim flow instead. If someone
+// types a name that already exists, this screen says so and points them at
+// claim rather than letting them build a second copy.
 //
 // Nothing created here is public. The listing stays hidden until it is
 // reviewed — the form says so rather than implying it went live.
 
-const STEPS = ['phone', 'code', 'business', 'industry']
+const STEPS = ['account', 'business', 'industry']
 
 export default function SignUp({ onBack }) {
-  const { signInWithPhone } = useAuth()
-  const [step, setStep] = useState('phone')
-  const [phone, setPhone] = useState('')
-  const [code, setCode] = useState('')
+  const { signIn } = useAuth()
+  const [step, setStep] = useState('account')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [name, setName] = useState('')
   const [website, setWebsite] = useState('')
   const [industry, setIndustry] = useState('')
@@ -52,23 +51,16 @@ export default function SignUp({ onBack }) {
 
   const go = (next) => { setError(''); setStep(next) }
 
-  async function submitPhone(e) {
+  function submitAccount(e) {
     e.preventDefault()
-    setBusy(true); setError('')
-    try {
-      const sent = await sendSignupCode(phone)
-      if (sent?.phone) setPhone(sent.phone)
-      go('code')
-    } catch (err) { setError(err.message) } finally { setBusy(false) }
-  }
-
-  async function submitCode(e) {
-    e.preventDefault()
-    setBusy(true); setError('')
-    try {
-      await verifySignupCode(phone, code)
-      go('business')
-    } catch (err) { setError(err.message) } finally { setBusy(false) }
+    setError('')
+    const addr = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) {
+      return setError('Enter a valid email address.')
+    }
+    if (password.length < 8) return setError('Use at least 8 characters.')
+    if (password !== confirm) return setError('Those passwords do not match.')
+    go('business')
   }
 
   function submitBusiness(e) {
@@ -80,17 +72,16 @@ export default function SignUp({ onBack }) {
   async function finish(chosen) {
     setBusy(true); setError(''); setAlreadyListed(null)
     try {
-      const created = await registerBusiness({
-        phone,
-        code,
+      await businessSignup({
+        email: email.trim().toLowerCase(),
+        password,
         business_name: name.trim(),
         website: website.trim() || undefined,
         entity_type: chosen || undefined,
       })
-      // The account exists now, and the server already minted its session —
-      // the one-time secret it was made from never left that process. The
-      // business never sees it and never types a password.
-      const { error: signInError } = await signInWithPhone(phone, created.session)
+      // Account exists now — same pattern as AcceptInvite: sign in with the
+      // password just chosen via POST /api/business-auth/password.
+      const { error: signInError } = await signIn(email.trim().toLowerCase(), password)
       if (signInError) throw signInError
     } catch (err) {
       if (err.claim_instead) setAlreadyListed(err.claim_instead)
@@ -110,57 +101,49 @@ export default function SignUp({ onBack }) {
           ))}
         </div>
 
-        {step === 'phone' && (
-          <form onSubmit={submitPhone}>
+        {step === 'account' && (
+          <form onSubmit={submitAccount}>
             <h1>Add your business</h1>
             <p className="claim-sub">
-              We&apos;ll text you a six-digit code to confirm your number.
+              Choose an email and password — that is how you will sign in.
             </p>
             <label>
-              Mobile number
+              Email
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => { setPhone(e.target.value); setError('') }}
-                placeholder="(251) 555-0100"
-                autoComplete="tel"
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError('') }}
+                placeholder="you@business.com"
+                autoComplete="email"
                 required
                 autoFocus
               />
             </label>
+            <label>
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError('') }}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <label>
+              Confirm password
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => { setConfirm(e.target.value); setError('') }}
+                autoComplete="new-password"
+                required
+              />
+            </label>
             {error && <p className="auth-error">{error}</p>}
-            <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send my code'}</button>
+            <button type="submit">Continue</button>
             <button type="button" className="auth-switch" onClick={onBack}>
               Already have a login? Sign in
-            </button>
-          </form>
-        )}
-
-        {step === 'code' && (
-          <form onSubmit={submitCode}>
-            <h1>Enter your code</h1>
-            <p className="claim-sub">Sent to {phone}. It expires in a few minutes.</p>
-            <label>
-              Six-digit code
-              <input
-                className="code-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={code}
-                onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); setError('') }}
-                autoComplete="one-time-code"
-                required
-                autoFocus
-              />
-            </label>
-            {error && <p className="auth-error">{error}</p>}
-            <button type="submit" disabled={busy || code.length < 6}>
-              {busy ? 'Checking…' : 'Confirm'}
-            </button>
-            <button type="button" className="auth-switch" onClick={() => go('phone')}>
-              Use a different number
             </button>
           </form>
         )}
@@ -212,6 +195,9 @@ export default function SignUp({ onBack }) {
 
             {error && <p className="auth-error">{error}</p>}
             <button type="submit">Continue</button>
+            <button type="button" className="auth-switch" onClick={() => go('account')}>
+              Back
+            </button>
           </form>
         )}
 

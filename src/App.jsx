@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import BusinessPicker from './pages/BusinessPicker'
 import AcceptInvite from './pages/AcceptInvite'
 import SignUp from './pages/SignUp'
+import ResetPassword from './pages/ResetPassword'
 
 function NoBusinessLinked() {
   const { signOut, user } = useAuth()
@@ -26,9 +27,32 @@ function NoBusinessLinked() {
   )
 }
 
+function ImpersonationError() {
+  const { impersonationError, exitImpersonation } = useAuth()
+  return (
+    <div className="auth-screen">
+      <div className="auth-card">
+        <h1>Admin link</h1>
+        <p className="claim-sub">{impersonationError}</p>
+        <button type="button" className="auth-switch" onClick={exitImpersonation}>
+          Back to sign in
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /** ?token=… means the visitor followed an invite link (root or /accept). */
 function inviteTokenFromUrl() {
   return new URLSearchParams(location.search).get('token')
+}
+
+
+/** Recovery link from Supabase Auth: #access_token=…&type=recovery */
+function recoveryAccessTokenFromUrl() {
+  const hash = new URLSearchParams((location.hash || '').replace(/^#/, ''))
+  if ((hash.get('type') || '').toLowerCase() !== 'recovery') return null
+  return hash.get('access_token') || null
 }
 
 function Root() {
@@ -37,10 +61,25 @@ function Root() {
     return <PublicLinkPage />
   }
 
-  const { loading, user, isAdmin, gcrSlug } = useAuth()
+  const { loading, user, isAdmin, gcrSlug, impersonationError, viewingAsImpersonation } = useAuth()
   const [claiming, setClaiming] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
   const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
+  const [recoveryToken, setRecoveryToken] = useState(recoveryAccessTokenFromUrl)
+
+  if (recoveryToken) {
+    return (
+      <ResetPassword
+        accessToken={recoveryToken}
+        onDone={() => {
+          const url = new URL(location.href)
+          url.hash = ''
+          history.replaceState({}, '', url)
+          setRecoveryToken(null)
+        }}
+      />
+    )
+  }
 
   if (loading) {
     return (
@@ -50,9 +89,15 @@ function Root() {
     )
   }
 
+  if (impersonationError && !user) {
+    return <ImpersonationError />
+  }
+
   // An invite beats everything else, including an existing session: someone
   // may open a link on a machine already signed in as another business.
-  if (inviteToken) {
+  // Admin Open-dashboard passes are handled in AuthContext before this tree
+  // renders a session; invite links still win for owner onboarding.
+  if (inviteToken && !viewingAsImpersonation) {
     return (
       <AcceptInvite
         token={inviteToken}
@@ -76,7 +121,7 @@ function Root() {
     )
   }
 
-  // Admin with no business selected picks one; deep links land straight in.
+  // Admin with no business selected picks one; deep links / impersonation land straight in.
   if (isAdmin && !gcrSlug) return <BusinessPicker />
 
   if (!gcrSlug) return <NoBusinessLinked />

@@ -38,16 +38,10 @@ const call = async (work) => {
 /* ── Signing up a brand-new business ───────────────────────────────────────
  *
  * Separate from tourist sign-up on GCR Unified, which is a different product
- * with a different account model. These call /api/business-auth/*.
+ * with a different account model. Self-serve signup uses /api/auth/business-signup
+ * (email + password). Phone OTP helpers were removed from this client; the API
+ * phone routes remain in gcr-api-clean for older clients.
  */
-
-/** Text a six-digit code to a business phone number. */
-export const sendSignupCode = (phone) =>
-  call(() => api.post(endpoints.auth.signupCode(), { phone }, PUBLIC))
-
-/** Check the code before asking for anything else. */
-export const verifySignupCode = (phone, code) =>
-  call(() => api.post(endpoints.auth.verifySignupCode(), { phone, code }, PUBLIC))
 
 /**
  * Listings that already look like this name. Read-only and public — used to
@@ -65,25 +59,27 @@ export async function findSimilarBusinesses(name) {
 }
 
 /**
- * Create the account, the listing and the ownership row.
+ * Create the Auth account, the listing and the ownership row.
  *
- * No password anywhere. The response carries the finished `session` — the API
- * mints it server-side from a one-time secret that never leaves that process.
- * The business's phone number is the login.
+ * POST /api/auth/business-signup — email + password + business_name.
+ * Does not return a session; the caller signs in with the same credentials
+ * via POST /api/business-auth/password (same pattern as AcceptInvite).
  *
  * The listing is created hidden and stays that way until an admin approves it.
- * Throws with `claim_instead` attached when the business is already listed.
  */
-export const registerBusiness = (payload) =>
-  call(() => api.post(endpoints.auth.register(), payload, PUBLIC))
+export const businessSignup = (payload) =>
+  call(() => api.post(endpoints.auth.businessSignup(), payload, PUBLIC))
 
-/** Text a code to a number that already has a business. */
-export const sendSigninCode = (phone) =>
-  call(() => api.post(endpoints.auth.signinCode(), { phone }, PUBLIC))
+/** Ask Supabase Auth to email a recovery link to the dashboard reset page. */
+export const forgotPassword = (email) =>
+  call(() => api.post(endpoints.auth.forgotPassword(), { email }, PUBLIC))
 
-/** Check it, and get the session to sign in with. */
-export const verifySigninCode = (phone, code) =>
-  call(() => api.post(endpoints.auth.verifySigninCode(), { phone, code }, PUBLIC))
+/**
+ * Set a new password using the recovery access_token from the email link hash.
+ * The API verifies the token with Auth, then updates the password server-side.
+ */
+export const resetPassword = ({ access_token, password }) =>
+  call(() => api.post(endpoints.auth.resetPassword(), { access_token, password }, PUBLIC))
 
 /**
  * What an invite token is for — GET /api/auth/invite/:token.
@@ -129,11 +125,8 @@ export async function searchEntities(query, { limit = 40 } = {}) {
 
 /**
  * Submit a claim on a business — POST /api/gcr/claim writes a business_claims
- * row with status 'new'. Approving does not invent ownership by itself: if the
- * email already has a Supabase Auth-backed users row, the API upserts
- * entity_owners; otherwise it creates a business_invites link and the owner
- * finishes on AcceptInvite (POST /api/auth/accept-invite), which writes
- * entity_owners. This call never talks to the database directly.
+ * row with status 'new'. An admin reviews it; approving is what creates the
+ * login and the entity_owners row that this dashboard reads access from.
  *
  * The API requires business_name and phone; everything else is optional.
  */
