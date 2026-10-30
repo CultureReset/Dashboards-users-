@@ -6,11 +6,12 @@
  *     Auth: ownerRequired (Bearer session; same headers apiClient already sends)
  *     Business: from entity_owners via the session — never send entity_id / slug
  *     Body: {
- *       modules: [{ key, enabled, has_data }],
+ *       modules: [{ key, enabled, has_data, installed? }],
  *       owner_visible_tables?: string[],  // gcr-api-clean owner_visible filter
  *     }
  *     Keys are already canonical (gallery→photos, menu→menu_sections on the API).
- *     has_data is kept; empty tabs are hidden by polishOwnerSections.
+ *     has_data + installed: installed apps with no rows still get a nav tab
+ *     (empty state). Uninstalled empty modules stay hidden.
  *     owner_visible_tables filters schema-discovery tabs (no hardcoded business list).
  *
  * There is NO owner POST. Toggle / install is Store + admin only:

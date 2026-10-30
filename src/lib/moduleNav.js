@@ -221,11 +221,16 @@ export function normalizeModulesList(payload) {
         sectionKey = resolved ? resolved.sectionKey : key
       }
       const hasDataRaw = row.has_data ?? row.hasData
+      const installedRaw = row.installed ?? row.is_installed ?? row.isInstalled
+      const installed = installedRaw === undefined
+        ? (hasDataRaw === true)
+        : !!installedRaw
       return {
         key,
         enabled: !!enabled,
         // undefined when the API omits it — callers treat missing as "unknown"
         has_data: hasDataRaw === undefined ? undefined : !!hasDataRaw,
+        installed,
         sort_order: row.sort_order ?? row.sortOrder ?? row.order ?? index,
         sectionKey,
         label: row.label || row.name || resolved?.label || null,
@@ -268,6 +273,7 @@ export function sectionsFromEnabledModules(modules, entity) {
       data: empty ? [] : data,
       empty,
       has_data: mod.has_data,
+      installed: mod.installed === true || mod.has_data === true,
       fromModule: true,
     })
   }
@@ -290,6 +296,8 @@ export function mergeModuleAndDiscoveredSections(discovered, moduleSections) {
         ...existing,
         catalogKey: s.catalogKey || existing.catalogKey,
         fromModule: existing.fromModule || s.fromModule,
+        installed: existing.installed || s.installed,
+        has_data: existing.has_data ?? s.has_data,
       })
     } else {
       byKey.set(s.key, s)
@@ -303,7 +311,8 @@ export function mergeModuleAndDiscoveredSections(discovered, moduleSections) {
  * 1. When the API returns owner_visible_tables, drop discovered sections whose
  *    backing table is not on that list (internal/raw contract rows).
  * 2. Dedupe tabs that share the same label (keep the one with data / preferred key).
- * 3. Hide empty tabs (no rows / has_data === false).
+ * 3. Hide empty tabs (no rows / has_data === false), except installed Store apps
+ *    which keep a clean empty state.
  *
  * @param {object[]} sections
  * @param {{ ownerVisibleTables?: string[]|null, tableFor?: (key: string) => string|null }} [opts]
@@ -316,17 +325,18 @@ export function polishOwnerSections(sections, opts = {}) {
 
   let list = [...(sections || [])]
 
+  const isInstalledEmpty = (s) =>
+    !!(s && s.fromModule && (s.installed === true || s.has_data === false || s.empty === true))
+
   if (allow) {
     list = list.filter((s) => {
-      // Module stubs without a swept table still need a chance when enabled+has_data
-      // was already filtered by the API — keep fromModule with has_data !== false
-      // only if their catalog table is allowed or unknown.
+      // Explicitly installed Store apps always keep a nav tab (empty state OK).
+      if (isInstalledEmpty(s)) return true
       const table = tableForFn(s.key) || s.table || s.key
       if (allow.has(table)) return true
       // API key might already be the table name
       if (allow.has(s.key)) return true
-      // If we cannot map and it came only from discovery, hide it when a
-      // visibility list is in force — that list is the source of truth.
+      // Module with data but no swept table — keep when catalog table unknown/allowed.
       if (s.fromModule && s.has_data !== false && s.empty !== true) {
         const catalogTable = s.table
         if (!catalogTable) return true
@@ -336,8 +346,9 @@ export function polishOwnerSections(sections, opts = {}) {
     })
   }
 
-  // Hide empty tabs
+  // Hide empty tabs — except installed Store apps (show empty state).
   list = list.filter((s) => {
+    if (isInstalledEmpty(s)) return true
     if (s.empty === true) return false
     if (s.has_data === false) return false
     const data = s.data

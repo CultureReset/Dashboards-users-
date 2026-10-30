@@ -30,7 +30,12 @@ import { detectInbox } from './shapes.js'
 const INTERNAL_PATTERNS = [
   /^ai_/, // AI / derived indexes
   /_(embedding|embeddings|vector|vectors|index|index_full)$/,
-  /^(entity_owners|platform_admins)$/, // access control
+  /(_v|_view)$/i, // SQL views / normalized dumps (entity_completeness_v, …)
+  /^v_/i,
+  /^(entity_owners|platform_admins|admin_impersonation_audit|search_index)$/, // access / search machinery
+  /(completeness|dead_google|items_norm|photos_dead|google_maps_links|nearby_landmark_types|address_areas|content_sections)/i,
+  /^entity_(amenities|offer|sources|theme|google_reviews|items_v)$/i,
+  /^industry_charter_fishing$/i,
   /(^|_)(audit|log|logs|history|impression|impressions|click|clicks|analytics|tracking|events_log)(_|$)/,
   /^(user_|tourist_|swipe|saved_)/, // other people's Trip Swipe data
   /(^|_)(sms|message|messages|inbox|notification|notifications)(_|$)/,
