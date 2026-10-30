@@ -129,8 +129,11 @@ export async function searchEntities(query, { limit = 40 } = {}) {
 
 /**
  * Submit a claim on a business — POST /api/gcr/claim writes a business_claims
- * row with status 'new'. An admin reviews it; approving is what creates the
- * login and the entity_owners row that this dashboard reads access from.
+ * row with status 'new'. Approving does not invent ownership by itself: if the
+ * email already has a Supabase Auth-backed users row, the API upserts
+ * entity_owners; otherwise it creates a business_invites link and the owner
+ * finishes on AcceptInvite (POST /api/auth/accept-invite), which writes
+ * entity_owners. This call never talks to the database directly.
  *
  * The API requires business_name and phone; everything else is optional.
  */
