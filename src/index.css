@@ -1063,3 +1063,12 @@ button.danger-ghost {
   border-radius: 10px; padding: 8px 12px; font: inherit; font-weight: 600; cursor: pointer;
 }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
+/* Enabled module with no rows yet — keep the tab, invite the owner to fill it. */
+.empty-module-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0 24px;
+}
+.empty-module-panel .primary { margin-top: 4px; }

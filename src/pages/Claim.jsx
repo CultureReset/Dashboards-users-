@@ -5,10 +5,11 @@ import { searchEntities, submitClaim } from '../lib/gcrApi'
 //
 // A business that has no login yet finds its GCR listing, confirms it, and
 // sends a claim. This does NOT grant access — POST /api/gcr/claim writes a
-// business_claims row with status 'new', which an admin reviews in
-// cybercheck-login's admin.html GCR Claims panel. Approving there is what
-// creates the account and the entity_owners row this dashboard reads access
-// from, so nobody can claim their way into another business's data.
+// business_claims row with status 'new'. An admin reviews it; approving may
+// either (a) link an existing Auth-backed account into entity_owners, or
+// (b) email/return an invite link. Ownership is only created when the owner
+// completes POST /api/auth/accept-invite (or already had auth_id to link).
+// Nobody can claim their way into another business's data from this screen.
 
 export default function Claim({ onBack }) {
   const [query, setQuery] = useState('')

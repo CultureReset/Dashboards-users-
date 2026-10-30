@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEntity } from '../lib/gcrApi'
 import { fetchEntityTables, getColumns } from '../lib/schemaDiscovery'
 import { fetchTablesForSlug, readTableCache } from '../lib/entityTables'
 import { discoverSections, mergeEntitySources } from '../lib/discoverSections'
+import {
+  sectionsFromEnabledModules,
+  mergeModuleAndDiscoveredSections,
+} from '../lib/moduleNav'
+import { fetchOwnerModules } from '../lib/modulesApi'
 import { TABLE_TO_API_KEY, tableFor } from '../lib/tableMap'
 import { rendererFor } from '../sections/registry'
 import GenericSection from '../sections/GenericSection'
 import EditableSection from '../sections/EditableSection'
+import EmptyModulePanel from '../components/EmptyModulePanel'
 import TopBar from '../components/TopBar'
 import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
@@ -29,6 +35,7 @@ export default function Dashboard() {
   const [sweep, setSweep] = useState(null) // { done, total } while scanning
   const [activeKey, setActiveKey] = useState(null)
   const [reloadKey, setReloadKey] = useState(0) // bumped after an edit saves
+  const [modulesReloadKey, setModulesReloadKey] = useState(0)
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
@@ -38,6 +45,13 @@ export default function Dashboard() {
   const [showAutomations, setShowAutomations] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
+  const [ownerModules, setOwnerModules] = useState([])
+  const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
+
+  const refreshAll = useCallback(() => {
+    setReloadKey((k) => k + 1)
+    setModulesReloadKey((k) => k + 1)
+  }, [])
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -58,6 +72,21 @@ export default function Dashboard() {
       cancelled = true
     }
   }, [gcrSlug, reloadKey])
+
+  // Owner modules — GET /api/owner/modules (gcr-api-clean PR #80).
+  // Session slug only; soft-fail to discovery when the endpoint is not deployed.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const result = await fetchOwnerModules()
+      if (cancelled) return
+      setModulesApiAvailable(!!result.available)
+      setOwnerModules(result.modules || [])
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [gcrSlug, modulesReloadKey])
 
   // Ask the database what tables exist right now, then sweep them for this
   // slug. The schema is re-read every load, so the dashboard follows the
@@ -117,7 +146,17 @@ export default function Dashboard() {
     () => mergeEntitySources(entity, tableRows),
     [entity, tableRows]
   )
-  const sections = useMemo(() => discoverSections(merged), [merged])
+
+  // Data-discovered sections (existing behavior). Always kept.
+  const discovered = useMemo(() => discoverSections(merged), [merged])
+
+  // When the modules API is available, union enabled modules (with empty
+  // stubs) onto discovery. When it is not, behave exactly as before.
+  const sections = useMemo(() => {
+    if (!modulesApiAvailable) return discovered
+    const fromModules = sectionsFromEnabledModules(ownerModules, merged)
+    return mergeModuleAndDiscoveredSections(discovered, fromModules)
+  }, [discovered, ownerModules, merged, modulesApiAvailable])
 
   useEffect(() => {
     if (sections.length && !sections.some((s) => s.key === activeKey)) {
@@ -148,6 +187,16 @@ export default function Dashboard() {
   const activeColumns = active ? getColumns(tableFor(active.key) || active.key) : []
   const Custom = rendererFor(active, activeColumns)
 
+  const clearOverlays = () => {
+    setAdding(false)
+    setShowApps(false)
+    setShowGhost(false)
+    setShowStore(false)
+    setShowPlatform(false)
+    setShowAutomations(false)
+    setShowCalendar(false)
+  }
+
   return (
     <div className="dashboard-shell">
       <TopBar
@@ -155,11 +204,7 @@ export default function Dashboard() {
         sections={sections}
         activeKey={adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setShowGhost(false); setShowStore(false); setShowPlatform(false)
-          setShowAutomations(false)
-          setShowCalendar(false)
+          clearOverlays()
           setActiveKey(key)
         }}
       />
@@ -168,13 +213,13 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => setAdding(true)}>
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
         {showCalendar ? (
           <Calendar />
         ) : showPlatform ? (
           <Platform />
         ) : showStore ? (
-          <Store />
+          <Store onChanged={refreshAll} />
         ) : showGhost ? (
           <Ghost />
         ) : showAutomations ? (
@@ -190,7 +235,15 @@ export default function Dashboard() {
               setAdding(false)
               // The new row makes this table a section on the next pass.
               setActiveKey(TABLE_TO_API_KEY[table] || table)
-              setReloadKey((k) => k + 1)
+              refreshAll()
+            }}
+          />
+        ) : active?.empty ? (
+          <EmptyModulePanel
+            section={active}
+            onAdd={() => {
+              clearOverlays()
+              setAdding(true)
             }}
           />
         ) : (
@@ -213,26 +266,22 @@ export default function Dashboard() {
         sections={sections}
         activeKey={showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
         onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setShowGhost(false); setShowStore(false); setShowPlatform(false)
-          setShowAutomations(false)
-          setShowCalendar(false)
+          clearOverlays()
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setAdding(true) }}
+        onAdd={() => { clearOverlays(); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowCalendar(false); setShowApps(true) }}
+        onApps={() => { clearOverlays(); setShowApps(true) }}
         apps={showApps}
-        onCalendar={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowCalendar(true) }}
+        onCalendar={() => { clearOverlays(); setShowCalendar(true) }}
         calendar={showCalendar}
-        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowCalendar(false); setShowPlatform(true) }}
+        onPlatform={() => { clearOverlays(); setShowPlatform(true) }}
         platform={showPlatform}
-        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowCalendar(false); setShowStore(true) }}
+        onStore={() => { clearOverlays(); setShowStore(true) }}
         store={showStore}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowCalendar(false); setShowGhost(true) }}
+        onGhost={() => { clearOverlays(); setShowGhost(true) }}
         ghost={showGhost}
-        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowCalendar(false); setShowAutomations(true) }}
+        onAutomations={() => { clearOverlays(); setShowAutomations(true) }}
         automations={showAutomations}
         automationsCount={automationsCount}
       />

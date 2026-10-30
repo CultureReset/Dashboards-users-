@@ -81,6 +81,13 @@ export const endpoints = {
     item: (id) => `/api/store/${seg(id)}`,
   },
 
+  // ---------------------------------------------------- owner modules ---
+  // GET /api/owner/modules — gcr-api-clean PR #80 (ownerRequired; session slug).
+  // No owner POST; Store routes project installs onto entity_modules.
+  modules: {
+    list: () => '/api/owner/modules',
+  },
+
   connections: {
     list: () => '/api/connections',
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,

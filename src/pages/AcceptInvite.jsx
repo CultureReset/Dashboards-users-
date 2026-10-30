@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { readInvite, acceptInvite } from '../lib/gcrApi'
 import { useAuth } from '../lib/AuthContext'
+import { api } from '../lib/apiClient'
+import { endpoints } from '../lib/endpoints'
 import { INDUSTRIES } from '../lib/industries'
 
 // Setting up an invited business.
@@ -51,6 +53,15 @@ export default function AcceptInvite({ token, onDone }) {
       // The account exists now, so sign in with it and land in the dashboard.
       const { error: signInError } = await signIn(invite.email, password)
       if (signInError) throw signInError
+      // Confirm entity_owners was written server-side. accept-invite is the
+      // only writer on this path; if /me has no slug, stop here with a clear
+      // message instead of the generic "No business linked" screen.
+      const me = await api.get(endpoints.auth.me())
+      if (!me?.slug && !me?.isAdmin) {
+        throw new Error(
+          'Your account was created, but it is not linked to the business yet. Ask for a new invite.',
+        )
+      }
       onDone?.()
     } catch (err) {
       setError(err.message)
