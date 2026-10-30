@@ -71,14 +71,12 @@ export default function Dashboard() {
     }
   }, [gcrSlug, reloadKey])
 
-  // Owner modules (entity_modules via gcr-api-clean). Soft-fail to discovery
-  // when the endpoint is not deployed yet (404/405/501).
+  // Owner modules — GET /api/owner/modules (gcr-api-clean PR #80).
+  // Session slug only; soft-fail to discovery when the endpoint is not deployed.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      // Wait for entity so we can pass entity_id when the API expects it.
-      const entityId = entity?.id ?? entity?.entity_id ?? null
-      const result = await fetchOwnerModules({ entityId, slug: gcrSlug })
+      const result = await fetchOwnerModules()
       if (cancelled) return
       setModulesApiAvailable(!!result.available)
       setOwnerModules(result.modules || [])
@@ -86,7 +84,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
-  }, [gcrSlug, entity?.id, entity?.entity_id, modulesReloadKey])
+  }, [gcrSlug, modulesReloadKey])
 
   // Ask the database what tables exist right now, then sweep them for this
   // slug. The schema is re-read every load, so the dashboard follows the

@@ -1,18 +1,19 @@
 /**
- * Owner modules API — thin adapter around whatever gcr-api-clean exposes.
+ * Owner modules API — matches gcr-api-clean PR #80
+ * (branch feat/entity-modules-store-admin → routes/owner-modules.js).
  *
- * ASSUMPTION (2026-10-30): Concierge is adding an owner modules endpoint.
- * No matching open PR/branch was found on CultureReset/gcr-api-clean at
- * draft time, so this client targets:
+ *   GET /api/owner/modules
+ *     Auth: ownerRequired (Bearer session; same headers apiClient already sends)
+ *     Business: from entity_owners via the session — never send entity_id / slug
+ *     Body: { modules: [{ key, enabled }] }
+ *     Keys are already canonical (gallery→photos, menu→menu_sections on the API)
  *
- *   GET  /api/owner/modules?entity_id=<id>  → { modules: [{ key, enabled }], catalog? }
- *   POST /api/owner/modules  { entity_id, key, enabled }
+ * There is NO owner POST. Toggle / install is Store + admin only:
+ *   POST/DELETE /api/store/:itemId… for kind:'module' projects onto entity_modules.
+ * After Store mutations, refetch this GET to refresh nav.
  *
- * Session owner auth (Bearer), same as /api/store. Paths live only in
- * endpoints.js so swapping to e.g. /api/business/modules is one edit.
- *
- * If the endpoint 404s / 405s / 501s, callers get { available: false } and
- * the dashboard falls back to pure data-discovery nav.
+ * Soft fallback: 404/405/501 → { available: false } so discovery-only nav still works
+ * until PR #80 is deployed.
  */
 
 import { api, ApiError } from './apiClient'
@@ -29,15 +30,11 @@ function isUnavailable(error) {
 }
 
 /**
- * @param {{ entityId?: string|number|null, slug?: string|null }} opts
- * @returns {Promise<{ available: boolean, modules: ReturnType<typeof normalizeModulesList>, raw: any }>}
+ * @returns {Promise<{ available: boolean, modules: ReturnType<typeof normalizeModulesList>, raw: any, error?: any }>}
  */
-export async function fetchOwnerModules({ entityId = null, slug = null } = {}) {
+export async function fetchOwnerModules() {
   try {
-    const query = {}
-    if (entityId != null && entityId !== '') query.entity_id = entityId
-    if (slug) query.slug = slug
-    const raw = await api.get(endpoints.modules.list(), { query })
+    const raw = await api.get(endpoints.modules.list())
     applyCatalogFromApi(raw)
     return {
       available: true,
@@ -45,30 +42,11 @@ export async function fetchOwnerModules({ entityId = null, slug = null } = {}) {
       raw,
     }
   } catch (error) {
+    clearCatalogFromApi()
     if (isUnavailable(error)) {
-      clearCatalogFromApi()
       return { available: false, modules: [], raw: null }
     }
-    // Auth / network errors: surface as unavailable for nav (keep discovery),
-    // but rethrow only if the caller wants — for Dashboard we soft-fail.
-    clearCatalogFromApi()
+    // Auth / network: keep discovery nav; Dashboard soft-fails.
     return { available: false, modules: [], raw: null, error }
-  }
-}
-
-/**
- * Enable/disable one module for this business.
- * Soft-fails the same way when the endpoint is not deployed yet.
- */
-export async function setOwnerModuleEnabled({ entityId, key, enabled, slug = null }) {
-  try {
-    const body = { key, enabled: !!enabled }
-    if (entityId != null && entityId !== '') body.entity_id = entityId
-    if (slug) body.slug = slug
-    const raw = await api.post(endpoints.modules.set(), body)
-    return { available: true, raw }
-  } catch (error) {
-    if (isUnavailable(error)) return { available: false, raw: null }
-    throw error
   }
 }

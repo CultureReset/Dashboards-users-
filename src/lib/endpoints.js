@@ -82,12 +82,10 @@ export const endpoints = {
   },
 
   // ---------------------------------------------------- owner modules ---
-  // entity_modules for this business. Paths assumed until Concierge lands
-  // the gcr-api-clean owner modules endpoint — change only here if the
-  // final mount differs (e.g. /api/business/modules).
+  // GET /api/owner/modules — gcr-api-clean PR #80 (ownerRequired; session slug).
+  // No owner POST; Store routes project installs onto entity_modules.
   modules: {
     list: () => '/api/owner/modules',
-    set: () => '/api/owner/modules',
   },
 
   connections: {

@@ -20,6 +20,7 @@ import { buildCatalog } from '../src/lib/sectionCatalog.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
 import {
   CATALOG_KEY_TO_SECTION,
+  canonicalize,
   sectionKeyForCatalog,
   sectionsFromEnabledModules,
   mergeModuleAndDiscoveredSections,
@@ -278,7 +279,11 @@ check('a non-contact column is untouched',
 
 
 console.log('\nModule nav (catalog map + union + empty stubs)')
-check('gallery maps to photos', sectionKeyForCatalog('gallery') === 'photos')
+check('canonicalize gallery → photos', canonicalize('gallery') === 'photos')
+check('canonicalize menu → menu_sections', canonicalize('menu') === 'menu_sections')
+check('canonicalize photos stays photos', canonicalize('photos') === 'photos')
+check('gallery maps to photos section', sectionKeyForCatalog('gallery') === 'photos')
+check('photos maps to photos section', sectionKeyForCatalog('photos') === 'photos')
 check('menu maps to menu_sections', sectionKeyForCatalog('menu') === 'menu_sections')
 check('drinks maps to drink_sections', sectionKeyForCatalog('drinks') === 'drink_sections')
 check('core has no section key', sectionKeyForCatalog('core') === null)
@@ -291,19 +296,22 @@ applyCatalogFromApi({
 check('API catalog override preferred for gallery label path', sectionKeyForCatalog('gallery') === 'photos')
 clearCatalogFromApi()
 
+// API returns already-canonical keys (PR #80)
 const enabled = normalizeModulesList({
   modules: [
-    { key: 'menu', enabled: true, sort_order: 1 },
-    { key: 'gallery', enabled: true },
+    { key: 'menu_sections', enabled: true, sort_order: 1 },
+    { key: 'photos', enabled: true },
     { key: 'core', enabled: true },
     { key: 'blog', enabled: false },
   ],
 })
+check('normalize keeps canonical photos key', enabled.some((m) => m.key === 'photos' && m.enabled))
+check('normalize collapses gallery alias if sent', normalizeModulesList({ modules: [{ key: 'gallery', enabled: true }] })[0]?.key === 'photos')
 const emptyEntity = { slug: 'demo', name: 'Demo' }
 const moduleSections = sectionsFromEnabledModules(enabled, emptyEntity)
 const modKeys = moduleSections.map((s) => s.key)
-check('enabled menu becomes menu_sections stub', modKeys.includes('menu_sections'))
-check('enabled gallery becomes photos stub', modKeys.includes('photos'))
+check('enabled menu_sections becomes stub', modKeys.includes('menu_sections'))
+check('enabled photos becomes stub', modKeys.includes('photos'))
 check('core does not become a nav section', !modKeys.includes('core') && !modKeys.includes(null))
 check('disabled blog is omitted', !modKeys.includes('blog_posts'))
 check('empty stubs flagged empty', moduleSections.every((s) => s.empty === true))
