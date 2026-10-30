@@ -1022,3 +1022,44 @@ input { font: inherit; }
 }
 .store-actions button:disabled, .store-banner button:disabled { opacity: 0.6; }
 .store-settings input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
+
+/* ── Calendar page ───────────────────────────────────────────────────────── */
+.calendar-page { display: flex; flex-direction: column; gap: 22px; padding: 4px 2px 32px; }
+.calendar-header h2 { margin: 0 0 6px; font-size: 1.35rem; }
+.calendar-section { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.calendar-section h3 { margin: 0; font-size: 1.05rem; }
+.calendar-slug-picker { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; max-width: 320px; }
+.calendar-slug-picker select,
+.calendar-add-form select,
+.calendar-add-form input,
+.calendar-export-row input {
+  background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px; font: inherit;
+}
+.calendar-unit-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.calendar-unit-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.calendar-slug { font-size: 0.75rem; color: var(--muted); }
+.calendar-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.calendar-export-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.calendar-export-row input { flex: 1 1 220px; min-width: 0; }
+.calendar-feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.calendar-feed-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.calendar-feed-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.calendar-feed-actions { display: flex; gap: 8px; align-items: center; }
+.calendar-add-form { display: grid; gap: 12px; }
+.calendar-add-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.calendar-connect-card { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.calendar-connect-card.stub { opacity: 0.92; }
+button.secondary, .calendar-page .secondary {
+  background: var(--accent-bg); color: var(--accent); border: 1px solid transparent;
+  border-radius: 10px; padding: 8px 12px; font: inherit; font-weight: 600; cursor: pointer;
+}
+button.primary, .calendar-page .primary {
+  background: var(--accent); color: var(--on-accent); border: none;
+  border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer;
+}
+button.danger-ghost {
+  background: transparent; color: var(--danger); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px; font: inherit; font-weight: 600; cursor: pointer;
+}
+button:disabled { opacity: 0.55; cursor: not-allowed; }

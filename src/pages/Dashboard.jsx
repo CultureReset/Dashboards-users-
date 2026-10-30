@@ -17,6 +17,7 @@ import Ghost from './Ghost'
 import Store from './Store'
 import Automations from './Automations'
 import Platform from './Platform'
+import Calendar from './Calendar'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [showStore, setShowStore] = useState(false)
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
 
   // The API payload — richest source for the domains it covers.
@@ -151,12 +153,13 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={adding ? null : activeKey}
+        activeKey={adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
           setShowGhost(false); setShowStore(false); setShowPlatform(false)
           setShowAutomations(false)
+          setShowCalendar(false)
           setActiveKey(key)
         }}
       />
@@ -165,8 +168,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showPlatform ? (
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showCalendar ? (
+          <Calendar />
+        ) : showPlatform ? (
           <Platform />
         ) : showStore ? (
           <Store />
@@ -206,25 +211,28 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
           setShowGhost(false); setShowStore(false); setShowPlatform(false)
           setShowAutomations(false)
+          setShowCalendar(false)
           setActiveKey(key)
         }}
         onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowCalendar(false); setShowApps(true) }}
         apps={showApps}
-        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(true) }}
+        onCalendar={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowCalendar(true) }}
+        calendar={showCalendar}
+        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowCalendar(false); setShowPlatform(true) }}
         platform={showPlatform}
-        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowStore(true) }}
+        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowCalendar(false); setShowStore(true) }}
         store={showStore}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowGhost(true) }}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowCalendar(false); setShowGhost(true) }}
         ghost={showGhost}
-        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(true) }}
+        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowCalendar(false); setShowAutomations(true) }}
         automations={showAutomations}
         automationsCount={automationsCount}
       />
