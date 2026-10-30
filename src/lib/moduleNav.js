@@ -188,6 +188,7 @@ export function sectionKeyForCatalog(catalogKey) {
 /**
  * Normalize GET /api/owner/modules into
  * [{ key, enabled, sort_order?, sectionKey?, label?, icon? }].
+ * Extra wire fields (has_data, etc.) are dropped — only these are kept.
  * Accepts common aliases on the wire; stores canonical keys.
  */
 export function normalizeModulesList(payload) {
