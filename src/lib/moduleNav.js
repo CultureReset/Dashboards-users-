@@ -10,6 +10,8 @@
  * Prefer catalog mappings from the owner-modules API response when present
  * (see applyCatalogFromApi). Keep every existing data-discovered section;
  * union enabled modules so empty-but-enabled modules still get a tab.
+ * When has_data is false (or local data is missing), the section is empty
+ * and Dashboard shows EmptyModulePanel.
  */
 
 import { labelFor, iconFor } from './discoverSections.js'
@@ -187,9 +189,9 @@ export function sectionKeyForCatalog(catalogKey) {
 
 /**
  * Normalize GET /api/owner/modules into
- * [{ key, enabled, sort_order?, sectionKey?, label?, icon? }].
- * Extra wire fields (has_data, etc.) are dropped — only these are kept.
- * Accepts common aliases on the wire; stores canonical keys.
+ * [{ key, enabled, has_data?, sort_order?, sectionKey?, label?, icon? }].
+ * Keeps has_data from the wire (gcr-api-clean #83) so empty-but-enabled
+ * modules can show an empty state. Accepts common aliases; stores canonical keys.
  */
 export function normalizeModulesList(payload) {
   if (!payload) return []
@@ -214,9 +216,12 @@ export function normalizeModulesList(payload) {
       if (sectionKey === undefined) {
         sectionKey = resolved ? resolved.sectionKey : key
       }
+      const hasDataRaw = row.has_data ?? row.hasData
       return {
         key,
         enabled: !!enabled,
+        // undefined when the API omits it — callers treat missing as "unknown"
+        has_data: hasDataRaw === undefined ? undefined : !!hasDataRaw,
         sort_order: row.sort_order ?? row.sortOrder ?? row.order ?? index,
         sectionKey,
         label: row.label || row.name || resolved?.label || null,
@@ -247,14 +252,18 @@ export function sectionsFromEnabledModules(modules, entity) {
       : data && typeof data === 'object'
         ? Object.values(data).some((v) => v !== null && v !== undefined && v !== '')
         : false
+    // Prefer API has_data when present (enabled && !has_data → empty state).
+    // Fall back to local row presence when the field is omitted.
+    const empty = mod.has_data === false ? true : !hasRows
     out.push({
       key: sectionKey,
       catalogKey: mod.key,
       label: mod.label || labelFor(sectionKey),
       icon: mod.icon || iconFor(sectionKey),
-      kind: Array.isArray(data) || !hasRows ? 'list' : 'record',
-      data: hasRows ? data : [],
-      empty: !hasRows,
+      kind: Array.isArray(data) || empty ? 'list' : 'record',
+      data: empty ? [] : data,
+      empty,
+      has_data: mod.has_data,
       fromModule: true,
     })
   }

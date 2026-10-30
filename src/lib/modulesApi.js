@@ -5,10 +5,10 @@
  *   GET /api/owner/modules
  *     Auth: ownerRequired (Bearer session; same headers apiClient already sends)
  *     Business: from entity_owners via the session — never send entity_id / slug
- *     Body: { modules: [{ key, enabled, has_data? }] }
+ *     Body: { modules: [{ key, enabled, has_data }] }
  *     Keys are already canonical (gallery→photos, menu→menu_sections on the API).
- *     Extra fields (e.g. has_data) are ignored; a shorter list is fine — nav
- *     unions whatever modules the API returns with discovery.
+ *     has_data is kept and drives empty-state tabs (enabled && !has_data).
+ *     A shorter list is fine — nav unions whatever the API returns with discovery.
  *
  * There is NO owner POST. Toggle / install is Store + admin only:
  *   POST/DELETE /api/store/:itemId… for kind:'module' projects onto entity_modules.
