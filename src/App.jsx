@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import BusinessPicker from './pages/BusinessPicker'
 import AcceptInvite from './pages/AcceptInvite'
 import SignUp from './pages/SignUp'
+import ResetPassword from './pages/ResetPassword'
 
 function NoBusinessLinked() {
   const { signOut, user } = useAuth()
@@ -35,6 +36,21 @@ function Root() {
   const [claiming, setClaiming] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
   const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
+  const [recoveryToken, setRecoveryToken] = useState(recoveryAccessTokenFromUrl)
+
+  if (recoveryToken) {
+    return (
+      <ResetPassword
+        accessToken={recoveryToken}
+        onDone={() => {
+          const url = new URL(location.href)
+          url.hash = ''
+          history.replaceState({}, '', url)
+          setRecoveryToken(null)
+        }}
+      />
+    )
+  }
 
   if (loading) {
     return (

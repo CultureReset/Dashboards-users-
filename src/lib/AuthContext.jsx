@@ -79,9 +79,9 @@ export function AuthProvider({ children }) {
     loadAccess()
   }, [session, loadAccess])
 
-  /* ── the three ways in ────────────────────────────────────────────────── */
+  /* ── how you get in ───────────────────────────────────────────────────── */
 
-  /** Slug or email plus a password — the invite accounts. */
+  /** Email (or slug) plus a password — self-signup and invite accounts. */
   const signIn = (identifier, password) =>
     attempt(async () => {
       const { session: minted } = await api.post(
@@ -93,25 +93,7 @@ export function AuthProvider({ children }) {
       return minted
     })
 
-  /**
-   * Businesses that signed up by phone.
-   *
-   * The code check already returned a finished session, so there is nothing
-   * left to redeem — this just stores it. The two trailing arguments are the
-   * old one-time secret and login address; they are accepted and ignored so
-   * the sign-in pages did not have to change in the same commit.
-   */
-  const signInWithPhone = (phone, secretOrSession) =>
-    attempt(async () => {
-      const minted = secretOrSession?.access_token ? secretOrSession : null
-      if (!minted) {
-        throw new Error('That sign-in did not complete — request a new code.')
-      }
-      setSession(minted)
-      return minted
-    })
-
-  /** Store a session the API already minted (sign-up, or a code check). */
+  /** Store a session the API already minted (rare; password sign-in is the path). */
   const adoptSession = (minted) => {
     if (minted?.access_token) setSession(minted)
     return minted
@@ -179,7 +161,6 @@ export function AuthProvider({ children }) {
       history.pushState({}, '', url)
     },
     signIn,
-    signInWithPhone,
     adoptSession,
     signOut,
   }
