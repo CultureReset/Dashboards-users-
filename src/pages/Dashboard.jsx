@@ -7,6 +7,7 @@ import { discoverSections, mergeEntitySources } from '../lib/discoverSections'
 import {
   sectionsFromEnabledModules,
   mergeModuleAndDiscoveredSections,
+  polishOwnerSections,
 } from '../lib/moduleNav'
 import { fetchOwnerModules } from '../lib/modulesApi'
 import { TABLE_TO_API_KEY, tableFor } from '../lib/tableMap'
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
+  const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
   const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
 
   const refreshAll = useCallback(() => {
@@ -82,6 +84,7 @@ export default function Dashboard() {
       if (cancelled) return
       setModulesApiAvailable(!!result.available)
       setOwnerModules(result.modules || [])
+      setOwnerVisibleTables(result.ownerVisibleTables ?? null)
     })()
     return () => {
       cancelled = true
@@ -153,10 +156,18 @@ export default function Dashboard() {
   // When the modules API is available, union enabled modules (with empty
   // stubs) onto discovery. When it is not, behave exactly as before.
   const sections = useMemo(() => {
-    if (!modulesApiAvailable) return discovered
-    const fromModules = sectionsFromEnabledModules(ownerModules, merged)
-    return mergeModuleAndDiscoveredSections(discovered, fromModules)
-  }, [discovered, ownerModules, merged, modulesApiAvailable])
+    let next
+    if (!modulesApiAvailable) {
+      next = discovered
+    } else {
+      const fromModules = sectionsFromEnabledModules(ownerModules, merged)
+      next = mergeModuleAndDiscoveredSections(discovered, fromModules)
+    }
+    return polishOwnerSections(next, {
+      ownerVisibleTables: modulesApiAvailable ? ownerVisibleTables : null,
+      tableFor,
+    })
+  }, [discovered, ownerModules, merged, modulesApiAvailable, ownerVisibleTables])
 
   useEffect(() => {
     if (sections.length && !sections.some((s) => s.key === activeKey)) {

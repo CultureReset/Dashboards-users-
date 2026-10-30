@@ -27,6 +27,7 @@ import {
   applyCatalogFromApi,
   clearCatalogFromApi,
   normalizeModulesList,
+  polishOwnerSections,
 } from '../src/lib/moduleNav.js'
 
 let failures = 0
@@ -323,6 +324,27 @@ check('union adds empty module sections', unioned.some((s) => s.key === 'photos'
 // restaurant already has photos with data — empty flag cleared by merge preferring discovered
 const photos = unioned.find((s) => s.key === 'photos')
 check('discovered photos wins over empty stub', photos && photos.empty === false)
+
+console.log('\nOwner nav polish (visibility, dedupe, hide empty)')
+{
+  const noisy = [
+    { key: 'entity_completeness_v', label: 'Entity Completeness V', data: [{ x: 1 }], empty: false },
+    { key: 'sections', label: 'Offerings', data: [{ id: 1 }], empty: false },
+    { key: 'offerings', label: 'Offerings', data: [{ id: 2 }, { id: 3 }], empty: false },
+    { key: 'hours', label: 'Hours', data: [], empty: true, has_data: false },
+    { key: 'photos', label: 'Photos', data: [{ url: 'a' }], empty: false },
+  ]
+  const polished = polishOwnerSections(noisy, {
+    ownerVisibleTables: ['entity_hours', 'entity_photos', 'offerings', 'entity_sections'],
+    tableFor: (key) => ({ hours: 'entity_hours', photos: 'entity_photos', sections: 'entity_sections', offerings: 'offerings' }[key] || key),
+  })
+  const keys = polished.map((s) => s.key)
+  check('hides internal completeness view', !keys.includes('entity_completeness_v'), keys.join(','))
+  check('hides empty hours tab', !keys.includes('hours'), keys.join(','))
+  check('keeps photos', keys.includes('photos'), keys.join(','))
+  check('dedupes Offerings to one tab', polished.filter((s) => s.label === 'Offerings').length === 1, keys.join(','))
+  check('prefers richer Offerings data', polished.find((s) => s.label === 'Offerings')?.key === 'offerings', keys.join(','))
+}
 
 console.log(failures ? `\n${failures} failed\n` : '\nAll checks passed\n')
 process.exit(failures ? 1 : 0)

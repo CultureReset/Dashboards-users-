@@ -5,10 +5,13 @@
  *   GET /api/owner/modules
  *     Auth: ownerRequired (Bearer session; same headers apiClient already sends)
  *     Business: from entity_owners via the session — never send entity_id / slug
- *     Body: { modules: [{ key, enabled, has_data }] }
+ *     Body: {
+ *       modules: [{ key, enabled, has_data }],
+ *       owner_visible_tables?: string[],  // gcr-api-clean owner_visible filter
+ *     }
  *     Keys are already canonical (gallery→photos, menu→menu_sections on the API).
- *     has_data is kept and drives empty-state tabs (enabled && !has_data).
- *     A shorter list is fine — nav unions whatever the API returns with discovery.
+ *     has_data is kept; empty tabs are hidden by polishOwnerSections.
+ *     owner_visible_tables filters schema-discovery tabs (no hardcoded business list).
  *
  * There is NO owner POST. Toggle / install is Store + admin only:
  *   POST/DELETE /api/store/:itemId… for kind:'module' projects onto entity_modules.
@@ -32,23 +35,27 @@ function isUnavailable(error) {
 }
 
 /**
- * @returns {Promise<{ available: boolean, modules: ReturnType<typeof normalizeModulesList>, raw: any, error?: any }>}
+ * @returns {Promise<{ available: boolean, modules: ReturnType<typeof normalizeModulesList>, ownerVisibleTables: string[]|null, raw: any, error?: any }>}
  */
 export async function fetchOwnerModules() {
   try {
     const raw = await api.get(endpoints.modules.list())
     applyCatalogFromApi(raw)
+    const tables = Array.isArray(raw?.owner_visible_tables)
+      ? raw.owner_visible_tables.map((t) => String(t || '').trim()).filter(Boolean)
+      : null
     return {
       available: true,
       modules: normalizeModulesList(raw),
+      ownerVisibleTables: tables,
       raw,
     }
   } catch (error) {
     clearCatalogFromApi()
     if (isUnavailable(error)) {
-      return { available: false, modules: [], raw: null }
+      return { available: false, modules: [], ownerVisibleTables: null, raw: null }
     }
     // Auth / network: keep discovery nav; Dashboard soft-fails.
-    return { available: false, modules: [], raw: null, error }
+    return { available: false, modules: [], ownerVisibleTables: null, raw: null, error }
   }
 }
