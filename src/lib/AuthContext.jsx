@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { api, onAuthFailure } from './apiClient'
 import { endpoints } from './endpoints'
 import { getSession, setSession, clearSession, onSessionChange, setActingSlug } from './authStore'
-import { LOGIN_DOMAIN } from './config'
+import { GCR_API_BASE, LOGIN_DOMAIN } from './config'
 
 const AuthContext = createContext(null)
 
@@ -28,6 +28,26 @@ function slugFromUrl() {
   return new URLSearchParams(location.search).get('business')
 }
 
+function passFromUrl() {
+  return new URLSearchParams(location.search).get('pass')
+}
+
+function stripPassFromUrl() {
+  const url = new URL(location.href)
+  if (!url.searchParams.has('pass')) return
+  url.searchParams.delete('pass')
+  history.replaceState({}, '', url)
+}
+
+/** Human copy for exchange-impersonation HTTP failures. */
+function impersonationErrorMessage(status) {
+  if (status === 400) return 'This admin link is incomplete.'
+  if (status === 401) return 'This admin link expired. Ask an admin to open the dashboard again.'
+  if (status === 409) return 'This admin link was already used.'
+  if (status === 501) return 'Not available yet — admin Open dashboard is not fully set up.'
+  return 'Could not open this business as admin. Ask an admin to try again.'
+}
+
 /**
  * Supabase's `{ data, error }` shape, kept.
  *
@@ -48,6 +68,11 @@ export function AuthProvider({ children }) {
   const [access, setAccess] = useState(undefined)
   const [adminSlug, setAdminSlug] = useState(slugFromUrl())
   const [ownerSlug, setOwnerSlug] = useState(null)
+  const [impersonationBooting, setImpersonationBooting] = useState(() => !!passFromUrl())
+  const [impersonationError, setImpersonationError] = useState(null)
+
+  // Guard so React Strict Mode (and a remount) cannot spend the one-time pass twice.
+  const passExchangeRef = useRef(null)
 
   // The store is the one copy of the session; this mirrors it into React so
   // the tree re-renders when a sign-in, a renewal or a sign-out changes it.
@@ -55,6 +80,81 @@ export function AuthProvider({ children }) {
 
   // The API rejecting our token is the only reliable sign a session has died.
   useEffect(() => onAuthFailure(() => setAccess(null)), [])
+
+  /**
+   * Admin "Open dashboard" deep link: ?pass=…&business=<slug>
+   *
+   * Exchange exactly once, store the session (no refresh_token), scope to the
+   * slug, strip pass from the URL. Prefer the pass over any prior owner session.
+   */
+  useEffect(() => {
+    const pass = passFromUrl()
+    if (!pass) {
+      setImpersonationBooting(false)
+      return
+    }
+
+    if (passExchangeRef.current === pass) return
+    passExchangeRef.current = pass
+
+    let cancelled = false
+    setImpersonationBooting(true)
+    setImpersonationError(null)
+
+    ;(async () => {
+      try {
+        const res = await fetch(`${GCR_API_BASE}${endpoints.auth.exchangeImpersonation()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ pass }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (cancelled) return
+        if (!res.ok) {
+          clearSession()
+          setActingSlug(null)
+          setAccess(null)
+          setImpersonationError(impersonationErrorMessage(res.status))
+          stripPassFromUrl()
+          return
+        }
+        const minted = data?.session
+        if (!minted?.access_token) {
+          clearSession()
+          setActingSlug(null)
+          setAccess(null)
+          setImpersonationError(impersonationErrorMessage(500))
+          stripPassFromUrl()
+          return
+        }
+        const slug = data.slug || minted.slug || slugFromUrl()
+        setSession(minted)
+        if (slug) {
+          setActingSlug(slug)
+          setAdminSlug(slug)
+          const url = new URL(location.href)
+          url.searchParams.set('business', slug)
+          url.searchParams.delete('pass')
+          history.replaceState({}, '', url)
+        } else {
+          stripPassFromUrl()
+        }
+      } catch {
+        if (cancelled) return
+        clearSession()
+        setActingSlug(null)
+        setAccess(null)
+        setImpersonationError(impersonationErrorMessage(500))
+        stripPassFromUrl()
+      } finally {
+        if (!cancelled) setImpersonationBooting(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   /**
    * What this account owns. One call, answered server-side.
@@ -76,8 +176,9 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (session === undefined) return
+    if (impersonationBooting) return
     loadAccess()
-  }, [session, loadAccess])
+  }, [session, loadAccess, impersonationBooting])
 
   /* ── the three ways in ────────────────────────────────────────────────── */
 
@@ -126,12 +227,24 @@ export function AuthProvider({ children }) {
       /* signing out locally is what matters; the token expires on its own */
     }
     clearSession()
+    setActingSlug(null)
+    setAdminSlug(null)
     setAccess(null)
+    setImpersonationError(null)
+  }
+
+  /** Exit an admin impersonation session back to the normal login screen. */
+  const exitImpersonation = async () => {
+    await signOut()
+    const url = new URL(location.href)
+    url.searchParams.delete('pass')
+    url.searchParams.delete('business')
+    history.replaceState({}, '', url)
   }
 
   // An admin viewing a business wins over their own ownership row, so support
   // can jump straight into any dashboard.
-  const isAdmin = !!access?.isAdmin
+  const isAdmin = !!access?.isAdmin || !!session?.admin_impersonation
   const ownedSlugs = access?.slugs || (access?.slug ? [{ slug: access.slug, name: access.name, role: access.role }] : [])
   const ownedChildren = access?.children || []
 
@@ -142,25 +255,44 @@ export function AuthProvider({ children }) {
     access?.slug ||
     null
 
-  const gcrSlug = (isAdmin && adminSlug) || effectiveOwnerSlug || null
+  const impersonationSlug = session?.admin_impersonation
+    ? (session.slug || adminSlug || access?.slug || null)
+    : null
+
+  const gcrSlug = impersonationSlug || (isAdmin && adminSlug) || effectiveOwnerSlug || null
 
   // Admins name a business explicitly. Owners with multiple linked units also
   // name the active one so /api/business/* scopes to that slug.
+  // Impersonation sessions are locked to one slug in the JWT; still set acting
+  // slug so client requests stay consistent with today's ?business= behaviour.
   useEffect(() => {
-    if (isAdmin && adminSlug) setActingSlug(adminSlug)
-    else if (!isAdmin && effectiveOwnerSlug && ownedSlugs.length > 1) setActingSlug(effectiveOwnerSlug)
-    else setActingSlug(null)
-  }, [isAdmin, adminSlug, effectiveOwnerSlug, ownedSlugs.length])
+    if (session?.admin_impersonation && (session.slug || adminSlug)) {
+      setActingSlug(session.slug || adminSlug)
+    } else if (isAdmin && adminSlug) {
+      setActingSlug(adminSlug)
+    } else if (!isAdmin && effectiveOwnerSlug && ownedSlugs.length > 1) {
+      setActingSlug(effectiveOwnerSlug)
+    } else {
+      setActingSlug(null)
+    }
+  }, [isAdmin, adminSlug, effectiveOwnerSlug, ownedSlugs.length, session])
+
+  const viewingAsImpersonation = !!session?.admin_impersonation
 
   const value = {
     session,
     user: session?.user || null,
-    loading: !!session && access === undefined,
+    loading: impersonationBooting || (!!session && access === undefined),
     gcrSlug,
-    businessName: (ownedSlugs.find((s) => s.slug === gcrSlug)?.name) || access?.name || null,
+    businessName:
+      (ownedSlugs.find((s) => s.slug === gcrSlug)?.name) ||
+      access?.name ||
+      null,
     role: (ownedSlugs.find((s) => s.slug === gcrSlug)?.role) || access?.role || null,
     isAdmin,
-    viewingAsAdmin: !!(isAdmin && adminSlug),
+    viewingAsAdmin: !!(isAdmin && adminSlug) || viewingAsImpersonation,
+    viewingAsImpersonation,
+    impersonationError,
     hasAccess: !!gcrSlug,
     ownedSlugs,
     ownedChildren,
@@ -182,6 +314,7 @@ export function AuthProvider({ children }) {
     signInWithPhone,
     adoptSession,
     signOut,
+    exitImpersonation,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

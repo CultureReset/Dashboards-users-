@@ -15,7 +15,14 @@ const THEME_LABELS = { system: 'Auto', light: 'Light', dark: 'Dark' }
 // Sections are optional. The business picker renders this bar with none, and
 // the menu is still worth having for the theme switch.
 export default function TopBar({ businessName, sections = [], activeKey, onSelect }) {
-  const { signOut, viewingAsAdmin, closeBusiness } = useAuth()
+  const {
+    signOut,
+    viewingAsAdmin,
+    viewingAsImpersonation,
+    closeBusiness,
+    exitImpersonation,
+    gcrSlug,
+  } = useAuth()
   const [theme, setTheme] = useTheme()
   const [open, setOpen] = useState(false)
   const menuRef = useRef(null)
@@ -46,14 +53,25 @@ export default function TopBar({ businessName, sections = [], activeKey, onSelec
     }
   }, [open])
 
+  const impersonationLabel = businessName || gcrSlug
+    ? `Viewing as admin — ${businessName || gcrSlug}`
+    : 'Viewing as admin'
+
   return (
     <>
-      {viewingAsAdmin && (
+      {viewingAsImpersonation ? (
+        <div className="admin-banner" role="status">
+          <span>{impersonationLabel}</span>
+          <button type="button" onClick={exitImpersonation}>
+            Exit
+          </button>
+        </div>
+      ) : viewingAsAdmin ? (
         <div className="admin-banner">
           <span>Admin view</span>
-          <button onClick={closeBusiness}>← All businesses</button>
+          <button type="button" onClick={closeBusiness}>← All businesses</button>
         </div>
-      )}
+      ) : null}
       <header className="topbar">
         <button
           ref={buttonRef}
