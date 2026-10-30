@@ -73,6 +73,8 @@ const LABEL_OVERRIDES = {
   availability_today: 'Availability Today',
   parent_amenities: 'Complex Amenities',
   spot_rules: 'Rules',
+  'song-request': 'Song Request',
+  'merch-store': 'Merch Store',
 }
 
 const ICONS = {
@@ -109,6 +111,8 @@ const ICONS = {
   social_posts: '📱',
   loyalty_program: '🎁',
   industry_facts: 'ℹ️',
+  'song-request': '🎧',
+  'merch-store': '🛍️',
 }
 
 function humanize(key) {
