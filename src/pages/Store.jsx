@@ -9,7 +9,7 @@ import endpoints from '../lib/endpoints'
 // session. A version that asks for access the business has not given is never
 // installed without it saying yes here.
 
-export default function Store() {
+export default function Store({ onChanged } = {}) {
   const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
@@ -36,6 +36,7 @@ export default function Store() {
       await api.post(path, { accept_permissions: acceptPermissions })
       setAsking(null)
       await load()
+      onChanged?.()
     } catch (err) {
       if (err.status === 409 && Array.isArray(err.body?.permissions)) {
         setAsking({ item, verb, permissions: err.body.permissions })
@@ -53,6 +54,7 @@ export default function Store() {
       if (verb === 'uninstall') await api.del(endpoints.store.item(item.id))
       else await api.post(endpoints.store.status(item.id, verb))
       await load()
+      onChanged?.()
     } catch (err) {
       setError(err.message)
     } finally {
