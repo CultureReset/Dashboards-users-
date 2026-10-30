@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEntity } from '../lib/gcrApi'
 import { fetchEntityTables, getColumns } from '../lib/schemaDiscovery'
 import { fetchTablesForSlug, readTableCache } from '../lib/entityTables'
 import { discoverSections, mergeEntitySources } from '../lib/discoverSections'
+import {
+  sectionsFromEnabledModules,
+  mergeModuleAndDiscoveredSections,
+} from '../lib/moduleNav'
+import { fetchOwnerModules } from '../lib/modulesApi'
 import { TABLE_TO_API_KEY, tableFor } from '../lib/tableMap'
 import { rendererFor } from '../sections/registry'
 import GenericSection from '../sections/GenericSection'
 import EditableSection from '../sections/EditableSection'
+import EmptyModulePanel from '../components/EmptyModulePanel'
 import TopBar from '../components/TopBar'
 import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
@@ -28,6 +34,7 @@ export default function Dashboard() {
   const [sweep, setSweep] = useState(null) // { done, total } while scanning
   const [activeKey, setActiveKey] = useState(null)
   const [reloadKey, setReloadKey] = useState(0) // bumped after an edit saves
+  const [modulesReloadKey, setModulesReloadKey] = useState(0)
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
@@ -36,6 +43,13 @@ export default function Dashboard() {
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
+  const [ownerModules, setOwnerModules] = useState([])
+  const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
+
+  const refreshAll = useCallback(() => {
+    setReloadKey((k) => k + 1)
+    setModulesReloadKey((k) => k + 1)
+  }, [])
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -56,6 +70,23 @@ export default function Dashboard() {
       cancelled = true
     }
   }, [gcrSlug, reloadKey])
+
+  // Owner modules (entity_modules via gcr-api-clean). Soft-fail to discovery
+  // when the endpoint is not deployed yet (404/405/501).
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      // Wait for entity so we can pass entity_id when the API expects it.
+      const entityId = entity?.id ?? entity?.entity_id ?? null
+      const result = await fetchOwnerModules({ entityId, slug: gcrSlug })
+      if (cancelled) return
+      setModulesApiAvailable(!!result.available)
+      setOwnerModules(result.modules || [])
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [gcrSlug, entity?.id, entity?.entity_id, modulesReloadKey])
 
   // Ask the database what tables exist right now, then sweep them for this
   // slug. The schema is re-read every load, so the dashboard follows the
@@ -115,7 +146,17 @@ export default function Dashboard() {
     () => mergeEntitySources(entity, tableRows),
     [entity, tableRows]
   )
-  const sections = useMemo(() => discoverSections(merged), [merged])
+
+  // Data-discovered sections (existing behavior). Always kept.
+  const discovered = useMemo(() => discoverSections(merged), [merged])
+
+  // When the modules API is available, union enabled modules (with empty
+  // stubs) onto discovery. When it is not, behave exactly as before.
+  const sections = useMemo(() => {
+    if (!modulesApiAvailable) return discovered
+    const fromModules = sectionsFromEnabledModules(ownerModules, merged)
+    return mergeModuleAndDiscoveredSections(discovered, fromModules)
+  }, [discovered, ownerModules, merged, modulesApiAvailable])
 
   useEffect(() => {
     if (sections.length && !sections.some((s) => s.key === activeKey)) {
@@ -146,6 +187,15 @@ export default function Dashboard() {
   const activeColumns = active ? getColumns(tableFor(active.key) || active.key) : []
   const Custom = rendererFor(active, activeColumns)
 
+  const clearOverlays = () => {
+    setAdding(false)
+    setShowApps(false)
+    setShowGhost(false)
+    setShowStore(false)
+    setShowPlatform(false)
+    setShowAutomations(false)
+  }
+
   return (
     <div className="dashboard-shell">
       <TopBar
@@ -153,10 +203,7 @@ export default function Dashboard() {
         sections={sections}
         activeKey={adding ? null : activeKey}
         onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setShowGhost(false); setShowStore(false); setShowPlatform(false)
-          setShowAutomations(false)
+          clearOverlays()
           setActiveKey(key)
         }}
       />
@@ -169,7 +216,7 @@ export default function Dashboard() {
         {showPlatform ? (
           <Platform />
         ) : showStore ? (
-          <Store />
+          <Store onChanged={refreshAll} />
         ) : showGhost ? (
           <Ghost />
         ) : showAutomations ? (
@@ -185,7 +232,15 @@ export default function Dashboard() {
               setAdding(false)
               // The new row makes this table a section on the next pass.
               setActiveKey(TABLE_TO_API_KEY[table] || table)
-              setReloadKey((k) => k + 1)
+              refreshAll()
+            }}
+          />
+        ) : active?.empty ? (
+          <EmptyModulePanel
+            section={active}
+            onAdd={() => {
+              clearOverlays()
+              setAdding(true)
             }}
           />
         ) : (
@@ -208,23 +263,20 @@ export default function Dashboard() {
         sections={sections}
         activeKey={showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
-          setAdding(false)
-          setShowApps(false)
-          setShowGhost(false); setShowStore(false); setShowPlatform(false)
-          setShowAutomations(false)
+          clearOverlays()
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setAdding(true) }}
+        onAdd={() => { clearOverlays(); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowApps(true) }}
+        onApps={() => { clearOverlays(); setShowApps(true) }}
         apps={showApps}
-        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(true) }}
+        onPlatform={() => { clearOverlays(); setShowPlatform(true) }}
         platform={showPlatform}
-        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowStore(true) }}
+        onStore={() => { clearOverlays(); setShowStore(true) }}
         store={showStore}
-        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowGhost(true) }}
+        onGhost={() => { clearOverlays(); setShowGhost(true) }}
         ghost={showGhost}
-        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(true) }}
+        onAutomations={() => { clearOverlays(); setShowAutomations(true) }}
         automations={showAutomations}
         automationsCount={automationsCount}
       />

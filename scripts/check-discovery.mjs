@@ -18,6 +18,15 @@ import { mergeEntitySources, discoverSections } from '../src/lib/discoverSection
 import { tableFor, API_KEY_TO_TABLE } from '../src/lib/tableMap.js'
 import { buildCatalog } from '../src/lib/sectionCatalog.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
+import {
+  CATALOG_KEY_TO_SECTION,
+  sectionKeyForCatalog,
+  sectionsFromEnabledModules,
+  mergeModuleAndDiscoveredSections,
+  applyCatalogFromApi,
+  clearCatalogFromApi,
+  normalizeModulesList,
+} from '../src/lib/moduleNav.js'
 
 let failures = 0
 function check(label, condition, detail = '') {
@@ -266,6 +275,46 @@ check("the business's own phone stays readable",
   !isContactField('phone', { ownRecord: true }))
 check('a non-contact column is untouched',
   !isContactField('song_title') && !isContactField('amount'))
+
+
+console.log('\nModule nav (catalog map + union + empty stubs)')
+check('gallery maps to photos', sectionKeyForCatalog('gallery') === 'photos')
+check('menu maps to menu_sections', sectionKeyForCatalog('menu') === 'menu_sections')
+check('drinks maps to drink_sections', sectionKeyForCatalog('drinks') === 'drink_sections')
+check('core has no section key', sectionKeyForCatalog('core') === null)
+check('catalog has at least 20 keys', Object.keys(CATALOG_KEY_TO_SECTION).length >= 20)
+
+clearCatalogFromApi()
+applyCatalogFromApi({
+  catalog: [{ key: 'gallery', section_key: 'photos', label: 'Photos (API)' }],
+})
+check('API catalog override preferred for gallery label path', sectionKeyForCatalog('gallery') === 'photos')
+clearCatalogFromApi()
+
+const enabled = normalizeModulesList({
+  modules: [
+    { key: 'menu', enabled: true, sort_order: 1 },
+    { key: 'gallery', enabled: true },
+    { key: 'core', enabled: true },
+    { key: 'blog', enabled: false },
+  ],
+})
+const emptyEntity = { slug: 'demo', name: 'Demo' }
+const moduleSections = sectionsFromEnabledModules(enabled, emptyEntity)
+const modKeys = moduleSections.map((s) => s.key)
+check('enabled menu becomes menu_sections stub', modKeys.includes('menu_sections'))
+check('enabled gallery becomes photos stub', modKeys.includes('photos'))
+check('core does not become a nav section', !modKeys.includes('core') && !modKeys.includes(null))
+check('disabled blog is omitted', !modKeys.includes('blog_posts'))
+check('empty stubs flagged empty', moduleSections.every((s) => s.empty === true))
+
+const discoveredOnly = discoverSections(mergeEntitySources(restaurant, {}))
+const unioned = mergeModuleAndDiscoveredSections(discoveredOnly, moduleSections)
+check('union keeps all discovered sections', discoveredOnly.every((s) => unioned.some((u) => u.key === s.key)))
+check('union adds empty module sections', unioned.some((s) => s.key === 'photos'))
+// restaurant already has photos with data — empty flag cleared by merge preferring discovered
+const photos = unioned.find((s) => s.key === 'photos')
+check('discovered photos wins over empty stub', photos && photos.empty === false)
 
 console.log(failures ? `\n${failures} failed\n` : '\nAll checks passed\n')
 process.exit(failures ? 1 : 0)

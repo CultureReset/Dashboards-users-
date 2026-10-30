@@ -81,6 +81,15 @@ export const endpoints = {
     item: (id) => `/api/store/${seg(id)}`,
   },
 
+  // ---------------------------------------------------- owner modules ---
+  // entity_modules for this business. Paths assumed until Concierge lands
+  // the gcr-api-clean owner modules endpoint — change only here if the
+  // final mount differs (e.g. /api/business/modules).
+  modules: {
+    list: () => '/api/owner/modules',
+    set: () => '/api/owner/modules',
+  },
+
   connections: {
     list: () => '/api/connections',
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,

@@ -1022,3 +1022,13 @@ input { font: inherit; }
 }
 .store-actions button:disabled, .store-banner button:disabled { opacity: 0.6; }
 .store-settings input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
+
+/* Enabled module with no rows yet — keep the tab, invite the owner to fill it. */
+.empty-module-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0 24px;
+}
+.empty-module-panel .primary { margin-top: 4px; }
