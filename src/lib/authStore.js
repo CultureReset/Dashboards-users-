@@ -142,6 +142,16 @@ async function refresh() {
  */
 export async function getToken() {
   if (!session) return null
+  // Admin impersonation sessions have no refresh_token. Use the access
+  // token until expires_at, then clear — never call /refresh.
+  if (!session.refresh_token) {
+    const now = Math.floor(Date.now() / 1000)
+    if (session.expires_at && session.expires_at <= now) {
+      clearSession()
+      return null
+    }
+    return session.access_token
+  }
   if (!expiresSoon(session)) return session.access_token
   const renewed = await refresh()
   return renewed?.access_token || session?.access_token || null

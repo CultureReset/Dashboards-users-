@@ -40,6 +40,9 @@ export const endpoints = {
     refresh: () => `${BUSINESS_AUTH}/refresh`,
     signout: () => `${BUSINESS_AUTH}/signout`,
 
+    /** One-time admin Open-dashboard pass → business session (no refresh_token). */
+    exchangeImpersonation: () => `${BUSINESS_AUTH}/exchange-impersonation`,
+
     // Self-serve email/password signup — creates entity + Auth user + ownership.
     businessSignup: () => `${AUTH}/business-signup`,
 
