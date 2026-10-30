@@ -31,6 +31,14 @@ function inviteTokenFromUrl() {
   return new URLSearchParams(location.search).get('token')
 }
 
+
+/** Recovery link from Supabase Auth: #access_token=…&type=recovery */
+function recoveryAccessTokenFromUrl() {
+  const hash = new URLSearchParams((location.hash || '').replace(/^#/, ''))
+  if ((hash.get('type') || '').toLowerCase() !== 'recovery') return null
+  return hash.get('access_token') || null
+}
+
 function Root() {
   const { loading, user, isAdmin, gcrSlug } = useAuth()
   const [claiming, setClaiming] = useState(false)
