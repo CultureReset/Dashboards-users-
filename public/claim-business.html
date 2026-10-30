@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <script>
+      // Old invite emails pointed at /claim-business.html?token=…
+      // AcceptInvite lives on the SPA root (and /accept).
+      var q = location.search || '';
+      location.replace('/' + (q || ''));
+    </script>
+    <meta http-equiv="refresh" content="0;url=/" />
+  </head>
+  <body>
+    <p>Continuing to set up your account…</p>
+  </body>
+</html>

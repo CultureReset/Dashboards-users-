@@ -25,7 +25,7 @@ function NoBusinessLinked() {
   )
 }
 
-/** ?token=… means the visitor followed an invite link. */
+/** ?token=… means the visitor followed an invite link (root or /accept). */
 function inviteTokenFromUrl() {
   return new URLSearchParams(location.search).get('token')
 }
