@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
   const [session, setSessionState] = useState(() => getSession() ?? null)
   const [access, setAccess] = useState(undefined)
   const [adminSlug, setAdminSlug] = useState(slugFromUrl())
+  const [ownerSlug, setOwnerSlug] = useState(null)
 
   // The store is the one copy of the session; this mirrors it into React so
   // the tree re-renders when a sign-in, a renewal or a sign-out changes it.
@@ -131,25 +132,39 @@ export function AuthProvider({ children }) {
   // An admin viewing a business wins over their own ownership row, so support
   // can jump straight into any dashboard.
   const isAdmin = !!access?.isAdmin
-  const gcrSlug = (isAdmin && adminSlug) || access?.slug || null
+  const ownedSlugs = access?.slugs || (access?.slug ? [{ slug: access.slug, name: access.name, role: access.role }] : [])
+  const ownedChildren = access?.children || []
 
-  // Tell the API client which business to name on every call. Only an admin
-  // has one to name: an owner's slug comes from entity_owners server-side and
-  // this stays null for them.
+  // Keep ownerSlug among the owned set when /me refreshes.
+  const effectiveOwnerSlug =
+    (ownerSlug && ownedSlugs.some((s) => s.slug === ownerSlug) && ownerSlug) ||
+    ownedSlugs[0]?.slug ||
+    access?.slug ||
+    null
+
+  const gcrSlug = (isAdmin && adminSlug) || effectiveOwnerSlug || null
+
+  // Admins name a business explicitly. Owners with multiple linked units also
+  // name the active one so /api/business/* scopes to that slug.
   useEffect(() => {
-    setActingSlug(isAdmin && adminSlug ? adminSlug : null)
-  }, [isAdmin, adminSlug])
+    if (isAdmin && adminSlug) setActingSlug(adminSlug)
+    else if (!isAdmin && effectiveOwnerSlug && ownedSlugs.length > 1) setActingSlug(effectiveOwnerSlug)
+    else setActingSlug(null)
+  }, [isAdmin, adminSlug, effectiveOwnerSlug, ownedSlugs.length])
 
   const value = {
     session,
     user: session?.user || null,
     loading: !!session && access === undefined,
     gcrSlug,
-    businessName: access?.name || null,
-    role: access?.role || null,
+    businessName: (ownedSlugs.find((s) => s.slug === gcrSlug)?.name) || access?.name || null,
+    role: (ownedSlugs.find((s) => s.slug === gcrSlug)?.role) || access?.role || null,
     isAdmin,
     viewingAsAdmin: !!(isAdmin && adminSlug),
     hasAccess: !!gcrSlug,
+    ownedSlugs,
+    ownedChildren,
+    selectOwnerSlug: (slug) => setOwnerSlug(slug || null),
     refreshAccess: loadAccess,
     openBusiness: (slug) => {
       setAdminSlug(slug)
