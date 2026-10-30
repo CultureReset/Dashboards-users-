@@ -297,3 +297,76 @@ export function mergeModuleAndDiscoveredSections(discovered, moduleSections) {
   }
   return [...byKey.values()]
 }
+
+/**
+ * Final owner-nav pass (data-driven, no per-business hardcoding):
+ * 1. When the API returns owner_visible_tables, drop discovered sections whose
+ *    backing table is not on that list (internal/raw contract rows).
+ * 2. Dedupe tabs that share the same label (keep the one with data / preferred key).
+ * 3. Hide empty tabs (no rows / has_data === false).
+ *
+ * @param {object[]} sections
+ * @param {{ ownerVisibleTables?: string[]|null, tableFor?: (key: string) => string|null }} [opts]
+ */
+export function polishOwnerSections(sections, opts = {}) {
+  const tableForFn = opts.tableFor || ((key) => key)
+  const allow = Array.isArray(opts.ownerVisibleTables) && opts.ownerVisibleTables.length
+    ? new Set(opts.ownerVisibleTables.map((t) => String(t).trim()).filter(Boolean))
+    : null
+
+  let list = [...(sections || [])]
+
+  if (allow) {
+    list = list.filter((s) => {
+      // Module stubs without a swept table still need a chance when enabled+has_data
+      // was already filtered by the API — keep fromModule with has_data !== false
+      // only if their catalog table is allowed or unknown.
+      const table = tableForFn(s.key) || s.table || s.key
+      if (allow.has(table)) return true
+      // API key might already be the table name
+      if (allow.has(s.key)) return true
+      // If we cannot map and it came only from discovery, hide it when a
+      // visibility list is in force — that list is the source of truth.
+      if (s.fromModule && s.has_data !== false && s.empty !== true) {
+        const catalogTable = s.table
+        if (!catalogTable) return true
+        return allow.has(catalogTable)
+      }
+      return false
+    })
+  }
+
+  // Hide empty tabs
+  list = list.filter((s) => {
+    if (s.empty === true) return false
+    if (s.has_data === false) return false
+    const data = s.data
+    if (Array.isArray(data) && data.length === 0) return false
+    return true
+  })
+
+  // Dedupe by normalized label
+  const byLabel = new Map()
+  for (const s of list) {
+    const label = String(s.label || s.key || '').trim().toLowerCase()
+    if (!label) continue
+    const prev = byLabel.get(label)
+    if (!prev) {
+      byLabel.set(label, s)
+      continue
+    }
+    // Prefer the one with more data / non-empty / shorter canonical key
+    const score = (x) => {
+      let n = 0
+      if (x.empty) n -= 10
+      if (Array.isArray(x.data)) n += Math.min(x.data.length, 50)
+      else if (x.data && typeof x.data === 'object') n += 5
+      if (x.fromModule) n += 1
+      // Prefer offerings over generic "sections" when labels collide
+      if (x.key === 'offerings' || x.key === 'sections') n += x.key === 'offerings' ? 3 : 0
+      return n
+    }
+    if (score(s) > score(prev)) byLabel.set(label, s)
+  }
+  return [...byLabel.values()]
+}
