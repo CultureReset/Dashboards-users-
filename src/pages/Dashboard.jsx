@@ -21,6 +21,8 @@ import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
 import Ghost from './Ghost'
 import Store from './Store'
+import { SongRequestOwnerSettings } from '../apps/song-request'
+import { MerchStoreOwnerSettings } from '../apps/merch-store'
 import Automations from './Automations'
 import Platform from './Platform'
 import Calendar from './Calendar'
@@ -226,6 +228,10 @@ export default function Dashboard() {
           <Automations onCountChange={setAutomationsCount} />
         ) : showApps ? (
           <AppStore />
+        ) : activeKey === 'song-request' || activeKey === 'song_request' ? (
+          <SongRequestOwnerSettings slug={gcrSlug} />
+        ) : activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop' ? (
+          <MerchStoreOwnerSettings slug={gcrSlug} />
         ) : adding ? (
           <AddSection
             allTables={allTables}

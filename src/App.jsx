@@ -1,3 +1,4 @@
+import PublicLinkPage from './pages/PublicLinkPage'
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import Login from './pages/Login'
@@ -31,6 +32,11 @@ function inviteTokenFromUrl() {
 }
 
 function Root() {
+  // Guest link page for a slug — no owner session required.
+  if (new URLSearchParams(location.search).get('page') === 'link') {
+    return <PublicLinkPage />
+  }
+
   const { loading, user, isAdmin, gcrSlug } = useAuth()
   const [claiming, setClaiming] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
