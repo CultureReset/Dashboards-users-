@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import BusinessPicker from './pages/BusinessPicker'
 import AcceptInvite from './pages/AcceptInvite'
 import SignUp from './pages/SignUp'
+import ResetPassword from './pages/ResetPassword'
 
 function NoBusinessLinked() {
   const { signOut, user } = useAuth()
@@ -30,11 +31,34 @@ function inviteTokenFromUrl() {
   return new URLSearchParams(location.search).get('token')
 }
 
+
+/** Recovery link from Supabase Auth: #access_token=…&type=recovery */
+function recoveryAccessTokenFromUrl() {
+  const hash = new URLSearchParams((location.hash || '').replace(/^#/, ''))
+  if ((hash.get('type') || '').toLowerCase() !== 'recovery') return null
+  return hash.get('access_token') || null
+}
+
 function Root() {
   const { loading, user, isAdmin, gcrSlug } = useAuth()
   const [claiming, setClaiming] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
   const [inviteToken, setInviteToken] = useState(inviteTokenFromUrl)
+  const [recoveryToken, setRecoveryToken] = useState(recoveryAccessTokenFromUrl)
+
+  if (recoveryToken) {
+    return (
+      <ResetPassword
+        accessToken={recoveryToken}
+        onDone={() => {
+          const url = new URL(location.href)
+          url.hash = ''
+          history.replaceState({}, '', url)
+          setRecoveryToken(null)
+        }}
+      />
+    )
+  }
 
   if (loading) {
     return (
