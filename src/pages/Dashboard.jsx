@@ -13,6 +13,11 @@ import BottomNav from '../components/BottomNav'
 import MainContent from '../components/MainContent'
 import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
+import Ghost from './Ghost'
+import Store from './Store'
+import Automations from './Automations'
+import Platform from './Platform'
+import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -26,6 +31,11 @@ export default function Dashboard() {
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   const [adding, setAdding] = useState(false)
   const [showApps, setShowApps] = useState(false)
+  const [showGhost, setShowGhost] = useState(false)
+  const [showStore, setShowStore] = useState(false)
+  const [showPlatform, setShowPlatform] = useState(false)
+  const [showAutomations, setShowAutomations] = useState(false)
+  const [automationsCount, setAutomationsCount] = useState(0)
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -91,6 +101,16 @@ export default function Dashboard() {
     }
   }, [gcrSlug, reloadKey])
 
+  // How many automations the operator has pushed here, for the tab badge.
+  // Failure is silent: the tab still opens, and the page explains itself.
+  useEffect(() => {
+    let cancelled = false
+    fetchAutomations()
+      .then((data) => { if (!cancelled) setAutomationsCount((data.automations || []).length) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [gcrSlug, reloadKey])
+
   const merged = useMemo(
     () => mergeEntitySources(entity, tableRows),
     [entity, tableRows]
@@ -135,6 +155,8 @@ export default function Dashboard() {
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowGhost(false); setShowStore(false); setShowPlatform(false)
+          setShowAutomations(false)
           setActiveKey(key)
         }}
       />
@@ -143,8 +165,16 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showApps ? (
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
+        {showPlatform ? (
+          <Platform />
+        ) : showStore ? (
+          <Store />
+        ) : showGhost ? (
+          <Ghost />
+        ) : showAutomations ? (
+          <Automations onCountChange={setAutomationsCount} />
+        ) : showApps ? (
           <AppStore />
         ) : adding ? (
           <AddSection
@@ -176,16 +206,27 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps ? null : activeKey}
+        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           setAdding(false)
           setShowApps(false)
+          setShowGhost(false); setShowStore(false); setShowPlatform(false)
+          setShowAutomations(false)
           setActiveKey(key)
         }}
-        onAdd={() => { setShowApps(false); setAdding(true) }}
+        onAdd={() => { setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setAdding(true) }}
         adding={adding}
-        onApps={() => { setAdding(false); setShowApps(true) }}
+        onApps={() => { setAdding(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(false); setShowApps(true) }}
         apps={showApps}
+        onPlatform={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowStore(false); setShowPlatform(true) }}
+        platform={showPlatform}
+        onStore={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowGhost(false); setShowPlatform(false); setShowStore(true) }}
+        store={showStore}
+        onGhost={() => { setAdding(false); setShowApps(false); setShowAutomations(false); setShowStore(false); setShowPlatform(false); setShowGhost(true) }}
+        ghost={showGhost}
+        onAutomations={() => { setAdding(false); setShowApps(false); setShowGhost(false); setShowStore(false); setShowPlatform(false); setShowAutomations(true) }}
+        automations={showAutomations}
+        automationsCount={automationsCount}
       />
     </div>
   )
