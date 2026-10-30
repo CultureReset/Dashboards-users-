@@ -118,6 +118,19 @@ export const endpoints = {
     rotateHook: (id) => `${BUSINESS}/automations/${seg(id)}/hook/rotate`,
   },
 
+
+  // ----------------------------------------------------------- calendar / iCal ---
+  // Owner-scoped. Slug from session (or ?slug= among owned). Sync-now is fixed
+  // on the API to run in-process — never the admin-only email-parser hop.
+  ical: {
+    overview: () => `${BUSINESS}/ical`,
+    feedUrl: () => `${BUSINESS}/ical/feed-url`,
+    regenerate: () => `${BUSINESS}/ical/regenerate`,
+    external: () => `${BUSINESS}/ical/external`,
+    externalId: (id) => `${BUSINESS}/ical/external/${seg(id)}`,
+    syncNow: (id) => `${BUSINESS}/ical/external/${seg(id)}/sync-now`,
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,

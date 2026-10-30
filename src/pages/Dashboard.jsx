@@ -23,6 +23,7 @@ import Ghost from './Ghost'
 import Store from './Store'
 import Automations from './Automations'
 import Platform from './Platform'
+import Calendar from './Calendar'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const [showStore, setShowStore] = useState(false)
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
@@ -192,6 +194,7 @@ export default function Dashboard() {
     setShowStore(false)
     setShowPlatform(false)
     setShowAutomations(false)
+    setShowCalendar(false)
   }
 
   return (
@@ -199,7 +202,7 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={adding ? null : activeKey}
+        activeKey={adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -210,8 +213,10 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && sections.length === 0} onAdd={() => setAdding(true)}>
-        {showPlatform ? (
+      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
+        {showCalendar ? (
+          <Calendar />
+        ) : showPlatform ? (
           <Platform />
         ) : showStore ? (
           <Store onChanged={refreshAll} />
@@ -259,7 +264,7 @@ export default function Dashboard() {
       </MainContent>
       <BottomNav
         sections={sections}
-        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -268,6 +273,8 @@ export default function Dashboard() {
         adding={adding}
         onApps={() => { clearOverlays(); setShowApps(true) }}
         apps={showApps}
+        onCalendar={() => { clearOverlays(); setShowCalendar(true) }}
+        calendar={showCalendar}
         onPlatform={() => { clearOverlays(); setShowPlatform(true) }}
         platform={showPlatform}
         onStore={() => { clearOverlays(); setShowStore(true) }}
