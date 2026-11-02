@@ -27,6 +27,7 @@ import { MerchStoreOwnerSettings } from '../apps/merch-store'
 import Automations from './Automations'
 import Platform from './Platform'
 import Calendar from './Calendar'
+import Setup from './Setup'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -47,6 +48,7 @@ export default function Dashboard() {
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showSetup, setShowSetup] = useState(true)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
@@ -201,6 +203,7 @@ export default function Dashboard() {
   const Custom = rendererFor(active, activeColumns)
 
   const clearOverlays = () => {
+    setShowSetup(false)
     setAdding(false)
     setShowApps(false)
     setShowGhost(false)
@@ -215,7 +218,7 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showSetup || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -226,8 +229,18 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
-        {showCalendar ? (
+      <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
+        {showSetup ? (
+          <Setup entity={entity} onOpen={(target) => {
+            clearOverlays()
+            if (target === 'data') setAdding(true)
+            if (target === 'store') setShowStore(true)
+            if (target === 'calendar') setShowCalendar(true)
+            if (target === 'tools') setShowApps(true)
+            if (target === 'automations') setShowAutomations(true)
+            if (target === 'ghost') setShowGhost(true)
+          }} />
+        ) : showCalendar ? (
           <Calendar />
         ) : showPlatform ? (
           <Platform />
@@ -245,6 +258,7 @@ export default function Dashboard() {
           <MerchStoreOwnerSettings slug={gcrSlug} />
         ) : adding ? (
           <AddSection
+            industry={entity?.entity_type}
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
             onCancel={() => setAdding(false)}
@@ -280,8 +294,10 @@ export default function Dashboard() {
         )}
       </MainContent>
       <BottomNav
+        onSetup={() => { clearOverlays(); setShowSetup(true) }}
+        setup={showSetup}
         sections={sections}
-        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
+        activeKey={showSetup || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)

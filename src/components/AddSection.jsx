@@ -3,6 +3,7 @@ import { buildCatalog } from '../lib/sectionCatalog'
 import { getColumns, isEditableColumn } from '../lib/schemaDiscovery'
 import RowEditor from './RowEditor'
 import { createRow } from '../lib/writeEntityData'
+import { recommendedTables } from '../lib/setupGuide'
 
 // "Add something" — the catalog of everything this business could start using,
 // not just what it already has.
@@ -11,9 +12,11 @@ import { createRow } from '../lib/writeEntityData'
 // uses. Saving writes the first row, which is what turns the table into a real
 // section on the next load.
 
-export default function AddSection({ allTables, activeKeys, onDone, onCancel }) {
+export default function AddSection({ allTables, activeKeys, onDone, onCancel, industry }) {
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState(null)
+  const [advanced, setAdvanced] = useState(false)
+  const recommended = useMemo(() => new Set(recommendedTables(industry)), [industry])
 
   // getColumns comes from the live schema read, so submission tables are
   // recognised by their shape rather than by being on a list.
@@ -24,17 +27,17 @@ export default function AddSection({ allTables, activeKeys, onDone, onCancel }) 
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return catalog
     return catalog
       .map((group) => ({
         ...group,
         entries: group.entries.filter(
           (e) =>
-            e.label.toLowerCase().includes(q) || e.table.toLowerCase().includes(q)
+            (advanced || recommended.has(e.table)) &&
+            (!q || e.label.toLowerCase().includes(q) || e.table.toLowerCase().includes(q))
         ),
       }))
       .filter((group) => group.entries.length)
-  }, [catalog, query])
+  }, [catalog, query, advanced, recommended])
 
   const total = catalog.reduce((n, g) => n + g.entries.length, 0)
 
@@ -55,7 +58,7 @@ export default function AddSection({ allTables, activeKeys, onDone, onCancel }) 
             form has no fields yet. Reload and try again.
           </p>
         )}
-        <RowEditor
+        {editable.length > 0 ? <RowEditor
           table={picked.table}
           row={null}
           onSave={async (values) => {
@@ -64,7 +67,7 @@ export default function AddSection({ allTables, activeKeys, onDone, onCancel }) 
           }}
           onCancel={() => setPicked(null)}
           onDelete={null}
-        />
+        /> : <button type="button" onClick={() => setPicked(null)}>Back to sections</button>}
       </div>
     )
   }
@@ -73,16 +76,19 @@ export default function AddSection({ allTables, activeKeys, onDone, onCancel }) 
     <div className="panel">
       <h2>Add to your dashboard</h2>
       <p className="claim-sub">
-        Everything the system supports that you're not using yet. Pick one and
-        add your first entry — it becomes a section straight away.
+        Start with common sections for your business. Pick one and add your
+        first entry — it becomes a section straight away. Other supported
+        sections remain available under advanced sections.
       </p>
+      <label className="catalog-advanced"><input type="checkbox" checked={advanced} onChange={event => setAdvanced(event.target.checked)} /> Show all advanced sections</label>
 
       <input
         className="picker-search"
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={`Search ${total} things you can add…`}
+        placeholder={advanced ? `Search ${total} supported sections…` : 'Search recommended sections…'}
+        aria-label="Search sections"
         autoFocus
       />
 
@@ -90,7 +96,7 @@ export default function AddSection({ allTables, activeKeys, onDone, onCancel }) 
         <p className="claim-empty">
           {total === 0
             ? "You're already using everything available."
-            : `Nothing matches "${query}".`}
+            : query ? `Nothing matches "${query}". Try advanced sections for more choices.` : 'No recommended sections to add. Open advanced sections to browse more.'}
         </p>
       ) : (
         filtered.map((group) => (

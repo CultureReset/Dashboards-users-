@@ -5,6 +5,7 @@ import {
 } from '../lib/gcrApi'
 import { useAuth } from '../lib/AuthContext'
 import { INDUSTRIES } from '../lib/industries'
+import { finishBusinessSignup } from '../lib/signupFlow'
 
 // Creating a brand-new business from scratch.
 //
@@ -35,6 +36,7 @@ export default function SignUp({ onBack }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [alreadyListed, setAlreadyListed] = useState(null)
+  const [accountCreated, setAccountCreated] = useState(false)
 
   // Warn about an existing listing while they type, not after they finish.
   useEffect(() => {
@@ -71,26 +73,39 @@ export default function SignUp({ onBack }) {
 
   async function finish(chosen) {
     setBusy(true); setError(''); setAlreadyListed(null)
+    let created = accountCreated
     try {
-      await businessSignup({
+      await finishBusinessSignup({
+        accountCreated,
+        register: businessSignup,
+        signIn,
+        onCreated: () => { created = true; setAccountCreated(true) },
+        payload: {
         email: email.trim().toLowerCase(),
         password,
         business_name: name.trim(),
         website: website.trim() || undefined,
         entity_type: chosen || undefined,
+        },
       })
-      // Account exists now — same pattern as AcceptInvite: sign in with the
-      // password just chosen via POST /api/business-auth/password.
-      const { error: signInError } = await signIn(email.trim().toLowerCase(), password)
-      if (signInError) throw signInError
     } catch (err) {
       if (err.claim_instead) setAlreadyListed(err.claim_instead)
-      setError(err.message)
+      setError(created ? `Your account exists. Sign-in needs another attempt: ${err.message}` : err.message)
       setBusy(false)
     }
   }
 
   const stepIndex = STEPS.indexOf(step)
+
+  if (accountCreated) return (
+    <div className="auth-screen"><div className="auth-card">
+      <h1>Your account is created</h1>
+      <p className="claim-sub">Sign in to continue setting up your business.</p>
+      {error && <p className="auth-error" role="alert">{error}</p>}
+      <button type="button" disabled={busy} onClick={() => finish(industry)}>{busy ? 'Signing in…' : 'Sign in to my account'}</button>
+      <button type="button" className="auth-switch" disabled={busy} onClick={onBack}>Back to sign in</button>
+    </div></div>
+  )
 
   return (
     <div className="auth-screen">
@@ -205,8 +220,8 @@ export default function SignUp({ onBack }) {
           <>
             <h1>What kind of business?</h1>
             <p className="claim-sub">
-              This decides what {name || 'your business'} gets set up with. You
-              can change it later.
+              This helps recommend sections for {name || 'your business'}.
+              You choose your apps and connections after creating your account.
             </p>
 
             <div className="industry-grid">
@@ -242,7 +257,7 @@ export default function SignUp({ onBack }) {
               onClick={() => finish(industry)}
               disabled={busy || !industry}
             >
-              {busy ? 'Creating your account…' : 'Create my account'}
+              {busy ? 'Setting up your account…' : accountCreated ? 'Sign in to my account' : 'Create my account'}
             </button>
             <button
               type="button"
