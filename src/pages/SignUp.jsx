@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../lib/AuthContext'
 import { INDUSTRIES } from '../lib/industries'
 import { finishBusinessSignup } from '../lib/signupFlow'
+import { markNewAccount } from '../onboarding/storage'
 
 // Creating a brand-new business from scratch.
 //
@@ -79,7 +80,7 @@ export default function SignUp({ onBack }) {
         accountCreated,
         register: businessSignup,
         signIn,
-        onCreated: () => { created = true; setAccountCreated(true) },
+        onCreated: () => { created = true; setAccountCreated(true); markNewAccount() },
         payload: {
         email: email.trim().toLowerCase(),
         password,

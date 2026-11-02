@@ -28,10 +28,12 @@ import Automations from './Automations'
 import Platform from './Platform'
 import Calendar from './Calendar'
 import Setup from './Setup'
+import Onboarding from './Onboarding'
+import useOnboardingGate from '../onboarding/useOnboardingGate'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
-  const { gcrSlug } = useAuth()
+  const { gcrSlug, viewingAsAdmin, viewingAsImpersonation } = useAuth()
   const [entity, setEntity] = useState(null)
   const [tableRows, setTableRows] = useState({})
   const [error, setError] = useState('')
@@ -49,6 +51,7 @@ export default function Dashboard() {
   const [showAutomations, setShowAutomations] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showSetup, setShowSetup] = useState(true)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
@@ -58,6 +61,12 @@ export default function Dashboard() {
     setReloadKey((k) => k + 1)
     setModulesReloadKey((k) => k + 1)
   }, [])
+
+  // The guided setup opens by itself after sign-up and on a first visit with
+  // nothing installed — never inside an admin's "view as" session.
+  const isAdminView = viewingAsAdmin || viewingAsImpersonation
+  const autoWizard = useOnboardingGate(gcrSlug, { enabled: !isAdminView })
+  useEffect(() => { if (autoWizard) setWizardOpen(true) }, [autoWizard])
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -196,6 +205,18 @@ export default function Dashboard() {
     )
   }
 
+  if (wizardOpen && !isAdminView) {
+    return (
+      <Onboarding
+        entity={entity}
+        onClose={({ changed }) => {
+          setWizardOpen(false)
+          if (changed) refreshAll()
+        }}
+      />
+    )
+  }
+
   const active = sections.find((s) => s.key === activeKey)
   // Columns for the table behind this section, so the renderer can be chosen
   // from its shape rather than from its name.
@@ -218,6 +239,7 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
+        onSetup={isAdminView ? undefined : () => setWizardOpen(true)}
         activeKey={showSetup || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
