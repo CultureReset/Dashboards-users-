@@ -1,13 +1,35 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import GenericSection from './GenericSection'
 import RowEditor from '../components/RowEditor'
 import { createRow, updateRow, deleteRow } from '../lib/writeEntityData'
 import { tableFor } from '../lib/tableMap'
+import { dayName } from '../lib/format'
+import { useToast } from '../components/Toast'
 
 // Wraps a discovered section with add / edit / delete. Works for any table,
 // since both the display and the form derive from the data and schema.
 export default function EditableSection({ section, onChanged, children }) {
   const [editing, setEditing] = useState(null) // row object, or 'new'
+  const toast = useToast()
+  // The list is long and the editor is short; without this, closing the editor
+  // drops the owner back at the top instead of at the row they were on.
+  const scrollBack = useRef(null)
+  const wasEditing = useRef(false)
+
+  function openEditor(next) {
+    scrollBack.current = window.scrollY
+    setEditing(next)
+  }
+
+  useLayoutEffect(() => {
+    if (editing) {
+      wasEditing.current = true
+      window.scrollTo(0, 0)
+    } else if (wasEditing.current) {
+      wasEditing.current = false
+      if (scrollBack.current != null) window.scrollTo(0, scrollBack.current)
+    }
+  }, [editing])
 
   // section.key is whatever the payload called this domain; writes need the
   // table it actually lives in. null means the API assembled it and there is
@@ -18,15 +40,29 @@ export default function EditableSection({ section, onChanged, children }) {
   async function save(values) {
     // No slug argument: the server takes it from the session, which is the
     // only copy that was ever trustworthy.
-    if (editing === 'new') await createRow(table, values)
-    else await updateRow(table, editing.id, values)
+    const adding = editing === 'new'
+    try {
+      if (adding) await createRow(table, values)
+      else await updateRow(table, editing.id, values)
+    } catch (err) {
+      toast.error(`Couldn't save: ${err.message}`)
+      throw err // RowEditor keeps the form open and shows it inline too
+    }
     setEditing(null)
+    toast.success(adding ? `Added to ${section.label}` : 'Saved')
     onChanged?.()
   }
 
   async function remove() {
-    await deleteRow(table, editing.id)
+    // RowEditor has already asked, naming the row.
+    try {
+      await deleteRow(table, editing.id)
+    } catch (err) {
+      toast.error(`Couldn't delete: ${err.message}`)
+      throw err
+    }
     setEditing(null)
+    toast.success('Deleted')
     onChanged?.()
   }
 
@@ -40,6 +76,7 @@ export default function EditableSection({ section, onChanged, children }) {
           onSave={save}
           onCancel={() => setEditing(null)}
           onDelete={editing === 'new' ? null : remove}
+          itemName={editing === 'new' ? '' : rowName(editing)}
         />
       </div>
     )
@@ -51,11 +88,16 @@ export default function EditableSection({ section, onChanged, children }) {
 
       {isList && (
         <div className="section-tools">
-          <button className="primary" onClick={() => setEditing('new')}>
+          <button className="primary" onClick={() => openEditor('new')}>
             + Add
           </button>
           {section.data.map((row, i) => (
-            <button key={row.id ?? i} onClick={() => setEditing(row)} disabled={!row.id}>
+            <button
+              key={row.id ?? i}
+              onClick={() => openEditor(row)}
+              disabled={!row.id}
+              title={row.id ? undefined : "This row can't be edited from here"}
+            >
               Edit {rowLabel(row, i)}
             </button>
           ))}
@@ -65,10 +107,14 @@ export default function EditableSection({ section, onChanged, children }) {
   )
 }
 
-function rowLabel(row, i) {
+function rowName(row) {
   const name =
     row.item_name || row.name || row.title || row.label || row.question ||
-    row.event_name || row.special_name || row.section_name
-  if (name) return String(name).slice(0, 28)
-  return `#${i + 1}`
+    row.event_name || row.special_name || row.section_name || row.tag_name ||
+    (row.day_of_week != null ? dayName(row.day_of_week) : '')
+  return name ? String(name).slice(0, 28) : ''
+}
+
+function rowLabel(row, i) {
+  return rowName(row) || `#${i + 1}`
 }

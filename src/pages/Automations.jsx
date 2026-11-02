@@ -3,6 +3,8 @@ import {
   fetchAutomations, updateAutomation, runAutomation, fetchRuns, upgradeAutomation, rotateHook, describeTrigger,
 } from '../lib/automations'
 import { formatDateTime } from '../lib/format'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmSheet'
 
 // Automations — what the operator pushed to this business.
 //
@@ -31,8 +33,8 @@ export default function Automations({ onCountChange }) {
 
   if (items === null) {
     return (
-      <div className="dashboard-loading">
-        <div className="spinner" />
+      <div className="dashboard-loading" role="status" aria-live="polite">
+        <div className="spinner" aria-hidden="true" />
         <span>Loading automations…</span>
       </div>
     )
@@ -48,7 +50,7 @@ export default function Automations({ onCountChange }) {
         {updates > 0 && <> <b>{updates} update{updates === 1 ? '' : 's'} waiting.</b></>}
       </p>
 
-      {error && <p className="auth-error">{error}</p>}
+      {error && <p className="auth-error" role="alert">{error}</p>}
 
       {items.length === 0 && !error && (
         <p className="claim-empty">Nothing has been set up for you yet. When something is, it appears here.</p>
@@ -71,6 +73,8 @@ function AutomationCard({ automation: a, onChanged }) {
   const [runs, setRuns] = useState(null)
   const [lastResult, setLastResult] = useState(null)
   const [hookUrl, setHookUrl] = useState(a.hook_url)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   useEffect(() => { setConfig(a.config || {}); setDirty(false) }, [a.config])
 
@@ -81,14 +85,19 @@ function AutomationCard({ automation: a, onChanged }) {
       await work()
     } catch (err) {
       setError(err.message)
+      toast.error(err.message)
     } finally {
       setBusy('')
     }
   }
 
-  const toggle = () => act('toggle', async () => { await updateAutomation(a.id, { enabled: !a.enabled }); onChanged() })
-  const saveConfig = () => act('save', async () => { await updateAutomation(a.id, { config }); setDirty(false); onChanged() })
-  const upgrade = () => act('upgrade', async () => { await upgradeAutomation(a.id); onChanged() })
+  const toggle = () => act('toggle', async () => {
+    await updateAutomation(a.id, { enabled: !a.enabled })
+    onChanged()
+    toast.success(a.enabled ? `${a.name} switched off` : `${a.name} switched on`)
+  })
+  const saveConfig = () => act('save', async () => { await updateAutomation(a.id, { config }); setDirty(false); onChanged(); toast.success('Settings saved') })
+  const upgrade = () => act('upgrade', async () => { await upgradeAutomation(a.id); onChanged(); toast.success(`${a.name} updated`) })
   const run = () => act('run', async () => {
     const { result } = await runAutomation(a.id)
     setLastResult(result)
@@ -96,10 +105,18 @@ function AutomationCard({ automation: a, onChanged }) {
     onChanged()
   })
   const showRuns = () => act('runs', async () => { setRuns((await fetchRuns(a.id)).runs) })
-  const rotate = () => act('rotate', async () => {
-    if (!confirm('The current URL will stop working. Continue?')) return
-    setHookUrl((await rotateHook(a.id)).hook_url)
-  })
+  const rotate = async () => {
+    const ok = await confirm({
+      title: `Get a new webhook URL for ${a.name}?`,
+      message: 'The current URL stops working immediately. Anything still posting to it will need the new one.',
+      confirmLabel: 'Get new URL',
+    })
+    if (!ok) return
+    await act('rotate', async () => {
+      setHookUrl((await rotateHook(a.id)).hook_url)
+      toast.success('New webhook URL ready')
+    })
+  }
 
   const schema = Array.isArray(a.config_schema) ? a.config_schema : []
 
@@ -166,7 +183,7 @@ function AutomationCard({ automation: a, onChanged }) {
           <p className="auto-help">POST anything to this address and the automation runs with it.</p>
           <code className="auto-code">{hookUrl}</code>
           <div className="section-tools" style={{ marginTop: 8, paddingTop: 0, borderTop: 0 }}>
-            <button type="button" onClick={() => navigator.clipboard?.writeText(hookUrl)}>Copy</button>
+            <button type="button" onClick={() => navigator.clipboard?.writeText(hookUrl).then(() => toast.success('Copied'), () => toast.error('Could not copy — select the URL and copy it manually'))}>Copy</button>
             <button type="button" onClick={rotate} disabled={!!busy}>New URL</button>
           </div>
         </div>
@@ -188,7 +205,7 @@ function AutomationCard({ automation: a, onChanged }) {
         </div>
       </div>
 
-      {error && <p className="auth-error">{error}</p>}
+      {error && <p className="auth-error" role="alert">{error}</p>}
 
       {lastResult && (
         <div className="auto-result">

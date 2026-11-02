@@ -197,8 +197,8 @@
 }
 .as-sheet {
   width: 100%; max-width: 540px;
-  max-height: 86vh; overflow-y: auto;
-  padding: 20px;
+  max-height: 86vh; max-height: 86dvh; overflow-y: auto;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
   border: 1px solid var(--border);
   border-radius: 20px 20px 0 0;
   background: var(--panel);
@@ -254,3 +254,13 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* Touch targets and iOS zoom: 44px to hit, 16px to type. */
+.as-btn { min-height: 44px; }
+.as-pages button { min-width: 44px; min-height: 44px; }
+.as-sheet-close { min-width: 44px; min-height: 44px; font-size: 1.15rem; }
+.as-tray-clear, .as-empty button { min-height: 44px; }
+.as-search { font-size: 16px; min-height: 44px; }
+.as-row-open { min-height: 44px; }
+.as-chip, .as-chips button { min-height: 44px; }
+.as-switch::before { content: ''; position: absolute; inset: -11px -4px; }

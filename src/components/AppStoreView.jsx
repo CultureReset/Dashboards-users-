@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './AppStoreView.css'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 // The App Store, as one component.
 //
@@ -161,8 +162,8 @@ export default function AppStoreView({
 
   if (loading) {
     return (
-      <div className="as-loading">
-        <div className="spinner" />
+      <div className="as-loading" role="status" aria-live="polite">
+        <div className="spinner" aria-hidden="true" />
         <span>Loading tools…</span>
       </div>
     )
@@ -172,7 +173,7 @@ export default function AppStoreView({
     return (
       <div className="as-wrap">
         <h2 className="as-title">{title}</h2>
-        <p className="as-error">{error}</p>
+        <p className="as-error" role="alert">{error}</p>
         {onRetry && <button className="as-btn as-btn--primary" onClick={onRetry}>Try again</button>}
       </div>
     )
@@ -190,7 +191,7 @@ export default function AppStoreView({
       </header>
 
       {disabled && disabledReason && <p className="as-notice">{disabledReason}</p>}
-      {error && tools.length > 0 && <p className="as-error">{error}</p>}
+      {error && tools.length > 0 && <p className="as-error" role="alert">{error}</p>}
 
       <input
         className="as-search"
@@ -325,21 +326,13 @@ export default function AppStoreView({
 }
 
 function DetailSheet({ tool, picked, curating, disabled, onClose, onPick, onDisconnect }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
-    }
-  }, [onClose])
+  // Focus moves in, Tab stays inside, Escape closes, focus returns to the row.
+  const sheetRef = useFocusTrap(onClose)
 
   const status = tool.connection?.status
   return (
     <div className="as-scrim" onClick={onClose} role="presentation">
-      <div className="as-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tool.name}>
+      <div ref={sheetRef} className="as-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tool.name}>
         <div className="as-sheet-head">
           <Logo tool={tool} size="lg" />
           <div className="as-sheet-id">

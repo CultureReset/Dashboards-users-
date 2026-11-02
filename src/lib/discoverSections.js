@@ -155,6 +155,44 @@ const NESTED_IN_PARENT = new Set([
   'room_amenities',
 ])
 
+const hasId = (row) => row && row.id !== undefined && row.id !== null && row.id !== ''
+
+const sameValue = (a, b) => (a ?? null) === (b ?? null) || String(a) === String(b)
+
+/**
+ * The public entity payload (GET /api/gcr/entity/:slug) selects some tables
+ * without `id` (entity_hours, entity_tags), and EditableSection can only edit
+ * a row it can address. The swept rows (GET /api/business/sections) are
+ * `select *`, so they have ids.
+ *
+ * Keep the API's rows — it cleans them (one hours row per day, no machine
+ * tags) — and give each the id of the swept row that is the same record. If
+ * not one of them can be matched (the API reshaped them), fall back to the
+ * swept rows for that table so it is still editable. Rows the swept side does
+ * not have (the API's merged amenities) stay as they are, read-only.
+ *
+ * Returns the rows to use, or null when there is nothing to improve.
+ */
+export function attachRowIds(apiRows, sweptRows) {
+  if (!Array.isArray(apiRows) || !Array.isArray(sweptRows)) return null
+  if (!apiRows.some((r) => r && typeof r === 'object' && !hasId(r))) return null
+  const candidates = sweptRows.filter(hasId)
+  if (!candidates.length) return null
+
+  const used = new Set()
+  let matched = 0
+  const out = apiRows.map((row) => {
+    if (!row || typeof row !== 'object' || hasId(row)) return row
+    const keys = Object.keys(row).filter((k) => row[k] !== undefined)
+    const hit = candidates.find((c, i) => !used.has(i) && keys.every((k) => sameValue(row[k], c[k])))
+    if (!hit) return row
+    used.add(candidates.indexOf(hit))
+    matched += 1
+    return { ...row, id: hit.id }
+  })
+  return matched > 0 ? out : sweptRows
+}
+
 /**
  * Combine the API's entity payload with rows swept directly from the database.
  * The API version wins where both have the same key, since it arrives already
@@ -172,8 +210,13 @@ export function mergeEntitySources(entity, tableRows = {}) {
     // the name it would have arrived under, or the swept table shows up a
     // second time as its own near-identical section.
     const apiKey = TABLE_TO_API_KEY[table]
-    if (apiKey && hasData(merged[apiKey])) continue
-    if (hasData(merged[table])) continue // API already supplied a richer version
+    // The API's rows win, but if it left the ids off, take them from the sweep.
+    const key = apiKey && hasData(merged[apiKey]) ? apiKey : hasData(merged[table]) ? table : null
+    if (key) {
+      const withIds = attachRowIds(merged[key], rows)
+      if (withIds) merged[key] = withIds
+      continue // API already supplied a richer version
+    }
     merged[apiKey || table] = rows
   }
   return merged

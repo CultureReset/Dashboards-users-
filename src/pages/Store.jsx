@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../lib/apiClient'
 import endpoints from '../lib/endpoints'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmSheet'
 
 // The business's store: what the operator has made available to this
 // business (free, its plan, or a grant), what it has installed, and updates.
@@ -15,6 +17,8 @@ export default function Store({ onChanged } = {}) {
   const [busy, setBusy] = useState('')
   const [asking, setAsking] = useState(null) // { item, verb, permissions }
   const [settingsFor, setSettingsFor] = useState(null)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const load = useCallback(async () => {
     try {
@@ -37,11 +41,13 @@ export default function Store({ onChanged } = {}) {
       setAsking(null)
       await load()
       onChanged?.()
+      toast.success(verb === 'install' ? `${item.name} installed` : `${item.name} updated`)
     } catch (err) {
       if (err.status === 409 && Array.isArray(err.body?.permissions)) {
         setAsking({ item, verb, permissions: err.body.permissions })
       } else {
         setError(err.message)
+        toast.error(`Couldn't ${verb} ${item.name}: ${err.message}`)
       }
     } finally {
       setBusy('')
@@ -49,20 +55,34 @@ export default function Store({ onChanged } = {}) {
   }
 
   async function act(item, verb) {
+    if (verb === 'uninstall') {
+      const ok = await confirm({
+        title: `Remove ${item.name}?`,
+        message: 'It stops working for your business right away. You can install it again later from this page.',
+        confirmLabel: 'Remove',
+      })
+      if (!ok) return
+    }
     setBusy(item.id)
     try {
       if (verb === 'uninstall') await api.del(endpoints.store.item(item.id))
       else await api.post(endpoints.store.status(item.id, verb))
       await load()
       onChanged?.()
+      toast.success({
+        uninstall: `${item.name} removed`,
+        enable: `${item.name} switched on`,
+        disable: `${item.name} switched off`,
+      }[verb] || 'Done')
     } catch (err) {
       setError(err.message)
+      toast.error(`Couldn't do that: ${err.message}`)
     } finally {
       setBusy('')
     }
   }
 
-  if (!items) return <div className="panel store-page"><p className="claim-sub">Loading the store…</p></div>
+  if (!items) return <div className="panel store-page"><p className="claim-sub" role="status" aria-live="polite">Loading the store…</p></div>
 
   const installed = items.filter((i) => i.installed)
   const available = items.filter((i) => !i.installed && i.entitled && i.available)
@@ -72,7 +92,7 @@ export default function Store({ onChanged } = {}) {
     <div className="panel store-page">
       <h2>Store</h2>
       <p className="claim-sub">What you can add to your business, and what you already have.</p>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {asking && (
         <div className="panel store-consent">
@@ -158,6 +178,7 @@ function StoreHead({ item }) {
 }
 
 function Settings({ item, onSaved }) {
+  const toast = useToast()
   const [values, setValues] = useState(item.installed.config || {})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -167,8 +188,10 @@ function Settings({ item, onSaved }) {
       await api.patch(endpoints.store.config(item.id), { config: values })
       setError('')
       await onSaved()
+      toast.success('Settings saved')
     } catch (err) {
       setError(err.message)
+      toast.error(`Couldn't save settings: ${err.message}`)
     } finally {
       setSaving(false)
     }
@@ -181,7 +204,7 @@ function Settings({ item, onSaved }) {
           <input value={values[key] ?? ''} onChange={(e) => setValues({ ...values, [key]: e.target.value })} />
         </label>
       ))}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <button className="primary" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
     </div>
   )
