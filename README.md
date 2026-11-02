@@ -1,21 +1,44 @@
 # Business dashboard
 
-**This is the dashboard a business owner logs into — one business, identified by
-its slug.** It is not the operator console. The operator console, where you see
-every business at once, is `Admin-dashboard-main`.
+> Status: current — last verified against code 2026-11-02 (branch `main`, commit f811332)
 
-Copied here from `admin-dashboard-` so the name says what it is; that repo's
-name (`admin-dashboard-`, package `dashboard-shell`) read as an admin tool and
-sat one hyphen away from `Admin-dashboard-main`, which is a different product.
-Treat this copy as the one to work on.
+> **This README describes the `main` branch**, which is the line that has been developed since
+> 2026-10-30. GitHub's default branch (`claude/dashboard-inventory-purposes-m5wtba`) is 23
+> commits behind it and its README describes that older line. Which of the two Vercel builds is
+> unverified.
 
-Both talk to the same backend, `gcr-api-clean`. Production:
-`dashboards-users.vercel.app`. It is built phone-first: a bottom bar, no sidebar.
+## What it is
 
-In the Ghost system this is a cloud-side screen: a static React app that only
-calls `gcr-api-clean`. It never talks to a Ghost box directly; "My Ghost" queues
-a request at the API, the box pulls it over its own outbound link and posts the
-answer back (`src/pages/Ghost.jsx`).
+**The dashboard a business owner logs into: one business, identified by its
+slug.** A static, phone-first React 19 / Vite 8 app (no router, bottom bar instead
+of a sidebar, oxlint). Its sections are generated from the database schema via the
+API, merged with the business's enabled modules (`GET /api/owner/modules`), not
+hardcoded per business or industry. It is not the operator console; that
+is `Admin-dashboard-main`.
+
+The package is still called `dashboard-shell` (it was copied from the repo
+`admin-dashboard-`); treat this repo as the one to work on. Production:
+`dashboards-users.vercel.app` (unverified from here).
+
+## Where it fits
+
+**Ecosystem rule: only `gcr-api-clean` touches the live cloud database** (Supabase
+project `cyber check`, ref `mkepugvdlktfsossumox`). This app, the operator console
+and `gcr-unified` call only that API. This app holds no database key and opens no
+database connection. The home machine has its own local Supabase, separate from this.
+
+- **Calls**: `gcr-api-clean` through `src/lib/apiClient.js` (session token from
+  `/api/business-auth`, kept in `localStorage`). Which business you are comes from the
+  session; the browser sends no slug, except that an admin acting as a business, or an owner
+  with several linked units, adds `?slug=` on `/api/business/*` calls, which the API checks
+  against `entity_owners` / `platform_admins`. Separately, the **Platform**
+  tab logs in to a separate Paperclip server through the `api/paperclip/[...path].js`
+  edge function (forwards `/api/paperclip/*` to `PAPERCLIP_SERVER_URL`; answers 503 when
+  unset; the clean version forwards every method and path it is given).
+- **Called by**: nobody. The operator console links here ("View as", `?business=<slug>`).
+- In the Ghost system this is a cloud-side screen. It never talks to a Ghost box
+  directly: "My Ghost" queues a request at the API, the box pulls it over its own
+  outbound link and posts the answer back (`src/pages/Ghost.jsx`).
 
 | Store | My Ghost |
 | --- | --- |
@@ -60,53 +83,52 @@ nothing entered starts from that catalog rather than an empty screen.
 
 
 
-<!-- branches:start -->
 ## Branches
 
-*Read from GitHub on 2026-09-29. 12 branches.*
+`main` (46 commits, tip f811332, 2026-10-30) is the line this README describes. It is **23 commits
+ahead of and 1 behind** GitHub's default branch `claude/dashboard-inventory-purposes-m5wtba`
+(24 commits, tip aac903f). The 23 commits are PRs #5 to #15: module-driven navigation, email and
+password sign-in, the admin "View as" pass exchange, the Song Request and Merch Store apps,
+owner-menu cleanup, a public link page and a `vercel.json`; the diff against the default branch is
+31 files, +1,885 / -287. Other branches with unmerged work (commits ahead of the default):
+`claude/dashboard-folder-structure-wqsm9i` +5, `claude/new-session-66c2e9` +3 (a Settings page),
+`claude/modular-booking-platform-wdq0kk` +2, `claude/admin-dashboard-repo-review-47q2vc` +2,
+`claude/repo-inventory-audit-5zw4yw` +1, `codex/paperclip-ghost-ui` +1 (open PR #3), `auth/supabase-oauth` +1.
+Branch counts drift; run `git ls-remote --heads origin`.
 
-- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`. It does **not** yet have this README or the audit fixes; those are on `claude/repo-code-analysis-y4n1k7`, which contains every commit of `claude/dashboard-inventory-purposes-m5wtba` and more, so it can be fast-forwarded without losing anything.
-- **`claude/repo-code-analysis-y4n1k7`** is where the README audit, the screenshots and the fixes were made.
-- **7 other branches hold commits that `claude/repo-code-analysis-y4n1k7` does not have.** The newest is `claude/modular-booking-platform-wdq0kk` (last commit 2026-09-13, 2 commits not in the work branch). Check those before assuming the work branch is the whole story.
+What changed on `main` relative to the default branch:
 
-<details><summary>All 12 branches</summary>
+| Area | `main` |
+| --- | --- |
+| Sign-in | Email and password only (`Login.jsx`), with forgot password (`POST /api/business-auth/forgot-password`, a Supabase recovery link) and `ResetPassword.jsx` for the `#access_token=...&type=recovery` return link. Phone-code sign-in and sign-up were removed from the UI; the API's phone routes remain. |
+| Sign-up | `SignUp.jsx`: email, password, business name, optional website, industry, then `POST /api/auth/business-signup`, then a normal password sign-in. |
+| Admin "View as" | `AuthContext.jsx` reads `?pass=`, calls `POST /api/business-auth/exchange-impersonation` once, stores the minted session (no refresh token), sets the slug, strips `pass` from the URL. `TopBar` shows "Viewing as admin" with Exit. A failed exchange shows an "Admin link" error screen. |
+| Navigation | `src/lib/moduleNav.js` and `modulesApi.js` merge the data-discovered sections with `GET /api/owner/modules` (enabled modules without rows get an empty-state tab, `EmptyModulePanel`). If the endpoint answers 404, 405, 501 or 502 the dashboard falls back to discovery-only navigation. |
+| Apps | `src/apps/song-request` and `src/apps/merch-store`: owner settings screens and guest popups, calling `/api/apps/<id>/<slug>/...` on the API. |
+| Public page | `/?page=link&slug=<slug>` renders `PublicLinkPage.jsx` without a session from `GET /api/public/link-page/:slug`; its buttons open the guest popups. |
+| Hosting | `vercel.json` with a single SPA rewrite; `public/claim-business.html` redirects old invite links to the root. |
 
-| Branch | Last commit | Not in the work branch | Last commit message |
-| --- | --- | --- | --- |
-| `claude/repo-code-analysis-y4n1k7` (work branch) | 2026-09-29 | - | this README and the audit fixes |
-| `claude/modular-booking-platform-wdq0kk` | 2026-09-13 | 2 | Dashboard: adaptive wording, nightly rates, and channel sync |
-| `claude/admin-dashboard-automation-builder-s0j5ht` | 2026-09-13 | 0 | Add the Automations tab: what the operator pushed to this business |
-| `claude/admin-dashboard-repo-review-47q2vc` | 2026-09-13 | 2 | Add Pages: where a business says its Facebook page is |
-| `claude/new-session-66c2e9` | 2026-08-26 | 3 | feat(settings): Add the Settings page |
-| `claude/dashboard-folder-structure-wqsm9i` | 2026-08-24 | 5 | Add session audit: every change with the command to verify it |
-| `claude/repo-inventory-audit-5zw4yw` | 2026-08-13 | 1 | Let a business fix its own availability |
-| `claude/gcr-api-claim-docs-g4e42t` | 2026-08-05 | 3 | Correct the tableMap entry count |
-| `build/nextgent-control-surface` | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `claude/dashboard-inventory-purposes-m5wtba` (default) | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `main` | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `claude/new-session-1e1dj0` | 2026-08-04 | 1 | Make the App Store search find things |
-
-</details>
-
-<!-- branches:end -->
-
-## Run it
+## Run and test
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
-npm run check    # discovery + table-mapping checks, no network needed
+npm run check    # scripts/check-discovery.mjs: discovery and table-mapping checks, no network
 npm run lint     # oxlint
 ```
 
+Results on 2026-11-02, Node 22 with `npm ci`, at commit f811332: `npm run lint` passes (0
+errors, 4 warnings), `npm run check` prints 94 passing lines and "All checks passed", `npm run build` passes (JS 327 KB, 97 KB gzipped).
+There is no CI workflow, no unit-test runner and no `verify` script. Nothing has been
+exercised in a browser against the live API in this pass.
+
 Deploy `dist/` anywhere static. Settings (all optional, copy `.env.example` to
 `.env.local`): `VITE_GCR_API_BASE` (defaults to `https://gcr-api-clean.vercel.app`),
-`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`) and
-`VITE_REQUEST_TIMEOUT_MS` (defaults to 30000). This
-app holds **no database key and never talks to the database**: every read and
-every write goes through `gcr-api-clean`, which decides which business you are
-from your session, never from anything the browser sends.
+`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`; vestigial, nothing builds an address from it) and `VITE_REQUEST_TIMEOUT_MS`
+(defaults to 30000). The Paperclip proxy needs `PAPERCLIP_SERVER_URL` on the deployment;
+for local dev `vite.config.js` proxies `/api/paperclip` to `PAPERCLIP_DEV_SERVER`
+(default `http://localhost:3100`).
 
 ## Where the data comes from
 
@@ -116,9 +138,15 @@ from your session, never from anything the browser sends.
 | Which tables can be sections, and their columns | `GET /api/business/schema` |
 | Every section that has rows, in one call | `GET /api/business/sections` |
 | Create / update / delete a row | `POST/PATCH/DELETE /api/business/:table[/:id]` |
-| Sign up and sign in by phone code | `/api/business-auth/*` |
+| Sign in with email and password, refresh, sign out, forgot and reset password | `POST /api/business-auth/password`, `/refresh`, `/signout`, `/forgot-password`, `/reset-password` |
+| Self-serve sign-up | `POST /api/auth/business-signup`; `GET /api/business-auth/similar` (warns about duplicate names) |
+| Admin "View as" pass to a session | `POST /api/business-auth/exchange-impersonation` |
+| Enabled modules and which have data | `GET /api/owner/modules` (read only; installing is through the Store) |
+| Song Request and Merch Store | `/api/apps/song-request/:slug/...`, `/api/apps/merch-store/:slug/...` |
+| Public link page for a slug | `GET /api/public/link-page/:slug` |
 | The business's public listing payload (`Dashboard.jsx`) | `GET /api/gcr/entity/:slug` |
-| Industry list, read live | `GET /api/business/industries` |
+| Industry list, read live once signed in (the sign-up form uses a built-in list, since no session exists yet) | `GET /api/business/industries` |
+| Calendar (iCal feed and imports) | `/api/business/ical` (`Calendar.jsx`) |
 | Invite links | `GET /api/auth/invite/:token`, `POST /api/auth/accept-invite` |
 | Claim a business | `GET /api/gcr/entities?search=`, `POST /api/gcr/claim` |
 | Tools (Composio connections) | `/api/connections` (`GET`, `:toolId/connect`, `:toolId/refresh`, `DELETE :toolId`) |
@@ -147,21 +175,24 @@ a real table name, so a table added tomorrow still works untouched.
 | `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
 | `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Internal tables (AI indexes, access control, audit/log/analytics tables, other people's Trip Swipe data, SMS/message tables, backups) are hidden everywhere. Tables that other people write to (bookings, orders, customers, requests, leads and the like) still show as sections once they have rows but are never offered under Add. |
 | `tableMap.js` | API payload key ↔ real table name. |
-| `gcrApi.js` | The gcr-api-clean calls for entity search and claim. |
+| `gcrApi.js` | The gcr-api-clean calls for entity search, claim, sign-up, forgot and reset password and invites. |
+| `moduleNav.js` / `modulesApi.js` | Module key to section mapping (aliases `gallery` to `photos`, `menu` to `menu_sections`), the merge of enabled modules with discovered sections, and the fetch of `GET /api/owner/modules`. |
 | `writeEntityData.js` | **Every write goes through here.** It sends no slug: the API takes the business from the session and puts it in the WHERE clause itself. |
 | `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
 | `config.js` | The API host, the sign-in login domain and the request timeout. No database host or key. |
 | `apiClient.js` / `endpoints.js` | The fetch wrapper (session token, typed errors) and every API path, once. |
 | `authStore.js` | Where the session lives (`localStorage`), token renewal, and the slug an admin is acting on. |
 | `shapes.js` | Works out from a table's columns and rows whether it is a progress bar, a price list or a fan-submitted inbox, and masks other people's contact details. |
-| `appStore.js` / `automations.js` / `industries.js` / `useTheme.js` | Calls and helpers for Tools, Automations, the industry list and the light/dark/auto theme. |
+| `appStore.js` / `automations.js` / `calendar.js` / `paperclip.js` / `industries.js` / `useTheme.js` | Calls and helpers for Tools, Automations, the Calendar, the Paperclip proxy, the industry list and the light/dark/auto theme. |
 
-**Screens — `src/pages/`** — `Login`, `SignUp`, `AcceptInvite`, `Claim`, `Dashboard`, `BusinessPicker` (admin only), `Store`, `Ghost` (My Ghost), `Automations`, `AppStore` (Tools, the Composio connections).
+**Screens — `src/pages/`** — `Login`, `SignUp`, `ResetPassword`, `AcceptInvite`, `Claim`, `PublicLinkPage` (no session needed), `Dashboard`, `BusinessPicker` (admin only), `Store`, `Ghost` (My Ghost), `Automations`, `AppStore` (Tools, the Composio connections), `Calendar` (iCal import and export), `Platform` (Paperclip login and store, through `api/paperclip`).
 
 **Layout — `src/components/`** — `TopBar`, `BottomNav` (one tab per discovered
-section plus a permanent Add tab; mobile-first, no sidebar), `MainContent`,
+section plus seven fixed tabs: Calendar, Tools, Platform, Store, My Ghost, Automations and Add; mobile-first, no sidebar), `MainContent`,
 `AddSection` (the catalog), `RowEditor` (builds a form from a table's columns),
-`AppStoreView` (the Tools list).
+`AppStoreView` (the Tools list), `EmptyModulePanel` (an enabled module with no rows yet).
+
+**Apps — `src/apps/`** — `song-request/` and `merch-store/`, each with `api.js`, `OwnerSettings.jsx` and `GuestPopup.jsx`; `Dashboard.jsx` shows the owner screen when the active tab is `song-request`, `merch-store` or `shop`.
 
 **Sections — `src/sections/`** — `GenericSection` renders *any* table by
 inspecting the shape of its rows. `registry.jsx` maps a handful of purpose-built
@@ -193,9 +224,11 @@ proposal: "NEVER RUN") —
 a new kind of paid thing is a row — not a schema change and not a deploy.
 
 **Nothing about this is hardwired.** `src/lib/artistModule.js` contains only
-nicer words — labels, icons, and a name pattern for catalog grouping. Delete it
-and the artist dashboard still works; it just says "Artist Price Tiers" instead
-of "Prices". Every decision that matters is made from the live schema and the
+nicer words — labels, icons, and a name pattern for catalog grouping. It is
+imported by `discoverSections.js`, `sectionCatalog.js` and `PriceListSection.jsx`, so
+it cannot simply be deleted: removing it breaks the build. What it holds is only labels,
+icons and a name pattern, so emptying it would leave the dashboard working with
+"Artist Price Tiers" instead of "Prices". Every decision that matters is made from the live schema and the
 shape of the rows, in `src/lib/shapes.js`:
 
 | Decision | How it's made |
@@ -233,10 +266,10 @@ Which business you are, and whether you are an admin, is decided by
 database. `sql/entity_sections.sql` is **not** applied and is no longer needed
 (the API does that sweep).
 
-**A login only reaches a dashboard once it has a row in `entity_owners`.** As of
-2026-09-29 that table has no rows on the live database, so no business owner can
-sign in to a business yet. Claims, invites and `sql/seed_first_owner.sql` are the
-ways to create the first ones.
+**A login only reaches a dashboard once it has a row in `entity_owners`.** A read-only
+audit on 2026-11-02 found exactly one row there (and one platform admin) on the live
+database, so the dashboard has hardly been used by real owners. Claims, invites and
+`sql/seed_first_owner.sql` are the ways to create more.
 
 Provision logins with `scripts/provision-accounts.mjs` (dry-run first; it needs
 the service key in the environment, and writes credentials to
@@ -246,20 +279,28 @@ the service key in the environment, and writes credentials to
 SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs --dry-run --limit=5
 ```
 
-`scripts/make-setup-links.mjs` (same key) writes one-time password-setup links to
+These scripts hardcode the live project's URL and use the service key directly, so they
+**bypass the API**; they are operator tools, not part of the app. Do not paste a service
+key anywhere else. `scripts/make-setup-links.mjs` (same key) writes one-time password-setup links to
 `setup-links.csv`, also gitignored. `scripts/reconcile-tables.mjs` and
 `scripts/build-reconciliation-page.mjs` read `docs/reconciliation/`, which is not
 in this repo, so they cannot run as checked in.
 
-Ways in, as built: a texted six-digit code (`Login.jsx`), a business login and
-password for provisioned or invited accounts, an invite link (`?token=`,
-`AcceptInvite.jsx`), a claim, or a new sign-up (`SignUp.jsx`: phone, code,
-business name, industry; the listing stays hidden until reviewed).
+Ways in, as built on `main`: a business email and password (`Login.jsx`; for provisioned,
+invited and self-signed-up accounts), an invite link (`?token=`, `AcceptInvite.jsx`; the
+token wins over an existing session unless an admin pass is being exchanged), a claim, a
+new sign-up (`SignUp.jsx`, email and password), or an admin "View as" link. The texted
+six-digit code of the default branch is gone from the UI.
 
-**Admin deep link** — from CyberCheck admin, link each business row to
-`https://<dashboard-host>/?business=<slug>`. That opens that business's
-dashboard with an "Admin view" banner. With no `?business=`, admins land on the
-searchable picker.
+**Admin deep link** — `https://<dashboard-host>/?business=<slug>` opens that business's
+dashboard with an "Admin view" banner for a signed-in admin (`AuthContext.jsx`); with no
+`?business=`, admins land on the searchable picker. The operator console's "View as" adds a
+one-time `&pass=` to that link. **On `main` the dashboard exchanges it**: `AuthContext.jsx` posts
+`{ pass }` to `POST /api/business-auth/exchange-impersonation`, keeps the returned session in
+the session store, scopes the dashboard to the slug and removes `pass` from the URL. A guard
+stops React Strict Mode from spending the one-time pass twice. (The default branch does not do
+this.) For an admin acting on a business the client adds `slug` to `/api/business/*` calls
+only (`apiClient.js`); `/api/store`, `/api/connections` and `/api/nodes` get no slug.
 
 ## Automations
 
@@ -288,28 +329,78 @@ admin step (for example `POST /api/admin/link-user`). The `admin.html` GCR Claim
 panel in cybercheck-login that this flow was written against is not in this
 workspace, so its behaviour is not checked here.
 
-## Status
+## Known gaps
 
-**Verified:** builds clean; `npm run check` passes; section discovery, table
-mapping and the add catalog tested against realistic restaurant and charter
-payloads. The Store, My Ghost and Automations tabs were driven in a real browser
-(Chromium) against a test backend running the real `gcr-api-clean` store routes.
+- **Not proven end to end on the live stack**: a real business signing in and editing.
+  Deployed state is unverified from here.
+- **Hours and tags rows cannot be edited**: `EditableSection.jsx` disables a row with no
+  `id`, and the API payload's hours and tags rows carry none.
+- **What a business may write** is decided by the API (`lib/businessTables.js` in gcr-api-clean holds the allow-list), not by the Add catalog here.
+- **Whole-dashboard refetch after every save**: a save bumps `reloadKey` in `Dashboard.jsx`,
+  which re-fetches the full entity payload and re-sweeps the tables (not a browser reload,
+  but the whole view reloads).
+- **The admin slug is not sent** for `/api/store`, `/api/connections` and `/api/nodes`
+  (see Access), so those tabs act on whichever business the session resolves to.
+- **Depends on API routes that exist on the API's `main` line**: `routes/owner-modules.js`
+  (`/api/owner/modules`), the `apps/` modules, `routes/admin-impersonate.js` and
+  `routes/business-ical.js`. Per a file-level comparison they are absent from the integration
+  line `codex/nextgent-integration-20261005`; there the Calendar page falls into the generic
+  `/api/business/:table` handler and "View as" cannot be minted. The soft fallback covers only
+  `/api/owner/modules`.
+- **No URL routing**: the app switches views with state (`showStore`, `showGhost`, …) in
+  `Dashboard.jsx`, so no tab has its own URL and the back button leaves the app.
+- **Platform tab** uses its own Paperclip login (cookie session, separate from the business
+  session); the proxy forwards any method and path it is given, with all headers including cookies and `Authorization`, and checks no login of its own, so anyone who can reach the deployed origin can reach that Paperclip backend.
+- **Session token in `localStorage`** (`authStore.js`).
+- **Operator scripts bypass the API** (see Access), and `docs/everything.html` embeds a
+  JWT-format string inside an old `config.js` listing (not inspected; probably the old public
+  anon key). The live database has anon write grants revoked, but rotate if in doubt.
+  `scripts/make-setup-links.mjs` defaults its redirect to `https://dashboard.gulfcoastradar.com/set-password`,
+  a screen this app does not have.
+- **`sql/artist_module.sql` is a proposal** ("NEVER RUN" in its own header) and the
+  fan-facing artist pages in `gcr-unified` do not read it.
+- **`docs/PORT_REVIEW.md` is partly out of date**: it describes a browser Supabase client
+  and anon key (none in `src/`) and lists Composio connections and any app concept as
+  "not built at all", although `src/pages/AppStore.jsx` and `src/pages/Store.jsx` exist.
+- The API line this talks to has open security gaps and two unreconciled git lines; see the
+  `gcr-api-clean` README. A merge of its `main` into the integration line with those
+  protections is prepared but not published.
 
-**Deployed** to production. **Not yet proven end to end on the live stack:** a
-real business signing in, because no login is linked to a business yet (see
-Access).
+`docs/everything.html` is the full record of the original port (architecture write-up,
+product spec, reconciliation of the 244-table design against the 563-table database then
+live; the live database now has 697 public tables). Open it in a browser; it needs no
+server.
 
-**Note on writes:** the Add catalog offers every table the schema supports, but
-what a business may actually write is decided by the API (`lib/businessTables.js`
-in gcr-api-clean holds the allow-list). See `docs/PORT_REVIEW.md`.
+## Inside this repo (from the code)
 
-`docs/everything.html` is the full record — the architecture write-up, the
-extracted product spec, the module-source analysis, and the reconciliation of
-the 244-table design against the 563-table live database. Open it in a browser;
-it needs no server and no network.
+From a code-only review on 2026-11-02 of `main` at f811332. Lint, `check` and build were run on a scratch copy; nothing was run in a browser against the live API (unverified).
 
-`docs/PORT_REVIEW.md` lists what this port was missing and what to fix first. It
-was written before the switch to `gcr-api-clean` and parts are out of date: it still
-describes a browser Supabase client and anon key (none in `src/` now) and lists
-Composio connections and any app concept as "not built at all", although
-`src/pages/AppStore.jsx` and `src/pages/Store.jsx` now exist.
+**Directory map.** 71 files under `src`, `api`, `scripts` and `sql` plus docs. JSX and JS only, one `src/index.css` (1,074 lines).
+
+| Path | What is in it |
+| --- | --- |
+| `src/lib/` (23 files) | API client and auth store, discovery engine (`schemaDiscovery`, `entityTables`, `discoverSections`, `sectionCatalog`, `tableMap`, `shapes`), `moduleNav.js` (383 lines) and `modulesApi.js`, `endpoints.js` (136 lines), `AuthContext.jsx` (308 lines, the session and the admin pass exchange), `paperclip.js` |
+| `src/pages/` (14) | Login, SignUp, ResetPassword, AcceptInvite, Claim, PublicLinkPage, BusinessPicker, Dashboard, Store, Ghost, Automations, AppStore (Tools), Calendar, Platform |
+| `src/apps/` (8 files) | Song Request and Merch Store: `api.js`, `OwnerSettings.jsx`, `GuestPopup.jsx`, `index.js` each |
+| `src/components/`, `src/sections/` | TopBar, BottomNav, AddSection, RowEditor, AppStoreView, EmptyModulePanel; the section renderers |
+| `api/paperclip/[...path].js` | Vercel edge function, same as on the default branch |
+| `scripts/` (5), `sql/` (5), `docs/` | unchanged from the default branch: `check-discovery.mjs` (now 350 lines), the four operator scripts, five SQL files nothing applies, `everything.html`, `PORT_REVIEW.md`, 27 static artist mockups |
+| `public/` | `favicon.svg`, `claim-business.html` (redirect for old invite links) |
+
+**Start.** `npm run dev` (Vite, 5173). `vercel.json` has one rewrite, everything to `/index.html`. Env names: `VITE_GCR_API_BASE`, `VITE_LOGIN_DOMAIN` (vestigial), `VITE_REQUEST_TIMEOUT_MS`; the edge function reads `PAPERCLIP_SERVER_URL`; scripts read `SUPABASE_SERVICE_KEY`. Browser storage: `localStorage` for the session (access and refresh token), the table cache and the theme.
+
+**Interfaces.** Single-page app, no router; views are booleans in `Dashboard.jsx`. URL parameters read: `?token=` (invite), `?business=<slug>` and `?pass=` (admin), `?page=link&slug=` (public link page), and the `#access_token=...&type=recovery` hash (password reset). Outbound only; no webhooks, CLI or MCP.
+
+**Against the API.** Path-level comparison with gcr-api-clean `main`: the builders in `endpoints.js`, the `/api/apps/*` calls, `/api/owner/modules`, `/api/business-auth/*` and `/api/public/link-page/:slug` all exist there (the song-request and merch-store routers define the catalog, request/order, queue/products and settings paths this app calls). `GET /api/public/link-page/:slug` is public by design.
+
+**Data.** No database access from `src`. `@supabase/supabase-js` is a devDependency used by the operator scripts, which write to the live project (`mkepugvdlktfsossumox`) directly with a service key (see Access).
+
+**Tests.** No test runner and no CI. `npm run check` (94 passing lines) covers discovery, `tableMap`, the catalog, shape detection and contact masking; it does not cover the pages, sign-in, the pass exchange, module navigation or the apps. `oxlint` 0 errors / 4 warnings; build passes.
+
+**Stubbed or dead.** The Calendar page's Google card is a labelled stub. `nodes.revoke` has no UI. `entity_sections.sql` is unused. The comment at the top of `BottomNav.jsx` ("one tab per discovered section, plus a permanent Add tab") is out of date: there are seven fixed tabs. Everything else flagged in Known gaps is unchanged from the default branch.
+
+## Related repos
+
+`gcr-api-clean` (the API and the only database client), `Admin-dashboard-main` (operator
+console), `gcr-unified` (public tourist site), `node-foundation` (home-machine monorepo and
+index of the system), and the `nextgent-*` repos.
