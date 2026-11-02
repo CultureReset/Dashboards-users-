@@ -23,8 +23,10 @@ database connection. The home machine has its own local Supabase, separate from 
 
 - **Calls**: `gcr-api-clean` through `src/lib/apiClient.js` (session token from
   `/api/business-auth`, kept in `localStorage`). Which business you are comes from the
-  session, never from anything the browser sends. The one exception is the **Platform**
-  tab, which logs in to a separate Paperclip server through the `api/paperclip/[...path].js`
+  session; the browser sends no slug, except that an admin acting as a business, or an owner
+  with several linked units, adds `?slug=` on `/api/business/*` calls, which the API checks
+  against `entity_owners` / `platform_admins`. Separately, the **Platform**
+  tab logs in to a separate Paperclip server through the `api/paperclip/[...path].js`
   edge function (forwards `/api/paperclip/*` to `PAPERCLIP_SERVER_URL`; answers 503 when
   unset; the clean version forwards every method and path it is given).
 - **Called by**: nobody. The operator console links here ("View as", `?business=<slug>`).
@@ -77,9 +79,23 @@ nothing entered starts from that catalog rather than an empty screen.
 
 ## Branches
 
-The default branch on GitHub is `claude/dashboard-inventory-purposes-m5wtba`, the line
-this README describes. Branch counts drift; run `git ls-remote --heads origin` and check
-any branch you care about before assuming this one is the whole story.
+**This README describes the GitHub default branch, `claude/dashboard-inventory-purposes-m5wtba`
+(24 commits, last 2026-10-30, tip aac903f). It is stale: `main` is 23 commits ahead of it
+(and 1 behind), and `main` is the line that has been developed since.** `main` carries PRs #5
+to #15: module-driven navigation (`src/lib/moduleNav.js`, `GET /api/owner/modules`), email and
+password sign-in with forgot/reset password instead of phone codes, the admin "View as" pass
+exchange (`POST /api/business-auth/exchange-impersonation`), the Song Request and Merch Store
+owner settings and guest popups (`src/apps/`), owner-menu cleanup, a public link page
+(`?page=link&slug=`) and a `vercel.json`. The branch
+`docs/readme-accuracy-2026-11-02-main`, cut from `origin/main`, has a README that describes
+that line. Which of the two Vercel builds for `dashboards-users.vercel.app` is unverified (the
+project settings could not be read).
+
+Other branches with unmerged work (commits ahead of the default): `claude/dashboard-folder-structure-wqsm9i` +5,
+`claude/new-session-66c2e9` +3 (a Settings page), `claude/modular-booking-platform-wdq0kk` +2,
+`claude/admin-dashboard-repo-review-47q2vc` +2, `claude/repo-inventory-audit-5zw4yw` +1,
+`codex/paperclip-ghost-ui` +1 (open PR #3, Paperclip controls in My Ghost), `auth/supabase-oauth` +1.
+Branch counts drift; run `git ls-remote --heads origin`.
 
 ## Run and test
 
@@ -98,7 +114,7 @@ exercised in a browser against the live API in this pass.
 
 Deploy `dist/` anywhere static. Settings (all optional, copy `.env.example` to
 `.env.local`): `VITE_GCR_API_BASE` (defaults to `https://gcr-api-clean.vercel.app`),
-`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`) and `VITE_REQUEST_TIMEOUT_MS`
+`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`; vestigial, nothing builds an address from it) and `VITE_REQUEST_TIMEOUT_MS`
 (defaults to 30000). The Paperclip proxy needs `PAPERCLIP_SERVER_URL` on the deployment;
 for local dev `vite.config.js` proxies `/api/paperclip` to `PAPERCLIP_DEV_SERVER`
 (default `http://localhost:3100`).
@@ -189,9 +205,11 @@ proposal: "NEVER RUN") —
 a new kind of paid thing is a row — not a schema change and not a deploy.
 
 **Nothing about this is hardwired.** `src/lib/artistModule.js` contains only
-nicer words — labels, icons, and a name pattern for catalog grouping. Delete it
-and the artist dashboard still works; it just says "Artist Price Tiers" instead
-of "Prices". Every decision that matters is made from the live schema and the
+nicer words — labels, icons, and a name pattern for catalog grouping. It is
+imported by `discoverSections.js`, `sectionCatalog.js` and `PriceListSection.jsx`, so
+it cannot simply be deleted: removing it breaks the build. What it holds is only labels,
+icons and a name pattern, so emptying it would leave the dashboard working with
+"Artist Price Tiers" instead of "Prices". Every decision that matters is made from the live schema and the
 shape of the rows, in `src/lib/shapes.js`:
 
 | Decision | How it's made |
@@ -257,9 +275,10 @@ business name, industry; the listing stays hidden until reviewed).
 **Admin deep link** — `https://<dashboard-host>/?business=<slug>` opens that business's
 dashboard with an "Admin view" banner for a signed-in admin (`AuthContext.jsx`); with no
 `?business=`, admins land on the searchable picker. The operator console's newer "View as"
-adds a one-time `&pass=` to that link, but **this dashboard never reads `pass` and never
-calls `/api/business-auth/exchange-impersonation`**, so the pass flow does not sign
-anyone in here. For an admin acting on a business the client adds `slug` to
+adds a one-time `&pass=` to that link. **On this (default) branch the dashboard never reads
+`pass` and never calls `/api/business-auth/exchange-impersonation`, so the pass flow does not
+sign anyone in here. That is true of this branch only: `main` reads `pass`, exchanges it and
+strips it from the URL (`src/lib/AuthContext.jsx`).** For an admin acting on a business the client adds `slug` to
 `/api/business/*` calls only (`apiClient.js`); `/api/store`, `/api/connections` and
 `/api/nodes` get no slug.
 
@@ -300,16 +319,18 @@ workspace, so its behaviour is not checked here.
 - **Whole-dashboard refetch after every save**: a save bumps `reloadKey` in `Dashboard.jsx`,
   which re-fetches the full entity payload and re-sweeps the tables (not a browser reload,
   but the whole view reloads).
-- **Admin "View as" pass is not exchanged** and the admin slug is not sent for
+- **Admin "View as" pass is not exchanged on this branch (it is on `main`)** and the admin slug is not sent for
   `/api/store`, `/api/connections` and `/api/nodes` (see Access).
 - **No URL routing**: the app switches views with state (`showStore`, `showGhost`, …) in
   `Dashboard.jsx`, so no tab has its own URL and the back button leaves the app.
 - **Platform tab** uses its own Paperclip login (cookie session, separate from the business
-  session); the proxy forwards any method and path it is given.
+  session); the proxy forwards any method and path it is given, with all headers including cookies and `Authorization`, and checks no login of its own, so anyone who can reach the deployed origin can reach that Paperclip backend.
 - **Session token in `localStorage`** (`authStore.js`).
-- **Operator scripts bypass the API** (see Access), and `docs/everything.html` embeds an
-  anon-role key for the live project. The live database has anon write grants revoked, but
-  rotate if in doubt.
+- **Operator scripts bypass the API** (see Access), and `docs/everything.html` embeds a
+  JWT-format string inside an old `config.js` listing (not inspected; probably the old public
+  anon key). The live database has anon write grants revoked, but rotate if in doubt.
+  `scripts/make-setup-links.mjs` defaults its redirect to `https://dashboard.gulfcoastradar.com/set-password`,
+  a screen this app does not have.
 - **`sql/artist_module.sql` is a proposal** ("NEVER RUN" in its own header) and the
   fan-facing artist pages in `gcr-unified` do not read it.
 - **`docs/PORT_REVIEW.md` is partly out of date**: it describes a browser Supabase client
@@ -323,6 +344,34 @@ workspace, so its behaviour is not checked here.
 product spec, reconciliation of the 244-table design against the 563-table database then
 live; the live database now has 697 public tables). Open it in a browser; it needs no
 server.
+
+## Inside this repo (from the code)
+
+From a code-only review on 2026-11-02 of this branch's code (default-branch tip aac903f). Lint, `check` and build were run on a scratch copy; nothing was run in a browser against the live API (unverified). **The default branch is not the newest line: `main` is 23 commits ahead (see Branches). Everything below describes the default branch.**
+
+**Directory map.** 58 `src` files (all reachable from `main.jsx`, none dead), JSX 36 files / 4.4k lines, JS 22 / 2.0k, one 1,065-line `src/index.css`.
+
+| Path | What is in it |
+| --- | --- |
+| `src/lib/` (21 files) | API client and auth store, the discovery engine (`schemaDiscovery`, `entityTables`, `discoverSections`, `sectionCatalog`, `tableMap` with about 59 renames, `shapes`), `endpoints.js` (49 path builders, 47 used), `paperclip.js` |
+| `src/pages/` (12) | Login, SignUp, Claim, AcceptInvite, BusinessPicker, Dashboard, Store, Ghost, Automations, AppStore (Tools), Calendar, Platform |
+| `src/components/`, `src/sections/` | TopBar, BottomNav, AddSection, RowEditor, AppStoreView; 13 section renderers (Hours, Photos, Menu, HappyHour, Events, Specials, Reviews, Faqs, Policies, Offerings, PriceList, Progress, Generic) plus `EditableSection` |
+| `api/paperclip/[...path].js` | Vercel edge function |
+| `scripts/` (5) | `check-discovery.mjs` (offline), `provision-accounts.mjs`, `make-setup-links.mjs`, `reconcile-tables.mjs`, `build-reconciliation-page.mjs` |
+| `sql/` (5) | `artist_module.sql` ("NEVER RUN" in its header), `close_anon_write_access.sql`, `ownership_and_write_access.sql`, `seed_first_owner.sql`, `entity_sections.sql`; nothing in this repo applies them |
+| `docs/` (32 files) | `everything.html`, `PORT_REVIEW.md`, 3 screenshots, `artist-mockups/` (27 static HTML design mockups for fan pages that live in `gcr-unified`; nothing in `src` reads them) |
+
+**Start.** `npm run dev` (Vite, port 5173); the dev server proxies only `/api/paperclip` to `PAPERCLIP_DEV_SERVER`. No `vercel.json`, no CI, no Dockerfile on this branch. Env names: `VITE_GCR_API_BASE`, `VITE_LOGIN_DOMAIN`, `VITE_REQUEST_TIMEOUT_MS` (all in `src/lib/config.js`), `PAPERCLIP_SERVER_URL` (edge function), `SUPABASE_SERVICE_KEY` (scripts only). `VITE_LOGIN_DOMAIN` is vestigial: it is exported and re-exported but nothing builds an address from it. Browser storage: `localStorage` `gcr_business_session_v1` (access and refresh token), `gcr_entity_tables_v1`, `gcr_dashboard_theme`; `sessionStorage` `gcr_tables_<slug>` (5 minutes).
+
+**Interfaces.** A single-page app with no router: the seven views (`showApps`, `showGhost`, `showStore`, `showPlatform`, `showAutomations`, `showCalendar`, `adding`) are booleans in `Dashboard.jsx`. URL parameters read: `?token=` (invite) and `?business=<slug>` (admin). The bottom bar scrolls horizontally, so on a phone the seven fixed tabs can be pushed off screen by a business with many sections. No webhooks, CLI or MCP.
+
+**Against the API.** On gcr-api-clean `main` all 49 builders resolve at path level except `store.status` (a `/:id/<verb>` template whose verbs exist). On the integration API line the Calendar page is broken: `routes/business-ical.js` does not exist there, so `/api/business/ical*` falls into the generic `/api/business/:table` handler. Requests carry no slug, except that `?slug=` is added on `/api/business/*` for an admin acting as a business or an owner with more than one linked unit; the server checks it against `entity_owners` / `platform_admins`.
+
+**Data.** No database access from `src`: no Supabase SDK in the bundle. `@supabase/supabase-js` is a devDependency used only by `scripts/`, which talk to the live project (`mkepugvdlktfsossumox`) directly with a service key. Those scripts break the rule that only the API touches the database; they are operator tools, gated by a manual `--dry-run`.
+
+**Tests.** No test runner and no CI. `npm run check` runs 69 offline assertions on discovery, `tableMap`, the catalog, shape detection and contact masking; it covers no page, no auth and no API client. On the scratch copy: `check` passes, `oxlint` 0 errors / 3 warnings, `vite build` passes (348 KB `dist`, JS 297 KB).
+
+**Stubbed or dead.** Only the Calendar page's Google Calendar card is a labelled stub. `nodes.revoke` has an endpoint builder and no UI. `sql/entity_sections.sql` is unused. `RowEditor` has no required-field validation and no controls for json, array, image or relation columns. Menu, drink and happy-hour items are nested under their parent sections, so as far as the code shows an existing menu item cannot be edited or deleted here (Add can create one). `AppStoreView.jsx`/`.css` and the Paperclip edge function are copies of the `Admin-dashboard-main` files.
 
 ## Related repos
 
