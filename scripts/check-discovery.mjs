@@ -402,7 +402,7 @@ console.log('\nRows the public payload sends without ids become editable')
 console.log('\nDashboard view state — one screen at a time')
 {
   check('starts on Setup', INITIAL_VIEW === 'setup')
-  check('there are exactly 9 views: setup, section, add + 6 manage', VIEWS.length === 9 && MANAGE_VIEWS.length === 6)
+  check('there are exactly 11 views: setup, section, add + 6 manage + home, app', VIEWS.length === 11 && MANAGE_VIEWS.length === 6)
   check('every manage view has a tab', MANAGE_VIEWS.every((v) => MANAGE_TABS.some((t) => t.view === v)))
   check('Store, Tools, My Ghost, Automations, Calendar, Platform are the manage tabs',
     MANAGE_TABS.map((t) => t.label).join() === 'Store,Tools,My Ghost,Automations,Calendar,Platform')

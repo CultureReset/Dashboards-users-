@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "check": "node scripts/check-discovery.mjs",
+    "check": "node scripts/check-discovery.mjs && node scripts/check-front.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
