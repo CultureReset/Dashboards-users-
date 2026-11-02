@@ -3,10 +3,11 @@
 // Add is always present, including when a business has no sections at all —
 // that is the whole point of it. A business that has never entered anything
 // still gets a way in.
-export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store }) {
+export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store, onSetup, setup }) {
   return (
     <nav className="bottom-nav" aria-label="Business navigation">
       <div className="bottom-nav-tabs">
+      {onSetup && <button type="button" className={`bottom-nav-item${setup ? ' active' : ''}`} onClick={onSetup} aria-current={setup ? 'page' : undefined}><span className="bottom-nav-icon">🏠</span><span className="bottom-nav-label">Setup</span></button>}
       {sections.map((s) => (
         <button
           key={s.key}

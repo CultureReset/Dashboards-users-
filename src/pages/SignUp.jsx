@@ -205,8 +205,8 @@ export default function SignUp({ onBack }) {
           <>
             <h1>What kind of business?</h1>
             <p className="claim-sub">
-              This decides what {name || 'your business'} gets set up with. You
-              can change it later.
+              This helps recommend sections for {name || 'your business'}.
+              You choose your apps and connections after creating your account.
             </p>
 
             <div className="industry-grid">
