@@ -11,7 +11,11 @@ export default async function handler(request) {
   }
 
   const incoming = new URL(request.url)
-  const rest = incoming.pathname.replace(/^\/api\/paperclip/, '') || '/'
+  const routedPath = incoming.searchParams.get('__paperclip_path')
+  incoming.searchParams.delete('__paperclip_path')
+  const rest = routedPath !== null
+    ? '/' + routedPath.replace(/^\/+/, '')
+    : incoming.pathname.replace(/^\/api\/paperclip/, '') || '/'
   const target = `${server}/api${rest}${incoming.search}`
 
   const headers = new Headers(request.headers)

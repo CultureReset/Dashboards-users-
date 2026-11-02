@@ -418,6 +418,12 @@ input { font: inherit; }
   background: var(--panel);
   border-top: 1px solid var(--border);
   display: flex;
+  overflow: hidden;
+}
+.bottom-nav-tabs {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   overflow-x: auto;
 }
 .bottom-nav-item {
@@ -437,8 +443,7 @@ input { font: inherit; }
 .bottom-nav-icon { font-size: 1.1rem; }
 /* Add is pinned to the end and always reachable, including with no sections. */
 .bottom-nav-add {
-  position: sticky;
-  right: 0;
+  flex: 0 0 auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
   color: var(--accent);

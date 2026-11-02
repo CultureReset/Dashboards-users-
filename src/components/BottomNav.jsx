@@ -5,7 +5,8 @@
 // still gets a way in.
 export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store }) {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" aria-label="Business navigation">
+      <div className="bottom-nav-tabs">
       {sections.map((s) => (
         <button
           key={s.key}
@@ -73,6 +74,7 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
           <span className="bottom-nav-label">Automations</span>
         </button>
       )}
+      </div>
       {onAdd && (
         <button
           className={`bottom-nav-item bottom-nav-add${adding ? ' active' : ''}`}
