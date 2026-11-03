@@ -28,8 +28,10 @@ import Automations from './Automations'
 import Platform from './Platform'
 import Calendar from './Calendar'
 import Setup from './Setup'
+import Onboarding from './Onboarding'
+import useOnboardingGate from '../onboarding/useOnboardingGate'
 import { fetchAutomations } from '../lib/automations'
-import { INITIAL_VIEW, landingView, viewForSetupTarget, viewReducer } from '../lib/dashboardView'
+import { INITIAL_VIEW, decideLanding, viewForSetupTarget, viewReducer } from '../lib/dashboardView'
 import AppHome from '../front/AppHome'
 import AppFrame from '../front/AppFrame'
 import useStoreApps from '../front/useStoreApps'
@@ -38,7 +40,7 @@ import { useToast } from '../components/Toast'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function Dashboard() {
-  const { gcrSlug } = useAuth()
+  const { gcrSlug, viewingAsAdmin, viewingAsImpersonation } = useAuth()
   const [entity, setEntity] = useState(null)
   const [tableRows, setTableRows] = useState({})
   const [error, setError] = useState('')
@@ -67,17 +69,21 @@ export default function Dashboard() {
   const entityLoadedFor = useRef(null)
   const sweptFor = useRef(null)
   const tablesRef = useRef([])
+  const [discoveredFor, setDiscoveredFor] = useState(null) // slug whose sections have finished loading
+  const [wizardOpen, setWizardOpen] = useState(false) // the guided setup (src/pages/Onboarding.jsx)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
   const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
-  const { items: storeItems } = useStoreApps(gcrSlug, modulesReloadKey)
+  const { items: storeItems, loaded: storeLoaded, known: storeKnown } = useStoreApps(gcrSlug, modulesReloadKey)
 
   const refreshAll = useCallback(() => {
     setReloadKey((k) => k + 1)
     setModulesReloadKey((k) => k + 1)
   }, [])
   const reload = useCallback(() => setReloadKey((k) => k + 1), [])
+
+  const isAdminView = viewingAsAdmin || viewingAsImpersonation
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
@@ -165,12 +171,16 @@ export default function Dashboard() {
         if (!cancelled) {
           sweptFor.current = gcrSlug
           setTableRows(fresh)
+          setDiscoveredFor(gcrSlug)
         }
       } catch (err) {
         // Discovery is additive — if it fails the API-backed sections still
         // work. After a save, though, stale rows would look like the save
         // was lost, so say so.
         if (silent && !cancelled) toast.error(`Couldn't refresh your sections: ${err.message}`)
+        // Discovery is additive: a failed sweep still ends the wait. The
+        // landing decision then goes by what the API payload gave us.
+        if (!cancelled) setDiscoveredFor(gcrSlug)
       } finally {
         if (!cancelled) setSweep(null)
       }
@@ -238,15 +248,29 @@ export default function Dashboard() {
   )
   const installCount = storeItems.filter((i) => i.installed).length
 
-  // Landing: a business that already has an app or a section opens on its
-  // launcher instead of Setup. Done before paint so Setup never flashes, and
-  // only until the owner has navigated anywhere themselves.
+  // Landing. ONE decision (decideLanding in lib/dashboardView.js):
+  //   brand-new owner (no installs, no data)  -> the guided setup, once
+  //   at least one install or one section    -> the app grid
+  //   otherwise                               -> the Setup page
+  // The grid is chosen before paint so Setup never flashes, and only until the
+  // owner has navigated anywhere themselves.
+  const populatedCount = sections.filter((s) => !s.empty).length
+  const landingInput = { sectionCount: sections.length, populatedCount, installCount, storeKnown }
   useLayoutEffect(() => {
     if (loading || touchedRef.current) return
-    if (landingView({ sectionCount: sections.length, installCount }) === 'home') {
-      rawDispatchView({ type: 'home' })
-    }
+    if (decideLanding(landingInput) === 'home') rawDispatchView({ type: 'home' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, sections.length, installCount])
+
+  // The wizard waits until everything the decision reads has arrived (the
+  // entity, the section sweep and the Store list), decides once per business,
+  // and never runs in an admin's "view as" session.
+  const autoWizard = useOnboardingGate(gcrSlug, {
+    enabled: !isAdminView,
+    ready: !loading && !error && storeLoaded && discoveredFor === gcrSlug,
+    ...landingInput,
+  })
+  useEffect(() => { if (autoWizard) setWizardOpen(true) }, [autoWizard])
 
   if (loading) {
     return (
@@ -275,6 +299,18 @@ export default function Dashboard() {
           Retry
         </button>
       </div>
+    )
+  }
+
+  if (wizardOpen && !isAdminView) {
+    return (
+      <Onboarding
+        entity={entity}
+        onClose={({ changed }) => {
+          setWizardOpen(false)
+          if (changed) refreshAll()
+        }}
+      />
     )
   }
 
@@ -308,6 +344,10 @@ export default function Dashboard() {
   // Leaving Add / a nested screen: back to the launcher from an app, else as before.
   const leave = (name) => (navView === 'app' ? dispatchView({ type: 'back' }) : dispatchView({ type: 'close', view: name }))
   const openAdd = () => dispatchView({ type: 'show', view: 'add' })
+  // The Setup page from the menu: inside the frame when the launcher is up.
+  const openSetup = () => (inFront
+    ? openApp({ view: 'setup', title: 'Setup', icon: '🏠' })
+    : dispatchView({ type: 'show', view: 'setup' }))
 
   return (
     <div className="dashboard-shell">
@@ -316,6 +356,8 @@ export default function Dashboard() {
         sections={sections}
         activeKey={shownKey}
         onSelect={pickSection}
+        onOpenSetup={openSetup}
+        onSetup={isAdminView ? undefined : () => setWizardOpen(true)}
       />
       {sweep && (
         <div className="sweep-status" role="status" aria-live="polite">

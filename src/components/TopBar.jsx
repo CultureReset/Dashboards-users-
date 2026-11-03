@@ -14,7 +14,7 @@ const THEME_LABELS = { system: 'Auto', light: 'Light', dark: 'Dark' }
 //
 // Sections are optional. The business picker renders this bar with none, and
 // the menu is still worth having for the theme switch.
-export default function TopBar({ businessName, sections = [], activeKey, onSelect }) {
+export default function TopBar({ businessName, sections = [], activeKey, onSelect, onSetup, onOpenSetup }) {
   const {
     signOut,
     viewingAsAdmin,
@@ -111,6 +111,38 @@ export default function TopBar({ businessName, sections = [], activeKey, onSelec
                     </button>
                   ))}
                 </div>
+              </>
+            )}
+
+            {(onOpenSetup || onSetup) && (
+              <>
+                <p className="topbar-menu-label">Guide</p>
+                {onOpenSetup && (
+                  <button
+                    role="menuitem"
+                    className="topbar-menu-item"
+                    onClick={() => {
+                      setOpen(false)
+                      onOpenSetup()
+                    }}
+                  >
+                    <span className="topbar-menu-icon" aria-hidden="true">🏠</span>
+                    <span>Setup</span>
+                  </button>
+                )}
+                {onSetup && (
+                  <button
+                    role="menuitem"
+                    className="topbar-menu-item"
+                    onClick={() => {
+                      setOpen(false)
+                      onSetup()
+                    }}
+                  >
+                    <span className="topbar-menu-icon" aria-hidden="true">🧭</span>
+                    <span>Guided setup</span>
+                  </button>
+                )}
               </>
             )}
 

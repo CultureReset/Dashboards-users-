@@ -96,7 +96,7 @@ nothing entered starts from that catalog rather than an empty screen.
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
-npm run check    # discovery + table-mapping checks, no network needed
+npm run check    # discovery, front layer, onboarding, setup + Paperclip tests; no network (see docs/DASHBOARD-INTEGRATION.md)
 npm run lint     # oxlint
 ```
 

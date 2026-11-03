@@ -10,18 +10,19 @@ import endpoints from '../lib/endpoints'
 //
 // Soft-fails: if the store is not open, or the call fails, the launcher still
 // shows the business's data sections and core tiles. `loaded` lets the caller
-// tell "no apps" from "not asked yet".
+// tell "no apps" from "not asked yet"; `known` tells "no apps" from "could
+// not find out" (the guided setup only opens on a known-empty Store).
 export default function useStoreApps(slug, reloadKey = 0) {
-  const [state, setState] = useState({ items: [], loaded: false })
+  const [state, setState] = useState({ items: [], loaded: false, known: false })
 
   useEffect(() => {
     let cancelled = false
     api.get(endpoints.store.list())
       .then((data) => {
-        if (!cancelled) setState({ items: Array.isArray(data?.items) ? data.items : [], loaded: true })
+        if (!cancelled) setState({ items: Array.isArray(data?.items) ? data.items : [], loaded: true, known: true })
       })
       .catch(() => {
-        if (!cancelled) setState((prev) => ({ items: prev.items, loaded: true }))
+        if (!cancelled) setState((prev) => ({ items: prev.items, loaded: true, known: prev.known }))
       })
     return () => { cancelled = true }
   }, [slug, reloadKey])

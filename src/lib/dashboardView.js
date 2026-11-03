@@ -7,6 +7,8 @@
 //
 // Pure data and a reducer: no React, so scripts/check-discovery.mjs can test it.
 
+import { shouldAutoShow } from '../onboarding/logic.js'
+
 /** Screens that are not "one of the business's data sections". */
 export const MANAGE_VIEWS = ['store', 'tools', 'ghost', 'automations', 'calendar', 'platform']
 
@@ -27,6 +29,33 @@ export const INITIAL_VIEW = 'setup'
  */
 export function landingView({ sectionCount = 0, installCount = 0 } = {}) {
   return sectionCount > 0 || installCount > 0 ? 'home' : 'setup'
+}
+
+/**
+ * THE landing rule, in one place. Returns 'wizard', 'home' or 'setup'.
+ *
+ *   wizard  a brand-new owner: nothing installed and no data of their own.
+ *           Once per business, dismissible, never in an admin's "view as"
+ *           (see shouldAutoShow in onboarding/logic.js for the exact rules).
+ *   home    at least one install or one section: the app grid.
+ *   setup   everything else: the Setup page.
+ *
+ * `sectionCount` counts every section (empty-but-enabled module stubs
+ * included), which is what puts a tile on the grid. `populatedCount` counts
+ * the ones with data and is what "nothing to show yet" means for the wizard.
+ */
+export function decideLanding({
+  sectionCount = 0,
+  populatedCount = sectionCount,
+  installCount = 0,
+  storeKnown = true,
+  stored = null,
+  viewingAsAdmin = false,
+} = {}) {
+  if (shouldAutoShow({ viewingAsAdmin, stored, installedCount: installCount, storeKnown, sectionCount: populatedCount })) {
+    return 'wizard'
+  }
+  return landingView({ sectionCount, installCount })
 }
 
 /** The fixed tabs, in the order they are offered under "More". */

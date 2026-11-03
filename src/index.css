@@ -1376,3 +1376,8 @@ body:has(.sheet-scrim) .toasts { visibility: hidden; }
   .toast { animation: none; }
   .spinner { animation-duration: 2s; }
 }
+
+/* Safe-area insets for .topbar and .bottom-nav are handled where those rules
+   are defined above (fix/dashboard-ux-bugs). The onboarding branch's own
+   copy of them was dropped in the integration merge: it said the same thing
+   with max() on the topbar sides, which would have narrowed the padding. */
