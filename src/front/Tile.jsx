@@ -8,6 +8,9 @@ import useLongPress from './useLongPress'
 // tile: { id, kind, name, icon, status, badge, attention, off }
 //   icon    an emoji, or an https:/data:image URL (an SDK app's own icon)
 //   badge   a short count or word shown on the corner; `attention` alone shows a dot
+//
+// onAsk(tile), when given, adds a small "Ask about this" button in the corner
+// (the Ask box, src/ask). It is a sibling of the open button, never inside it.
 
 function Icon({ icon }) {
   if (typeof icon === 'string' && /^(https:\/\/|data:image\/)/.test(icon)) {
@@ -25,6 +28,7 @@ export default function Tile({
   onLongPress,
   onMove,
   onHide,
+  onAsk,
 }) {
   const press = useLongPress(onLongPress)
   const hasBadge = tile.badge !== null && tile.badge !== undefined && tile.badge !== ''
@@ -90,6 +94,11 @@ export default function Tile({
           {...(onLongPress ? press : {})}
         >
           {face}
+        </button>
+      )}
+      {onAsk && !editing && (
+        <button type="button" className="fl-ask-tile" aria-label={`Ask about ${tile.name}`} title="Ask about this" onClick={() => onAsk(tile)}>
+          <span aria-hidden="true">?</span>
         </button>
       )}
     </li>

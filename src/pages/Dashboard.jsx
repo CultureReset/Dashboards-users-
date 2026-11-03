@@ -31,7 +31,7 @@ import Setup from './Setup'
 import Onboarding from './Onboarding'
 import useOnboardingGate from '../onboarding/useOnboardingGate'
 import { fetchAutomations } from '../lib/automations'
-import { INITIAL_VIEW, decideLanding, viewForSetupTarget, viewReducer } from '../lib/dashboardView'
+import { INITIAL_VIEW, MANAGE_TABS, decideLanding, viewForSetupTarget, viewReducer } from '../lib/dashboardView'
 import AppHome from '../front/AppHome'
 import AppFrame from '../front/AppFrame'
 import useStoreApps from '../front/useStoreApps'
@@ -378,6 +378,12 @@ export default function Dashboard() {
             onOpen={openTile}
             onAddApp={() => openApp({ view: 'store', title: 'Store', icon: '🏪' })}
             focusId={lastTileId}
+            businessName={entity?.name}
+            viewingAs={isAdminView}
+            onOpenView={(v) => {
+              const tab = MANAGE_TABS.find((t) => t.view === v)
+              openApp({ view: v, title: tab?.label || v, icon: tab?.icon })
+            }}
           />
         ) : view === 'setup' ? (
           <Setup

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Tile from './Tile'
+import AskBar from '../ask/AskBar'
 import { ADD_APP_TILE } from './tiles'
 import {
   EMPTY_LAYOUT, applyLayout, clearLayout, hideTile, loadLayout, moveTile, saveLayout, showTile,
@@ -18,12 +19,16 @@ import './theme.css'
 //   onOpen(t)   a tile was opened
 //   onAddApp()  the "Add app" tile was opened (the Store)
 //   focusId     tile to focus on mount — the one the owner just came back from
+//   businessName, viewingAs, onOpenView   for the Ask box on top (src/ask):
+//               the business's name, whether an admin is viewing as it, and
+//               how to open another screen ('platform', 'ghost')
 //
 // Mount it with key={slug}: the layout is read once per business.
-export default function AppHome({ slug, tiles, onOpen, onAddApp, focusId }) {
+export default function AppHome({ slug, tiles, onOpen, onAddApp, focusId, businessName, viewingAs = false, onOpenView }) {
   const [layout, setLayout] = useState(() => loadLayout(slug))
   const [editing, setEditing] = useState(false)
   const [note, setNote] = useState('')
+  const [prefill, setPrefill] = useState(null) // a tile's "Ask about this" -> the Ask box
   const { visible, hidden } = useMemo(() => applyLayout(tiles, layout), [tiles, layout])
   const isEmpty = !tiles.some((t) => t.kind !== 'core')
 
@@ -74,6 +79,16 @@ export default function AppHome({ slug, tiles, onOpen, onAddApp, focusId }) {
         </button>
       </div>
 
+      <AskBar
+        key={`${slug}:${viewingAs}`}
+        slug={slug}
+        businessName={businessName}
+        viewingAs={viewingAs}
+        prefill={prefill}
+        onOpenView={onOpenView}
+        canOpenGhost={tiles.some((t) => t.target?.view === 'ghost')}
+      />
+
       {isEmpty && !editing && (
         <p className="fl-hint">
           Nothing installed yet. Add an app from the store, or start with Setup.
@@ -92,6 +107,7 @@ export default function AppHome({ slug, tiles, onOpen, onAddApp, focusId }) {
             onLongPress={editing ? undefined : startEditing}
             onMove={(delta) => move(tile, delta)}
             onHide={() => commit(hideTile(tiles, layout, tile.id), `${tile.name} hidden`)}
+            onAsk={() => setPrefill({ text: `About ${tile.name}: `, n: (prefill?.n || 0) + 1 })}
           />
         ))}
         <Tile tile={ADD_APP_TILE} onOpen={onAddApp} />

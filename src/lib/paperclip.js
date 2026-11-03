@@ -10,8 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method, path, body) {
-  const res = await fetch(`/api/paperclip${path}`, {
+// `fetchImpl` is optional and only for tests and the Ask box (src/ask): it lets
+// a caller hand in its own fetch. Left out, the global fetch is used, exactly as before.
+async function request(method, path, body, fetchImpl = fetch) {
+  const res = await fetchImpl(`/api/paperclip${path}`, {
     method,
     credentials: 'include',
     headers: body === undefined ? {} : { 'content-type': 'application/json' },
@@ -33,16 +35,16 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  get: (path) => request('GET', path),
-  post: (path, body = {}) => request('POST', path, body),
-  patch: (path, body = {}) => request('PATCH', path, body),
-  del: (path) => request('DELETE', path),
+  get: (path, fetchImpl) => request('GET', path, undefined, fetchImpl),
+  post: (path, body = {}, fetchImpl) => request('POST', path, body, fetchImpl),
+  patch: (path, body = {}, fetchImpl) => request('PATCH', path, body, fetchImpl),
+  del: (path, fetchImpl) => request('DELETE', path, undefined, fetchImpl),
 }
 
 export const auth = {
-  session: async () => {
+  session: async (fetchImpl) => {
     try {
-      return await api.get('/auth/get-session')
+      return await api.get('/auth/get-session', fetchImpl)
     } catch (err) {
       if (err.status === 401) return null
       throw err
@@ -52,7 +54,7 @@ export const auth = {
 }
 
 export const businesses = {
-  mine: () => api.get('/companies?scope=accessible'),
+  mine: (fetchImpl) => api.get('/companies?scope=accessible', fetchImpl),
 }
 
 export const store = {
