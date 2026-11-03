@@ -22,6 +22,7 @@ import AddSection from '../components/AddSection'
 import AppStore from './AppStore'
 import Ghost from './Ghost'
 import Store from './Store'
+import SdkApp from '../sdkapp/SdkApp'
 import { SongRequestOwnerSettings } from '../apps/song-request'
 import { MerchStoreOwnerSettings } from '../apps/merch-store'
 import Automations from './Automations'
@@ -396,6 +397,16 @@ export default function Dashboard() {
           <Calendar />
         ) : view === 'platform' ? (
           <Platform />
+        ) : view === 'sdk' && appTarget?.appKey ? (
+          // Any App SDK app, drawn from the API's description of it (src/sdkapp).
+          // An item that turns out not to be an SDK app gets the Store, as before.
+          <SdkApp
+            key={appTarget.appKey}
+            appKey={appTarget.appKey}
+            fallback={<Store onChanged={refreshAll} />}
+            onOpenStore={() => openApp({ view: 'store', title: 'Store', icon: '🏪' })}
+            onChanged={refreshAll}
+          />
         ) : view === 'store' ? (
           <Store onChanged={refreshAll} />
         ) : view === 'ghost' ? (

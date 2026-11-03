@@ -82,6 +82,20 @@ export const endpoints = {
     item: (id) => `/api/store/${seg(id)}`,
   },
 
+  // ------------------------------------------------------------ SDK apps ---
+  // The generic owner routes of every App SDK app (gcr-api-clean
+  // lib/appSdk/router.js). The business is the session's; no slug travels.
+  // The public form (/api/apps/<id>/public/<installId>) is for customers and
+  // is not called from here — the dashboard only shows its link.
+  sdkApps: {
+    list: () => '/api/apps',
+    app: (id) => `/api/apps/${seg(id)}`,
+    settings: (id) => `/api/apps/${seg(id)}/settings`,
+    rows: (id, resource) => `/api/apps/${seg(id)}/resources/${seg(resource)}`,
+    row: (id, resource, rowId) => `/api/apps/${seg(id)}/resources/${seg(resource)}/${seg(rowId)}`,
+    action: (id, action) => `/api/apps/${seg(id)}/actions/${seg(action)}`,
+  },
+
   connections: {
     list: () => '/api/connections',
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,

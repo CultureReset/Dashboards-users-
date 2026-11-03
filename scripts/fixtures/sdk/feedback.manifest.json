@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "sdk": 1,
+  "id": "feedback",
+  "name": "Feedback",
+  "summary": "Customers leave private feedback through a link; you read it in your dashboard.",
+  "description": "Share one link (or a QR code) and customers can rate you and say what they think. Only you see what they write. Optionally text each customer who leaves a number a thank-you. Every new entry also fires the feedback.received event, so an automation can react to it.",
+  "version": "1.0.0",
+  "publisher": "operator",
+  "icon": "💬",
+  "category": "customers",
+  "pricing": { "model": "free" },
+  "permissions": ["messages:send"],
+  "settings": [
+    {
+      "key": "thank_you_message",
+      "label": "Thank-you message",
+      "type": "textarea",
+      "default": "Thank you! Your feedback goes straight to the owner.",
+      "max_length": 300,
+      "public": true,
+      "help": "Shown to the customer after they send feedback, and texted to them if the switch below is on."
+    },
+    {
+      "key": "notify_by_text",
+      "label": "Text a thank-you to customers who leave a phone number",
+      "type": "boolean",
+      "default": false,
+      "help": "Sent from your registered number, and only to a customer who has not opted out."
+    }
+  ],
+  "resources": [
+    {
+      "id": "entries",
+      "label": "Feedback",
+      "description": "What customers have told you. Customers can add to this list through your link; only you can read it.",
+      "public": "append",
+      "title": "message",
+      "fields": [
+        { "key": "rating", "label": "How was it?", "type": "integer", "required": true, "min": 1, "max": 5, "help": "1 to 5" },
+        { "key": "message", "label": "Your feedback", "type": "textarea", "required": true, "max_length": 2000 },
+        { "key": "name", "label": "Your name (optional)", "type": "text", "max_length": 80 },
+        { "key": "phone", "label": "Your phone (optional)", "type": "phone", "max_length": 30, "help": "Only used to thank you, if the business has that switched on." },
+        { "key": "handled", "label": "Handled", "type": "boolean", "default": false, "ownerOnly": true }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "list",
+      "label": "List feedback",
+      "kind": "read",
+      "resource": "entries",
+      "summary": "List the private feedback customers have left, newest first."
+    },
+    {
+      "id": "summary",
+      "label": "Feedback summary",
+      "kind": "handler",
+      "access": "read",
+      "summary": "How much feedback there is, the average rating, and how many entries are not handled yet."
+    },
+    {
+      "id": "update",
+      "label": "Update feedback",
+      "kind": "update",
+      "resource": "entries",
+      "summary": "Change a feedback entry, for example mark it handled."
+    }
+  ],
+  "events": [
+    { "name": "received", "summary": "A customer left feedback." }
+  ],
+  "surfaces": [
+    { "id": "inbox", "kind": "dashboard", "title": "Feedback", "display_modes": ["page"], "resource": "entries" },
+    { "id": "leave", "kind": "public", "title": "Leave feedback", "display_modes": ["page", "button", "table_qr"], "resource": "entries" }
+  ]
+}

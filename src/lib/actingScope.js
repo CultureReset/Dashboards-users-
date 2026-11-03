@@ -16,8 +16,16 @@ const OWNER_SCOPED_PREFIXES = [
   '/api/owner',
 ]
 
+// The App SDK's generic owner routes (/api/apps, /api/apps/<id>, and under it
+// settings, resources, actions) are ownerRequired like the rest. They are
+// matched narrowly, NOT as a '/api/apps' prefix: the two older route apps
+// live at /api/apps/<app>/<business slug>, and a public SDK link is
+// /api/apps/<id>/public/<install>; neither is touched.
+const SDK_APP_OWNER_PATH = /^\/api\/apps(\/[^/?]+)?(\/(settings|resources|actions)(\/[^?]*)?)?(\?.*)?$/
+
 export function isOwnerScoped(path) {
   const p = String(path || '')
+  if (SDK_APP_OWNER_PATH.test(p)) return true
   return OWNER_SCOPED_PREFIXES.some((prefix) => {
     if (prefix.endsWith('/')) return p.startsWith(prefix)
     // '/api/store' must match '/api/store', '/api/store/x' and '/api/store?q',

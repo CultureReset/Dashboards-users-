@@ -94,8 +94,10 @@ export const ADD_APP_TILE = Object.freeze({
  * anything else in the manifest is ignored here. `item` is the Store row the
  * manifest came with (it supplies fallbacks and the install state).
  *
- * `surfaces` is kept on the tile so a later AppFrame can mount the right one;
- * today every SDK tile opens the Store entry for the app (see docs).
+ * `surfaces` is kept on the tile for the frame. An app that is switched on
+ * opens the SDK renderer (src/sdkapp) by its Store `key`; a switched-off one,
+ * or a row with no key, opens its Store entry. The renderer itself falls back
+ * to the Store when the API says the item is not an SDK app (a module, say).
  */
 export function tileFromManifest(manifest, item = {}) {
   const m = manifest && typeof manifest === 'object' ? manifest : {}
@@ -118,7 +120,7 @@ export function tileFromManifest(manifest, item = {}) {
     attention: !!item.update_available,
     off,
     surfaces,
-    target: { view: 'store' },
+    target: off || !item.key || (item.kind && item.kind !== 'app') ? { view: 'store' } : { view: 'sdk', appKey: String(item.key) },
   }
 }
 

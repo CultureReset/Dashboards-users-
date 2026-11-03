@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "check": "node scripts/check-discovery.mjs && node scripts/check-front.mjs && node scripts/check-onboarding.mjs && node --test scripts/test-setup.mjs scripts/test-paperclip.mjs scripts/test-paperclip-proxy.mjs",
+    "check": "node scripts/check-discovery.mjs && node scripts/check-front.mjs && node scripts/check-onboarding.mjs && node scripts/check-sdkapp.mjs && node --test scripts/test-setup.mjs scripts/test-paperclip.mjs scripts/test-paperclip-proxy.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
