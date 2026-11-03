@@ -165,7 +165,7 @@ const sizes = { phone: { width: 390, height: 844 }, desktop: { width: 1280, heig
 async function shot(page, name, size, { full = false, clip } = {}) {
   await page.waitForTimeout(300)
   const file = join(OUT, `sdkapp-${name}-${size}.png`)
-  await page.screenshot({ path: file, fullPage: full, ...(clip ? { clip } : {}) })
+  await page.screenshot({ path: file, fullPage: full, ...(clip && { clip }) })
   console.log('  wrote', file)
 }
 
@@ -252,15 +252,7 @@ try {
     }
   }
 
-  // 8. dark, phone; offline-ish and uninstalled-mid-session states, phone
-  {
-    const { ctx, page } = await open(browser, {}, { ...sizes.phone }, true)
-    await ctx.close()
-  }
-  {
-    const { ctx, page } = await open(browser, {}, sizes.phone)
-    await ctx.close()
-  }
+  // 8. dark, phone; offline and uninstalled-mid-session states, phone
   {
     const ctx = await browser.newContext({ viewport: sizes.phone, colorScheme: 'dark', deviceScaleFactor: 2, hasTouch: true, isMobile: true })
     await ctx.addInitScript(() => { localStorage.setItem('gcr_business_session_v1', JSON.stringify({ access_token: 'stub-not-a-real-token', expires_at: 4102444800, user: { email: 'owner@example.test' } })) })
