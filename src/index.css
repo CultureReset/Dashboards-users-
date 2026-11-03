@@ -22,12 +22,17 @@
   --input-bg: #ffffff;
   --border: #dde3e8;
   --text: #16202a;
-  --muted: #64748b;
-  --accent: #17806f;
+  /* Contrast, measured: --muted is 5.5:1 on --bg, 5.3:1 on --accent-bg and
+     6.1:1 on --panel; --accent is 5.1:1 on --accent-bg, 5.3:1 on --bg and
+     5.7:1 on --panel. All pass WCAG AA (4.5:1) for body text. --star is also
+     used as small status text, so it is dark enough to read (4.8:1). */
+  --muted: #55657a;
+  --accent: #147364;
   --accent-bg: #e6f5f2;
   --on-accent: #ffffff;
   --danger: #b3261e;
-  --star: #d69e2e;
+  --on-danger: #ffffff;
+  --star: #946200;
   --banner-bg: #1f2937;
   --banner-text: #ffffff;
   --banner-button: rgba(255, 255, 255, 0.14);
@@ -51,6 +56,7 @@
     --accent-bg: rgba(47, 194, 168, 0.15);
     --on-accent: #06231d;
     --danger: #f87171;
+    --on-danger: #2a0a08;
     --star: #f5c451;
     --banner-bg: #232c3a;
     --banner-text: #e6edf5;
@@ -72,6 +78,7 @@
   --accent-bg: rgba(47, 194, 168, 0.15);
   --on-accent: #06231d;
   --danger: #f87171;
+  --on-danger: #2a0a08;
   --star: #f5c451;
   --banner-bg: #232c3a;
   --banner-text: #e6edf5;
@@ -80,18 +87,24 @@
 }
 
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); }
-button { font: inherit; cursor: pointer; }
-input { font: inherit; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+/* Keyboard and switch users get a visible ring everywhere; a tap does not. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Loading */
 .dashboard-loading {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  padding: 24px;
+  text-align: center;
   color: var(--muted);
 }
 .spinner {
@@ -107,6 +120,7 @@ input { font: inherit; }
 /* Auth + claim shared card styling */
 .auth-screen, .claim-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -275,10 +289,13 @@ input { font: inherit; }
    fixed bottom tab bar for section switching (no sidebar, no desktop-panel
    layout as the base case). */
 .dashboard-shell {
+  --nav-h: 56px;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 64px; /* room for the fixed bottom nav */
+  /* room for the fixed bottom nav, and the home indicator under it */
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px);
 }
 
 .topbar {
@@ -287,18 +304,21 @@ input { font: inherit; }
   z-index: 10;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
-  padding: 14px 16px;
+  /* The notch / status bar when installed full-screen, and the side cut-outs
+     in landscape. 0 in an ordinary browser tab. */
+  padding: calc(8px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 8px calc(16px + env(safe-area-inset-left));
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.topbar-brand { font-weight: 800; font-size: 1rem; flex: 1; }
+.topbar-brand { font-weight: 800; font-size: 1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-signout {
   background: none;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 0.78rem;
+  padding: 0 14px;
+  min-height: 44px;
+  font-size: 0.82rem;
   color: var(--muted);
 }
 
@@ -310,10 +330,12 @@ input { font: inherit; }
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   line-height: 1;
-  padding: 7px 10px;
-  margin-right: 12px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin-right: 10px;
   flex: none;
 }
 
@@ -324,6 +346,7 @@ input { font: inherit; }
   right: 12px;
   max-width: 340px;
   max-height: min(70vh, 520px);
+  max-height: min(70dvh, 520px);
   overflow-y: auto;
   z-index: 20;
   background: var(--panel);
@@ -360,7 +383,8 @@ input { font: inherit; }
   border: none;
   border-radius: 9px;
   padding: 9px 10px;
-  font-size: 0.88rem;
+  min-height: 44px;
+  font-size: 0.9rem;
   color: var(--text);
 }
 .topbar-menu-item:hover { background: var(--bg); }
@@ -392,7 +416,8 @@ input { font: inherit; }
   border: none;
   border-radius: 7px;
   padding: 7px 4px;
-  font-size: 0.78rem;
+  min-height: 44px;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -419,27 +444,51 @@ input { font: inherit; }
   border-top: 1px solid var(--border);
   display: flex;
   overflow: hidden;
+  /* Home indicator, and landscape cut-outs. 0 in an ordinary browser tab. */
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .bottom-nav-tabs {
+  position: relative; /* tabs measure their offset from here, to scroll the active one into view */
   display: flex;
   flex: 1 1 0;
   min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.bottom-nav-tabs::-webkit-scrollbar { display: none; }
+/* A soft fade on whichever edge has more tabs hiding past it. */
+.bottom-nav-tabs[data-edge-end='true'] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+}
+.bottom-nav-tabs[data-edge-start='true'] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 26px);
+  mask-image: linear-gradient(to right, transparent, #000 26px);
+}
+.bottom-nav-tabs[data-edge-start='true'][data-edge-end='true'] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 26px, #000 calc(100% - 26px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 26px, #000 calc(100% - 26px), transparent);
 }
 .bottom-nav-item {
   flex: 1 0 auto;
-  min-width: 68px;
+  min-width: 64px;
+  min-height: var(--nav-h, 56px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   background: none;
   border: none;
-  padding: 8px 10px;
+  padding: 6px 8px;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
 }
+.bottom-nav-label { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bottom-nav-item.active { color: var(--accent); font-weight: 700; }
+.bottom-nav-item.active .bottom-nav-icon { background: var(--accent-bg); }
+.bottom-nav-item:focus-visible { outline-offset: -3px; }
 .bottom-nav-icon { font-size: 1.1rem; }
 .setup-guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin: 20px 0; }
 .setup-guide-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px; background: var(--panel); display: flex; flex-direction: column; align-items: flex-start; }
@@ -450,12 +499,13 @@ input { font: inherit; }
 .catalog-advanced { display: flex; align-items: center; gap: 8px; margin: 16px 0; color: var(--muted); }
 .catalog-advanced input { width: auto; }
 /* Add is pinned to the end and always reachable, including with no sections. */
-.bottom-nav-add {
+.bottom-nav-add,
+.bottom-nav-more {
   flex: 0 0 auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
-  color: var(--accent);
 }
+.bottom-nav-add { color: var(--accent); }
 
 /* Artist module — prices and goals */
 .price-kind { margin-top: 16px; }
@@ -533,29 +583,40 @@ input { font: inherit; }
 }
 
 /* Admin */
+:root { --banner-h: calc(44px + env(safe-area-inset-top)); }
 .admin-banner {
   position: sticky;
   top: 0;
   z-index: 11;
+  min-height: var(--banner-h);
+  padding-top: env(safe-area-inset-top);
   background: var(--banner-bg);
   color: var(--banner-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 14px;
-  font-size: 0.74rem;
+  padding-right: calc(14px + env(safe-area-inset-right));
+  padding-left: calc(14px + env(safe-area-inset-left));
+  font-size: 0.8rem;
   font-weight: 700;
 }
+/* Both bars are sticky at the top; without this the banner sat on top of the
+   header and hid its menu button as soon as the page scrolled. */
+.admin-banner + .topbar { top: var(--banner-h); padding-top: 8px; }
 .admin-banner button {
+  position: relative;
   background: var(--banner-button);
   border: none;
   border-radius: 7px;
   color: var(--banner-text);
-  padding: 4px 10px;
-  font-size: 0.72rem;
+  padding: 0 12px;
+  min-height: 36px;
+  font-size: 0.78rem;
 }
+/* 36px to look at, 44px to hit. */
+.admin-banner button::before { content: ''; position: absolute; inset: -4px -2px; }
 
-.picker-screen { min-height: 100vh; display: flex; flex-direction: column; }
+.picker-screen { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .picker-body { padding: 16px; }
 .picker-search {
   width: 100%;
@@ -602,7 +663,7 @@ input { font: inherit; }
 }
 
 .main-content { padding: 16px; flex: 1; }
-.main-empty { display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; min-height: 50vh; color: var(--muted); }
+.main-empty { display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; min-height: 50vh; min-height: 50dvh; color: var(--muted); }
 
 /* Panels / sections */
 .panel { margin-bottom: 26px; }
@@ -653,8 +714,9 @@ input { font: inherit; }
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  padding: 0 16px;
+  min-height: 44px;
+  font-size: 0.82rem;
   color: var(--muted);
 }
 .section-tools button.primary,
@@ -670,10 +732,10 @@ input { font: inherit; }
 .editor-field input,
 .editor-field select,
 .editor-field textarea {
-  padding: 9px 11px;
+  padding: 11px 12px;
   border: 1px solid var(--border);
   border-radius: 9px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   background: var(--input-bg);
   color: var(--text);
   width: 100%;
@@ -855,7 +917,16 @@ input { font: inherit; }
 
 /* Automations — what the operator pushed here. One card each: switch, the
    settings it asks for, run it, read what it did. */
-.bottom-nav-icon { position: relative; }
+.bottom-nav-icon {
+  position: relative;
+  min-width: 32px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
 .bottom-nav-count {
   position: absolute;
   top: -6px;
@@ -870,6 +941,17 @@ input { font: inherit; }
   font-weight: 800;
   line-height: 16px;
   text-align: center;
+}
+
+.bottom-nav-dot {
+  position: absolute;
+  top: -1px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
 }
 
 .auto-list { display: flex; flex-direction: column; gap: 12px; }
@@ -916,6 +998,8 @@ input { font: inherit; }
 .auto-switch.on { background: var(--accent-bg); border-color: var(--accent); }
 .auto-switch.on::after { transform: translateX(18px); background: var(--accent); }
 .auto-switch:disabled { opacity: 0.5; }
+/* The switch is drawn 42x24; the tap target around it is 50x44. */
+.auto-switch::before { content: ''; position: absolute; inset: -10px -4px; }
 
 .auto-desc { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.45; }
 
@@ -1085,3 +1169,210 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   padding: 8px 0 24px;
 }
 .empty-module-panel .primary { margin-top: 4px; }
+
+/* ── Mobile polish ───────────────────────────────────────────────────────────
+   Everything below is deliberately last: it adjusts rules defined above and in
+   component stylesheets without changing what they look like on a desktop. */
+
+/* Inputs are 16px so iOS Safari does not zoom the page when one is focused.
+   The six-digit code field is already larger. */
+input:not([type='checkbox']):not([type='radio']):not(.code-input),
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Touch targets: 44px is the smallest thing a thumb reliably hits. */
+.store-actions button,
+.store-banner button,
+.store-settings > button,
+.auto-actions button,
+.auto-banner button,
+.editor-actions button,
+.auth-switch,
+.auto-run-head,
+.catalog-item,
+.picker-item,
+.store-btn,
+.store-cat,
+.claim-result button,
+.industry-option,
+button.secondary,
+button.primary,
+button.danger-ghost,
+.auth-card button[type='submit'],
+.setup-submit {
+  min-height: 44px;
+}
+.store-actions button,
+.store-banner button,
+.auto-actions button,
+.auto-banner button {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.faq-row summary { padding: 10px 0; margin: -10px 0; }
+.store-settings input,
+.calendar-add-form input,
+.calendar-export-row input { min-height: 44px; }
+
+/* Errors that were being rendered as plain, unstyled text. Used by Store, My
+   Ghost and the box replies; also fine inline anywhere. */
+.error {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger) 9%, var(--panel));
+  color: var(--danger);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.auth-error[role='alert'] { line-height: 1.45; }
+
+/* Sheets: the confirm dialog and the More menu. Up from the bottom on a phone,
+   centred when there is room. */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.5);
+}
+.sheet {
+  width: 100%;
+  max-width: 540px;
+  max-height: 86vh;
+  max-height: 86dvh;
+  overflow-y: auto;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  background: var(--panel);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sheet:focus { outline: none; }
+.sheet h3 { margin: 0; font-size: 1.1rem; font-weight: 750; letter-spacing: -0.01em; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet-close {
+  min-width: 44px;
+  min-height: 44px;
+  margin: -8px -10px -8px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+.sheet-actions { display: flex; gap: 8px; margin-top: 4px; }
+.sheet-actions button {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 700;
+}
+.sheet-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sheet-actions button.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
+@media (min-width: 720px) {
+  .sheet-scrim { align-items: center; padding: 24px; }
+  .sheet { border-radius: 18px; }
+}
+
+/* More: the management screens, one row each. */
+.more-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.more-item {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+.more-item:hover { background: var(--bg); }
+.more-item.active { background: var(--accent-bg); border-color: var(--accent); }
+.more-icon { font-size: 1.4rem; width: 32px; text-align: center; flex: none; }
+.more-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.more-text b { font-size: 0.95rem; }
+.more-text small { font-size: 0.78rem; color: var(--muted); }
+.more-item.active .more-text b { color: var(--accent); }
+.more-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Toasts sit just above the bottom nav and never take the tap. */
+.toasts {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(56px + env(safe-area-inset-bottom) + 10px);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 460px;
+  width: auto;
+  min-height: 44px;
+  padding: 8px 16px 8px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--banner-bg);
+  color: var(--banner-text);
+  box-shadow: var(--menu-shadow);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  animation: toast-in 0.18s ease-out;
+}
+.toast-icon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.toast-error { border-radius: 16px; }
+.toast-error .toast-icon { background: var(--danger); color: var(--on-danger); }
+/* While a sheet is open the toast would sit on top of its text. */
+body:has(.sheet-scrim) .toasts { visibility: hidden; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .spinner { animation-duration: 2s; }
+}

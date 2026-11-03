@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import AppStoreView from '../components/AppStoreView'
 import { fetchAppStore, connectTool, refreshTool, disconnectTool } from '../lib/appStore'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmSheet'
 
 // The business's side of the App Store.
 //
@@ -17,6 +19,8 @@ export default function AppStore() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [queue, setQueue] = useState(null) // { ids, at, onDone }
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const load = useCallback(async () => {
     try {
@@ -80,11 +84,22 @@ export default function AppStore() {
   }, [queue?.at])
 
   async function disconnect(tool) {
+    const name = tool.name || tool.tool_id
+    const ok = await confirm({
+      title: `Disconnect ${name}?`,
+      message: `Your dashboard stops using ${name} until you connect it again.`,
+      confirmLabel: 'Disconnect',
+    })
+    if (!ok) return
     setError('')
     try {
       await disconnectTool(tool.tool_id)
       await load()
-    } catch (err) { setError(err.message) }
+      toast.success(`${name} disconnected`)
+    } catch (err) {
+      setError(err.message)
+      toast.error(`Couldn't disconnect ${name}: ${err.message}`)
+    }
   }
 
   return (

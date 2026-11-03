@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEntity } from '../lib/gcrApi'
 import { fetchEntityTables, getColumns } from '../lib/schemaDiscovery'
@@ -29,6 +29,9 @@ import Platform from './Platform'
 import Calendar from './Calendar'
 import Setup from './Setup'
 import { fetchAutomations } from '../lib/automations'
+import { INITIAL_VIEW, viewReducer } from '../lib/dashboardView'
+import { useToast } from '../components/Toast'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function Dashboard() {
   const { gcrSlug } = useAuth()
@@ -41,14 +44,14 @@ export default function Dashboard() {
   const [reloadKey, setReloadKey] = useState(0) // bumped after an edit saves
   const [modulesReloadKey, setModulesReloadKey] = useState(0)
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
-  const [adding, setAdding] = useState(false)
-  const [showApps, setShowApps] = useState(false)
-  const [showGhost, setShowGhost] = useState(false)
-  const [showStore, setShowStore] = useState(false)
-  const [showPlatform, setShowPlatform] = useState(false)
-  const [showAutomations, setShowAutomations] = useState(false)
-  const [showCalendar, setShowCalendar] = useState(false)
-  const [showSetup, setShowSetup] = useState(true)
+  // Which screen is open. One value, not eight booleans — see dashboardView.js.
+  const [view, dispatchView] = useReducer(viewReducer, INITIAL_VIEW)
+  const toast = useToast()
+  // What has been loaded for the current business. After the first load,
+  // reloads are silent: the shell stays mounted, scroll and tab stay put.
+  const entityLoadedFor = useRef(null)
+  const sweptFor = useRef(null)
+  const tablesRef = useRef([])
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
@@ -58,18 +61,29 @@ export default function Dashboard() {
     setReloadKey((k) => k + 1)
     setModulesReloadKey((k) => k + 1)
   }, [])
+  const reload = useCallback(() => setReloadKey((k) => k + 1), [])
 
   // The API payload — richest source for the domains it covers.
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError('')
+    // Only the first load of a business blanks the screen. A reload after a
+    // save keeps showing what is there and swaps the data in when it arrives.
+    const silent = entityLoadedFor.current === gcrSlug
+    if (!silent) {
+      setLoading(true)
+      setError('')
+    }
     fetchEntity(gcrSlug)
       .then((data) => {
-        if (!cancelled) setEntity(data)
+        if (cancelled) return
+        entityLoadedFor.current = gcrSlug
+        setEntity(data)
+        setError('')
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message)
+        if (cancelled) return
+        if (silent) toast.error(`Couldn't refresh your data: ${err.message}`)
+        else setError(err.message)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -77,6 +91,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcrSlug, reloadKey])
 
   // Owner modules — GET /api/owner/modules (gcr-api-clean PR #80).
@@ -101,20 +116,25 @@ export default function Dashboard() {
   // through. Cached results only paint instantly while the fresh read runs.
   useEffect(() => {
     let cancelled = false
+    // A reload after the first sweep is silent: no cached repaint (it would
+    // flash the pre-save rows), no progress bar, and the schema is not re-read
+    // — saving a row does not change which tables exist.
+    const silent = sweptFor.current === gcrSlug
 
-    const cached = readTableCache(gcrSlug)
+    const cached = silent ? null : readTableCache(gcrSlug)
     if (cached) setTableRows(cached)
 
     ;(async () => {
       try {
-        const tables = await fetchEntityTables()
+        const tables = silent && tablesRef.current.length ? tablesRef.current : await fetchEntityTables()
+        tablesRef.current = tables
         if (cancelled) return
         // Kept whole, not just the ones with rows — this is what the business
         // gets offered when they want to add something they don't have yet.
         setAllTables(tables)
-        if (!cached) setSweep({ done: 0, total: tables.length })
+        if (!cached && !silent) setSweep({ done: 0, total: tables.length })
 
-        const fresh = await fetchTablesForSlug(gcrSlug, tables, {
+        const fresh = await fetchTablesForSlug(gcrSlug, tables, silent ? {} : {
           // Stream sections in as they land so the page fills progressively…
           onFound: (table, rows) => {
             if (!cancelled) setTableRows((prev) => ({ ...prev, [table]: rows }))
@@ -126,9 +146,15 @@ export default function Dashboard() {
 
         // …then replace wholesale, which is what drops tables that no longer
         // exist or no longer have data for this business.
-        if (!cancelled) setTableRows(fresh)
-      } catch {
-        // Discovery is additive — if it fails the API-backed sections still work.
+        if (!cancelled) {
+          sweptFor.current = gcrSlug
+          setTableRows(fresh)
+        }
+      } catch (err) {
+        // Discovery is additive — if it fails the API-backed sections still
+        // work. After a save, though, stale rows would look like the save
+        // was lost, so say so.
+        if (silent && !cancelled) toast.error(`Couldn't refresh your sections: ${err.message}`)
       } finally {
         if (!cancelled) setSweep(null)
       }
@@ -137,6 +163,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcrSlug, reloadKey])
 
   // How many automations the operator has pushed here, for the tab badge.
@@ -181,8 +208,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="spinner" />
+      <div className="dashboard-loading" role="status" aria-live="polite">
+        <div className="spinner" aria-hidden="true" />
         <span>Loading your business…</span>
       </div>
     )
@@ -191,7 +218,20 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="dashboard-loading">
-        <span className="auth-error">Couldn't load your business: {error}</span>
+        <span className="auth-error" role="alert">Couldn't load your business: {error}</span>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => {
+            // A failed first load has no data to keep, so this one is allowed
+            // to show the spinner again.
+            setError('')
+            setLoading(true)
+            reload()
+          }}
+        >
+          Retry
+        </button>
       </div>
     )
   }
@@ -202,87 +242,69 @@ export default function Dashboard() {
   const activeColumns = active ? getColumns(tableFor(active.key) || active.key) : []
   const Custom = rendererFor(active, activeColumns)
 
-  const clearOverlays = () => {
-    setShowSetup(false)
-    setAdding(false)
-    setShowApps(false)
-    setShowGhost(false)
-    setShowStore(false)
-    setShowPlatform(false)
-    setShowAutomations(false)
-    setShowCalendar(false)
+  const onSection = view === 'section'
+  // The tab that shows as selected: only a data section can be.
+  const shownKey = onSection ? activeKey : null
+  const pickSection = (key) => {
+    setActiveKey(key)
+    dispatchView({ type: 'section' })
   }
+  const openAdd = () => dispatchView({ type: 'show', view: 'add' })
 
   return (
     <div className="dashboard-shell">
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={showSetup || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
-        onSelect={(key) => {
-          clearOverlays()
-          setActiveKey(key)
-        }}
+        activeKey={shownKey}
+        onSelect={pickSection}
       />
       {sweep && (
-        <div className="sweep-status">
+        <div className="sweep-status" role="status" aria-live="polite">
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
-        {showSetup ? (
-          <Setup entity={entity} onOpen={(target) => {
-            clearOverlays()
-            if (target === 'data') setAdding(true)
-            if (target === 'store') setShowStore(true)
-            if (target === 'calendar') setShowCalendar(true)
-            if (target === 'tools') setShowApps(true)
-            if (target === 'automations') setShowAutomations(true)
-            if (target === 'ghost') setShowGhost(true)
-          }} />
-        ) : showCalendar ? (
+      <MainContent empty={onSection && sections.length === 0} onAdd={openAdd}>
+        <ErrorBoundary inline resetKey={`${view}:${activeKey}`}>
+        {view === 'setup' ? (
+          <Setup entity={entity} onOpen={(target) => dispatchView({ type: 'setup-target', target })} />
+        ) : view === 'calendar' ? (
           <Calendar />
-        ) : showPlatform ? (
+        ) : view === 'platform' ? (
           <Platform />
-        ) : showStore ? (
+        ) : view === 'store' ? (
           <Store onChanged={refreshAll} />
-        ) : showGhost ? (
+        ) : view === 'ghost' ? (
           <Ghost />
-        ) : showAutomations ? (
+        ) : view === 'automations' ? (
           <Automations onCountChange={setAutomationsCount} />
-        ) : showApps ? (
+        ) : view === 'tools' ? (
           <AppStore />
-        ) : activeKey === 'song-request' || activeKey === 'song_request' ? (
+        ) : view === 'section' && (activeKey === 'song-request' || activeKey === 'song_request') ? (
           <SongRequestOwnerSettings slug={gcrSlug} />
-        ) : activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop' ? (
+        ) : view === 'section' && (activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop') ? (
           <MerchStoreOwnerSettings slug={gcrSlug} />
-        ) : adding ? (
+        ) : view === 'add' ? (
           <AddSection
             industry={entity?.entity_type}
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
-            onCancel={() => setAdding(false)}
+            onCancel={() => dispatchView({ type: 'close', view: 'add' })}
             onDone={(table) => {
-              setAdding(false)
+              dispatchView({ type: 'close', view: 'add' })
               // The new row makes this table a section on the next pass.
               setActiveKey(TABLE_TO_API_KEY[table] || table)
               refreshAll()
             }}
           />
         ) : active?.empty ? (
-          <EmptyModulePanel
-            section={active}
-            onAdd={() => {
-              clearOverlays()
-              setAdding(true)
-            }}
-          />
+          <EmptyModulePanel section={active} onAdd={openAdd} />
         ) : (
           active && (
             <EditableSection
               key={active.key}
               section={active}
-              onChanged={() => setReloadKey((k) => k + 1)}
+              onChanged={reload}
             >
               {Custom ? (
                 <Custom entity={merged} section={active} columns={activeColumns} />
@@ -292,30 +314,14 @@ export default function Dashboard() {
             </EditableSection>
           )
         )}
+        </ErrorBoundary>
       </MainContent>
       <BottomNav
-        onSetup={() => { clearOverlays(); setShowSetup(true) }}
-        setup={showSetup}
         sections={sections}
-        activeKey={showSetup || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
-        onSelect={(key) => {
-          clearOverlays()
-          setActiveKey(key)
-        }}
-        onAdd={() => { clearOverlays(); setAdding(true) }}
-        adding={adding}
-        onApps={() => { clearOverlays(); setShowApps(true) }}
-        apps={showApps}
-        onCalendar={() => { clearOverlays(); setShowCalendar(true) }}
-        calendar={showCalendar}
-        onPlatform={() => { clearOverlays(); setShowPlatform(true) }}
-        platform={showPlatform}
-        onStore={() => { clearOverlays(); setShowStore(true) }}
-        store={showStore}
-        onGhost={() => { clearOverlays(); setShowGhost(true) }}
-        ghost={showGhost}
-        onAutomations={() => { clearOverlays(); setShowAutomations(true) }}
-        automations={showAutomations}
+        view={view}
+        activeKey={activeKey}
+        onSelect={pickSection}
+        onShow={(next) => dispatchView({ type: 'show', view: next })}
         automationsCount={automationsCount}
       />
     </div>

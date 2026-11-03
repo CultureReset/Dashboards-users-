@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getColumns, isEditableColumn } from '../lib/schemaDiscovery'
 import { labelFor } from '../lib/discoverSections'
+import { useConfirm } from './ConfirmSheet'
 
 // A form that builds itself from a table's columns. Nothing here knows about
 // menus or hours or charters — give it any table and it renders the right
@@ -56,7 +57,8 @@ function inputFor(col, value, onChange) {
   return <input type="text" {...common} />
 }
 
-export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
+export default function RowEditor({ table, row, onSave, onCancel, onDelete, itemName = '' }) {
+  const confirm = useConfirm()
   const columns = getColumns(table).filter(isEditableColumn)
   const [values, setValues] = useState(() => {
     const seed = {}
@@ -84,7 +86,12 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
   }
 
   async function remove() {
-    if (!confirm('Delete this permanently?')) return
+    const ok = await confirm({
+      title: itemName ? `Delete “${itemName}”?` : 'Delete this entry?',
+      message: 'It will be removed permanently. This cannot be undone.',
+      confirmLabel: 'Delete',
+    })
+    if (!ok) return
     setBusy(true)
     setError('')
     try {
@@ -113,7 +120,7 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
         </label>
       ))}
 
-      {error && <p className="auth-error">{error}</p>}
+      {error && <p className="auth-error" role="alert">{error}</p>}
 
       <div className="editor-actions">
         <button type="submit" className="primary" disabled={busy}>

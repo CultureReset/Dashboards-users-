@@ -132,7 +132,7 @@ export default function Ghost() {
         Your box at the business. Tell it what to do from anywhere; your data stays there.
       </p>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       {enrolled && (
         <div className="panel ghost-enrolled">

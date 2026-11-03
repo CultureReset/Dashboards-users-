@@ -13,6 +13,7 @@
 
 import { GCR_API_BASE, REQUEST_TIMEOUT_MS } from './config'
 import { getToken, refreshNow, clearSession, getActingSlug } from './authStore'
+import { isOwnerScoped } from './actingScope'
 
 /** Raised for any non-2xx response, carrying enough context to render well. */
 export class ApiError extends Error {
@@ -162,14 +163,16 @@ export async function request(path, options = {}) {
   } = options
 
   // An admin viewing someone else's business owns nothing, so the server has
-  // no slug to resolve for them. Carry it on every /api/business call rather
-  // than only the reads that took it as an argument — otherwise an admin can
-  // see a business's data and gets a 403 the moment they try to change any of
-  // it. The server ignores this for everyone platform_admins does not vouch
-  // for, so attaching it is never a grant.
+  // no slug to resolve for them. Carry it on every owner-scoped call
+  // (/api/business, /api/store, /api/connections, /api/nodes, /api/owner — see
+  // actingScope.js) rather than only the reads that took it as an argument —
+  // otherwise an admin can see a business's data and gets a 403 the moment
+  // they try to change any of it, or open Store/Tools/Ghost. The server
+  // ignores this for everyone platform_admins does not vouch for, so attaching
+  // it is never a grant.
   const acting = getActingSlug()
   const withActing =
-    acting && path.startsWith('/api/business/') && !query?.slug
+    acting && isOwnerScoped(path) && !query?.slug
       ? { ...query, slug: acting }
       : query
 

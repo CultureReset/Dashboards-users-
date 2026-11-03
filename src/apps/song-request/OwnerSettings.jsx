@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { songRequestApi } from './api'
+import { useConfirm } from '../../components/ConfirmSheet'
 
 /**
  * Owner settings + queue for Song Request.
  * Standalone — reads/writes shared slug data through /api/apps/song-request.
  */
 export default function OwnerSettings({ slug }) {
+  const confirm = useConfirm()
   const [settings, setSettings] = useState(null)
   const [songs, setSongs] = useState([])
   const [queue, setQueue] = useState([])
@@ -69,6 +71,13 @@ export default function OwnerSettings({ slug }) {
   }
 
   async function removeSong(id) {
+    const title = songs.find((s) => s.id === id)?.title
+    const ok = await confirm({
+      title: title ? `Remove “${title}” from your song list?` : 'Remove this song?',
+      message: 'Guests will no longer be able to request it.',
+      confirmLabel: 'Remove',
+    })
+    if (!ok) return
     const next = songs.filter((s) => s.id !== id)
     setSaving(true)
     try {

@@ -8,6 +8,8 @@ import {
   regenerateExportUrl,
 } from '../lib/calendar'
 import { fetchAppStore, connectTool, refreshTool } from '../lib/appStore'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmSheet'
 
 /**
  * Owner Calendar — manage iCal import/export for every linked unit, and a
@@ -23,6 +25,8 @@ export default function Calendar() {
   const [form, setForm] = useState({ slug: gcrSlug || '', label: '', url: '', provider: '' })
   const [copied, setCopied] = useState('')
   const [apps, setApps] = useState(null)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const load = useCallback(async () => {
     try {
@@ -76,21 +80,33 @@ export default function Calendar() {
       )
       setForm((f) => ({ ...f, label: '', url: '', provider: '' }))
       await load()
+      toast.success('Calendar link added')
     } catch (err) {
       setError(err.message)
+      toast.error(`Couldn't add that link: ${err.message}`)
     } finally {
       setBusy('')
     }
   }
 
-  async function onRemove(unitSlug, feedId) {
+  async function onRemove(unitSlug, feed) {
+    const feedId = feed.id
+    const name = feed.source_label || feed.provider || 'this feed'
+    const ok = await confirm({
+      title: `Remove ${name}?`,
+      message: 'This stops importing its bookings. Dates it already blocked may become available again.',
+      confirmLabel: 'Remove feed',
+    })
+    if (!ok) return
     setBusy(`rm-${feedId}`)
     setError('')
     try {
       await removeIcalFeed(feedId, unitSlug)
       await load()
+      toast.success(`${name} removed`)
     } catch (err) {
       setError(err.message)
+      toast.error(`Couldn't remove it: ${err.message}`)
     } finally {
       setBusy('')
     }
@@ -102,8 +118,10 @@ export default function Calendar() {
     try {
       await syncIcalFeed(feedId, unitSlug)
       await load()
+      toast.success('Calendar synced')
     } catch (err) {
       setError(err.message)
+      toast.error(`Sync failed: ${err.message}`)
     } finally {
       setBusy('')
     }
@@ -114,19 +132,28 @@ export default function Calendar() {
       await navigator.clipboard.writeText(url)
       setCopied(key)
       setTimeout(() => setCopied(''), 1800)
+      toast.success('Link copied')
     } catch {
       setError('Could not copy — select the link and copy manually.')
     }
   }
 
-  async function onRotate(unitSlug) {
+  async function onRotate(unitSlug, unitName) {
+    const ok = await confirm({
+      title: `Get a new export link for ${unitName || unitSlug}?`,
+      message: 'The old link stops working. Airbnb, VRBO or Google will need the new one pasted in before they sync again.',
+      confirmLabel: 'Get new link',
+    })
+    if (!ok) return
     setBusy(`rot-${unitSlug}`)
     setError('')
     try {
       await regenerateExportUrl(unitSlug)
       await load()
+      toast.success('New export link ready')
     } catch (err) {
       setError(err.message)
+      toast.error(`Couldn't change the link: ${err.message}`)
     } finally {
       setBusy('')
     }
@@ -158,7 +185,7 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="calendar-page">
-        <p className="claim-sub">Loading calendar…</p>
+        <p className="claim-sub" role="status" aria-live="polite">Loading calendar…</p>
       </div>
     )
   }
@@ -174,7 +201,7 @@ export default function Calendar() {
         </p>
       </header>
 
-      {error ? <p className="auth-error">{error}</p> : null}
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       {(ownedSlugs?.length > 1 || editableUnits.length > 1) && (
         <label className="calendar-slug-picker">
@@ -215,7 +242,7 @@ export default function Calendar() {
                       type="button"
                       className="secondary"
                       disabled={busy === `rot-${unit.slug}`}
-                      onClick={() => onRotate(unit.slug)}
+                      onClick={() => onRotate(unit.slug, unit.name)}
                     >
                       Rotate link
                     </button>
@@ -256,7 +283,7 @@ export default function Calendar() {
                             type="button"
                             className="danger-ghost"
                             disabled={busy === `rm-${feed.id}`}
-                            onClick={() => onRemove(unit.slug, feed.id)}
+                            onClick={() => onRemove(unit.slug, feed)}
                           >
                             Remove
                           </button>

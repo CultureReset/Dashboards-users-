@@ -14,7 +14,9 @@
  *     edit path writes somewhere real
  */
 
-import { mergeEntitySources, discoverSections } from '../src/lib/discoverSections.js'
+import { mergeEntitySources, discoverSections, attachRowIds } from '../src/lib/discoverSections.js'
+import { viewReducer, viewForSetupTarget, VIEWS, MANAGE_VIEWS, MANAGE_TABS, INITIAL_VIEW } from '../src/lib/dashboardView.js'
+import { isOwnerScoped } from '../src/lib/actingScope.js'
 import { tableFor, API_KEY_TO_TABLE } from '../src/lib/tableMap.js'
 import { buildCatalog } from '../src/lib/sectionCatalog.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
@@ -344,6 +346,101 @@ console.log('\nOwner nav polish (visibility, dedupe, hide empty)')
   check('keeps photos', keys.includes('photos'), keys.join(','))
   check('dedupes Offerings to one tab', polished.filter((s) => s.label === 'Offerings').length === 1, keys.join(','))
   check('prefers richer Offerings data', polished.find((s) => s.label === 'Offerings')?.key === 'offerings', keys.join(','))
+}
+
+console.log('\nRows the public payload sends without ids become editable')
+{
+  // GET /api/gcr/entity/:slug selects entity_hours / entity_tags without `id`;
+  // GET /api/business/sections (the sweep) is select *, so it has them.
+  const apiPayload = {
+    name: 'Flora-Bama',
+    hours: [
+      { day_of_week: 1, opens_at: '11:00:00', closes_at: '22:00:00', is_closed: false },
+      { day_of_week: 2, opens_at: '11:00:00', closes_at: '22:00:00', is_closed: false },
+    ],
+    tags: [
+      { tag_name: 'Waterfront', tag_category: 'vibe' },
+      { id: 'am-7', entity_slug: 'flora-bama', tag_name: 'Parking', tag_category: 'amenity' }, // synthetic API row
+    ],
+  }
+  const sweptRows = {
+    entity_hours: [
+      { id: 41, entity_slug: 'flora-bama', day_of_week: 1, opens_at: '11:00:00', closes_at: '22:00:00', is_closed: false },
+      { id: 42, entity_slug: 'flora-bama', day_of_week: 2, opens_at: '11:00:00', closes_at: '22:00:00', is_closed: false },
+      { id: 43, entity_slug: 'flora-bama', day_of_week: 2, opens_at: '00:00:00', closes_at: '01:00:00', is_closed: false }, // dup the API hid
+    ],
+    entity_tags: [
+      { id: 90, entity_slug: 'flora-bama', tag_name: 'Waterfront', tag_category: 'vibe' },
+      { id: 91, entity_slug: 'flora-bama', tag_name: 'outdoor_seating', tag_category: 'vibe' }, // machine tag the API hid
+    ],
+  }
+  const m = mergeEntitySources(apiPayload, sweptRows)
+  check('hours rows now carry the swept ids', m.hours.map((r) => r.id).join() === '41,42', JSON.stringify(m.hours))
+  check('hours keeps the API\'s cleaned list (hidden duplicate not resurrected)', m.hours.length === 2)
+  check('tags row gets its id', m.tags.find((r) => r.tag_name === 'Waterfront')?.id === 90)
+  check('a synthetic API row keeps its own id', m.tags.find((r) => r.tag_name === 'Parking')?.id === 'am-7')
+  check('machine tag the API hid is not added back', !m.tags.some((r) => r.tag_name === 'outdoor_seating'))
+  check('the input payload is not mutated', apiPayload.hours[0].id === undefined)
+  const secs = discoverSections(m)
+  check('hours and tags are still single sections', secs.filter((s) => s.key === 'hours').length === 1 && secs.filter((s) => s.key === 'tags').length === 1)
+  check('every hours row is editable (has an id)', secs.find((s) => s.key === 'hours').data.every((r) => r.id))
+
+  // The API reshaped the rows so none can be matched: use the swept rows.
+  check('falls back to the swept rows when nothing matches',
+    attachRowIds([{ day: 'Mon', open: '9' }], sweptRows.entity_hours) === sweptRows.entity_hours)
+  check('rows that already have ids are left alone (null = no change)',
+    attachRowIds([{ id: 1, day_of_week: 1 }], sweptRows.entity_hours) === null)
+  check('no swept ids, nothing to attach (null)',
+    attachRowIds([{ day_of_week: 1 }], [{ day_of_week: 1 }]) === null)
+  check('an identical twin row matches its own swept row once each',
+    attachRowIds(
+      [{ tag_name: 'A' }, { tag_name: 'A' }],
+      [{ id: 1, tag_name: 'A' }, { id: 2, tag_name: 'A' }],
+    ).map((r) => r.id).join() === '1,2')
+}
+
+console.log('\nDashboard view state — one screen at a time')
+{
+  check('starts on Setup', INITIAL_VIEW === 'setup')
+  check('there are exactly 9 views: setup, section, add + 6 manage', VIEWS.length === 9 && MANAGE_VIEWS.length === 6)
+  check('every manage view has a tab', MANAGE_VIEWS.every((v) => MANAGE_TABS.some((t) => t.view === v)))
+  check('Store, Tools, My Ghost, Automations, Calendar, Platform are the manage tabs',
+    MANAGE_TABS.map((t) => t.label).join() === 'Store,Tools,My Ghost,Automations,Calendar,Platform')
+
+  // The reported bug: tapping Add while Calendar was open did nothing.
+  let v = viewReducer('setup', { type: 'show', view: 'calendar' })
+  check('Calendar opens', v === 'calendar')
+  v = viewReducer(v, { type: 'show', view: 'add' })
+  check('Add from Calendar opens Add (and Calendar is gone)', v === 'add')
+  check('Add closes back to the section', viewReducer(v, { type: 'close', view: 'add' }) === 'section')
+  check('closing Add when Add is not open changes nothing',
+    viewReducer('store', { type: 'close', view: 'add' }) === 'store')
+
+  // From every screen to every screen: always lands exactly where asked.
+  let reachable = true
+  for (const from of VIEWS) for (const to of VIEWS) {
+    if (viewReducer(from, { type: 'show', view: to }) !== to) reachable = false
+  }
+  check('any screen reaches any other in one step', reachable)
+  check('an unknown view is ignored', viewReducer('store', { type: 'show', view: 'nope' }) === 'store')
+  check('an unknown action is ignored', viewReducer('store', { type: 'nope' }) === 'store')
+  check('picking a section leaves any overlay',
+    MANAGE_VIEWS.concat(['setup', 'add']).every((from) => viewReducer(from, { type: 'section' }) === 'section'))
+
+  check('Setup cards: data -> add', viewForSetupTarget('data') === 'add')
+  check('Setup cards: tools/store/calendar/automations/ghost open themselves',
+    ['tools', 'store', 'calendar', 'automations', 'ghost'].every((t) => viewForSetupTarget(t) === t))
+  check('Setup cards: an unknown target falls back to the section',
+    viewReducer('setup', { type: 'setup-target', target: 'wat' }) === 'section')
+}
+
+console.log('\nAdmin "View as" slug reaches every owner-scoped route')
+{
+  const scoped = ['/api/business/sections', '/api/business/hours/12', '/api/store', '/api/store/abc/install',
+    '/api/connections', '/api/connections/gmail/connect', '/api/nodes', '/api/nodes/9/requests/3', '/api/owner/modules']
+  for (const p of scoped) check(`${p} carries the acting slug`, isOwnerScoped(p))
+  const unscoped = ['/api/business-auth/password', '/api/business-auth/refresh', '/api/gcr/entity/x', '/api/auth/invite/t', '/api/storefront', '/api/ownership', '/api/nodesx']
+  for (const p of unscoped) check(`${p} does not`, !isOwnerScoped(p))
 }
 
 console.log(failures ? `\n${failures} failed\n` : '\nAll checks passed\n')
