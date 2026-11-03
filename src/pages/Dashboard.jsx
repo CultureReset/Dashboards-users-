@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEntity } from '../lib/gcrApi'
 import { fetchEntityTables, getColumns } from '../lib/schemaDiscovery'
@@ -29,7 +29,11 @@ import Platform from './Platform'
 import Calendar from './Calendar'
 import Setup from './Setup'
 import { fetchAutomations } from '../lib/automations'
-import { INITIAL_VIEW, viewReducer } from '../lib/dashboardView'
+import { INITIAL_VIEW, landingView, viewForSetupTarget, viewReducer } from '../lib/dashboardView'
+import AppHome from '../front/AppHome'
+import AppFrame from '../front/AppFrame'
+import useStoreApps from '../front/useStoreApps'
+import { buildTiles } from '../front/tiles'
 import { useToast } from '../components/Toast'
 import ErrorBoundary from '../components/ErrorBoundary'
 
@@ -45,7 +49,18 @@ export default function Dashboard() {
   const [modulesReloadKey, setModulesReloadKey] = useState(0)
   const [allTables, setAllTables] = useState([]) // every slug table in the schema
   // Which screen is open. One value, not eight booleans — see dashboardView.js.
-  const [view, dispatchView] = useReducer(viewReducer, INITIAL_VIEW)
+  const [navView, rawDispatchView] = useReducer(viewReducer, INITIAL_VIEW)
+  // Front layer: the launcher ('home') and one app opened from it ('app').
+  // `view` below is what the existing screen switch reads; while an app is
+  // open it is that app's own screen, so every page renders exactly as before.
+  const [appTarget, setAppTarget] = useState(null) // { view, key?, title, icon, tileId? }
+  const [lastTileId, setLastTileId] = useState(null) // focus goes back to it on return
+  const touchedRef = useRef(false) // the owner has navigated: stop auto-landing
+  const dispatchView = useCallback((action) => {
+    touchedRef.current = true
+    rawDispatchView(action)
+  }, [])
+  const view = navView === 'app' && appTarget ? appTarget.view : navView
   const toast = useToast()
   // What has been loaded for the current business. After the first load,
   // reloads are silent: the shell stays mounted, scroll and tab stay put.
@@ -56,6 +71,7 @@ export default function Dashboard() {
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
   const [modulesApiAvailable, setModulesApiAvailable] = useState(false)
+  const { items: storeItems } = useStoreApps(gcrSlug, modulesReloadKey)
 
   const refreshAll = useCallback(() => {
     setReloadKey((k) => k + 1)
@@ -201,10 +217,36 @@ export default function Dashboard() {
   }, [discovered, ownerModules, merged, modulesApiAvailable, ownerVisibleTables])
 
   useEffect(() => {
+    // An app opened from the launcher may be a Store app with no section of
+    // its own yet; leave its key alone.
+    if (appTarget?.key && appTarget.key === activeKey) return
     if (sections.length && !sections.some((s) => s.key === activeKey)) {
       setActiveKey(sections[0].key)
     }
-  }, [sections, activeKey])
+  }, [sections, activeKey, appTarget])
+
+  // The launcher's tiles: what this business already has (see front/tiles.js).
+  const tiles = useMemo(
+    () => buildTiles({
+      sections,
+      storeItems,
+      automationsCount,
+      ownerVisibleTables: modulesApiAvailable ? ownerVisibleTables : null,
+      tableFor,
+    }),
+    [sections, storeItems, automationsCount, modulesApiAvailable, ownerVisibleTables],
+  )
+  const installCount = storeItems.filter((i) => i.installed).length
+
+  // Landing: a business that already has an app or a section opens on its
+  // launcher instead of Setup. Done before paint so Setup never flashes, and
+  // only until the owner has navigated anywhere themselves.
+  useLayoutEffect(() => {
+    if (loading || touchedRef.current) return
+    if (landingView({ sectionCount: sections.length, installCount }) === 'home') {
+      rawDispatchView({ type: 'home' })
+    }
+  }, [loading, sections.length, installCount])
 
   if (loading) {
     return (
@@ -242,13 +284,29 @@ export default function Dashboard() {
   const activeColumns = active ? getColumns(tableFor(active.key) || active.key) : []
   const Custom = rendererFor(active, activeColumns)
 
-  const onSection = view === 'section'
+  const onSection = navView === 'section'
   // The tab that shows as selected: only a data section can be.
   const shownKey = onSection ? activeKey : null
+  // Open one app full screen from the launcher (or from inside another app).
+  const openApp = (target) => {
+    if (target.key) setActiveKey(target.key)
+    setAppTarget(target)
+    setLastTileId(target.tileId || null)
+    dispatchView({ type: 'show', view: 'app' })
+  }
+  const openTile = (tile) => openApp({ ...tile.target, title: tile.name, icon: tile.icon, tileId: tile.id })
+  const inFront = navView === 'home' || navView === 'app'
   const pickSection = (key) => {
     setActiveKey(key)
-    dispatchView({ type: 'section' })
+    if (inFront) {
+      const s = sections.find((x) => x.key === key)
+      openApp({ view: 'section', key, title: s?.label || key, icon: s?.icon })
+    } else {
+      dispatchView({ type: 'section' })
+    }
   }
+  // Leaving Add / a nested screen: back to the launcher from an app, else as before.
+  const leave = (name) => (navView === 'app' ? dispatchView({ type: 'back' }) : dispatchView({ type: 'close', view: name }))
   const openAdd = () => dispatchView({ type: 'show', view: 'add' })
 
   return (
@@ -265,9 +323,33 @@ export default function Dashboard() {
         </div>
       )}
       <MainContent empty={onSection && sections.length === 0} onAdd={openAdd}>
+        <AppFrame
+          app={navView === 'app' ? appTarget : null}
+          onBack={() => dispatchView({ type: 'back' })}
+        >
         <ErrorBoundary inline resetKey={`${view}:${activeKey}`}>
-        {view === 'setup' ? (
-          <Setup entity={entity} onOpen={(target) => dispatchView({ type: 'setup-target', target })} />
+        {view === 'home' ? (
+          <AppHome
+            key={gcrSlug}
+            slug={gcrSlug}
+            tiles={tiles}
+            onOpen={openTile}
+            onAddApp={() => openApp({ view: 'store', title: 'Store', icon: '🏪' })}
+            focusId={lastTileId}
+          />
+        ) : view === 'setup' ? (
+          <Setup
+            entity={entity}
+            onOpen={(target) => {
+              if (navView !== 'app') return dispatchView({ type: 'setup-target', target })
+              // Inside the frame, a Setup card opens its screen in the frame.
+              const next = viewForSetupTarget(target)
+              const manage = tiles.find((t) => t.target.view === next)
+              openApp(next === 'add'
+                ? { view: next, title: 'Add to your business', icon: '＋' }
+                : { view: next, title: manage?.name || 'Apps', icon: manage?.icon })
+            }}
+          />
         ) : view === 'calendar' ? (
           <Calendar />
         ) : view === 'platform' ? (
@@ -289,9 +371,9 @@ export default function Dashboard() {
             industry={entity?.entity_type}
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
-            onCancel={() => dispatchView({ type: 'close', view: 'add' })}
+            onCancel={() => leave('add')}
             onDone={(table) => {
-              dispatchView({ type: 'close', view: 'add' })
+              leave('add')
               // The new row makes this table a section on the next pass.
               setActiveKey(TABLE_TO_API_KEY[table] || table)
               refreshAll()
@@ -315,15 +397,20 @@ export default function Dashboard() {
           )
         )}
         </ErrorBoundary>
+        </AppFrame>
       </MainContent>
-      <BottomNav
-        sections={sections}
-        view={view}
-        activeKey={activeKey}
-        onSelect={pickSection}
-        onShow={(next) => dispatchView({ type: 'show', view: next })}
-        automationsCount={automationsCount}
-      />
+      {/* The launcher and an opened app have no tab bar: Back is the way out. */}
+      {!inFront && (
+        <BottomNav
+          sections={sections}
+          view={view}
+          activeKey={activeKey}
+          onSelect={pickSection}
+          onShow={(next) => dispatchView({ type: 'show', view: next })}
+          onHome={() => dispatchView({ type: 'home' })}
+          automationsCount={automationsCount}
+        />
+      )}
     </div>
   )
 }

@@ -17,7 +17,7 @@ import { useFocusTrap } from '../lib/useFocusTrap'
 // Add is always present, including when a business has no sections at all —
 // that is the whole point of it. A business that has never entered anything
 // still gets a way in.
-export default function BottomNav({ sections, view, activeKey, onSelect, onShow, automationsCount = 0 }) {
+export default function BottomNav({ sections, view, activeKey, onSelect, onShow, onHome, automationsCount = 0 }) {
   const [moreOpen, setMoreOpen] = useState(false)
   const stripRef = useRef(null)
   const [edges, setEdges] = useState({ start: false, end: false })
@@ -66,6 +66,12 @@ export default function BottomNav({ sections, view, activeKey, onSelect, onShow,
           data-edge-start={edges.start}
           data-edge-end={edges.end}
         >
+          {onHome && (
+            <button type="button" className="bottom-nav-item" onClick={onHome}>
+              <span className="bottom-nav-icon" aria-hidden="true">▦</span>
+              <span className="bottom-nav-label">Apps</span>
+            </button>
+          )}
           <button
             type="button"
             className={`bottom-nav-item${view === 'setup' ? ' active' : ''}`}
