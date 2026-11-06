@@ -236,7 +236,7 @@ export default function Calendar() {
                         <div>
                           <strong>{feed.source_label || feed.provider || 'Feed'}</strong>
                           <div className="calendar-feed-meta">
-                            <a href={feed.ical_url} target="_blank" rel="noreferrer">Open source</a>
+                            <span>{feed.ical_host || 'Private calendar feed'}</span>
                             {feed.last_sync_status ? <span>{feed.last_sync_status}</span> : null}
                             {feed.last_synced_at ? (
                               <span>Last sync {new Date(feed.last_synced_at).toLocaleString()}</span>
