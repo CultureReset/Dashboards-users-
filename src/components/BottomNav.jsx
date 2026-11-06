@@ -3,7 +3,7 @@
 // Add is always present, including when a business has no sections at all —
 // that is the whole point of it. A business that has never entered anything
 // still gets a way in.
-export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store }) {
+export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store, onSetup, setup, onQuery, query }) {
   return (
     <nav className="bottom-nav">
       {sections.map((s) => (
@@ -16,6 +16,24 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
           <span className="bottom-nav-label">{s.label}</span>
         </button>
       ))}
+      {onSetup && (
+        <button
+          className={`bottom-nav-item${setup ? ' active' : ''}`}
+          onClick={onSetup}
+        >
+          <span className="bottom-nav-icon">🔧</span>
+          <span className="bottom-nav-label">Setup</span>
+        </button>
+      )}
+      {onQuery && (
+        <button
+          className={`bottom-nav-item${query ? ' active' : ''}`}
+          onClick={onQuery}
+        >
+          <span className="bottom-nav-icon">🔎</span>
+          <span className="bottom-nav-label">Query</span>
+        </button>
+      )}
       {onCalendar && (
         <button
           className={`bottom-nav-item${calendar ? ' active' : ''}`}

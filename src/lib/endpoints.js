@@ -125,6 +125,22 @@ export const endpoints = {
     syncNow: (id) => `${BUSINESS}/ical/external/${seg(id)}/sync-now`,
   },
 
+  // Structured owner query (provisional — remount when Admin commits /api/query).
+  // Body: { version:'v1', resource, filters?, date_range?, fields?, sort?, page? }
+  // Mutations add: action, id?, values?, reason
+  query: {
+    catalog: () => `${BUSINESS}/query/catalog`,
+    run: () => `${BUSINESS}/query`,
+  },
+
+  // Owner Setup — Airbnb/VRBO listing + iCal (owner-only).
+  setup: {
+    status: () => `${BUSINESS}/setup`,
+    connect: () => `${BUSINESS}/setup/connect`,
+    connectId: (id) => `${BUSINESS}/setup/connect/${seg(id)}`,
+    linkRequest: () => `${BUSINESS}/setup/link-request`,
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,
