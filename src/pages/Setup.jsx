@@ -4,6 +4,7 @@ import {
   connectListing,
   removeConnection,
   requestUnitLink,
+  newIdempotencyKey,
 } from '../lib/ownerSetupApi'
 import { useAuth } from '../lib/AuthContext'
 
@@ -26,7 +27,9 @@ export default function Setup() {
     business_name: '',
     phone: '',
     entity_slug: '',
+    reason: '',
   })
+  const [pendingRemove, setPendingRemove] = useState(null) // { id, label, reason }
   const [candidates, setCandidates] = useState([])
 
   const load = useCallback(async () => {
@@ -55,8 +58,9 @@ export default function Setup() {
         listing_url: form.listing_url.trim() || undefined,
         ical_url: form.ical_url.trim(),
         source_label: form.source_label.trim() || undefined,
-      })
-      setForm((f) => ({ ...f, listing_url: '', ical_url: '', source_label: '' }))
+        reason: form.reason.trim(),
+      }, newIdempotencyKey())
+      setForm((f) => ({ ...f, listing_url: '', ical_url: '', source_label: '', reason: '' }))
       setInfo('Connected. You can re-sync from Calendar.')
       await load()
     } catch (err) {
@@ -76,11 +80,11 @@ export default function Setup() {
       const res = await requestUnitLink({
         provider: form.provider,
         listing_url: form.listing_url.trim() || undefined,
-        ical_url: form.ical_url.trim() || undefined,
         business_name: form.business_name.trim() || undefined,
         phone: form.phone.trim(),
         entity_slug: form.entity_slug.trim() || undefined,
-      })
+        reason: form.reason.trim(),
+      }, newIdempotencyKey())
       setCandidates(res.candidates || [])
       setInfo(res.note || 'Link request sent to staff.')
     } catch (err) {
@@ -90,11 +94,15 @@ export default function Setup() {
     }
   }
 
-  async function onRemove(id) {
+  async function onConfirmRemove() {
+    const { id, reason } = pendingRemove || {}
+    if (!id || (reason || '').trim().length < 3) return
     setBusy(`rm-${id}`)
     setError('')
     try {
-      await removeConnection(id)
+      await removeConnection(id, reason.trim(), newIdempotencyKey())
+      setPendingRemove(null)
+      setInfo('Calendar disconnected and its imported blocks removed.')
       await load()
     } catch (err) {
       setError(err.message)
@@ -108,6 +116,8 @@ export default function Setup() {
   }
 
   const needsLink = !!status?.needs_link
+  // Writes stay off until the owner-setup migration is applied server-side.
+  const writesEnabled = status?.writes_enabled === true
 
   return (
     <div className="calendar-page">
@@ -122,11 +132,18 @@ export default function Setup() {
       </header>
 
       {error ? <p className="auth-error">{error}</p> : null}
+      {status && !writesEnabled ? (
+        <p className="claim-sub" role="status">
+          Connecting, disconnecting and link requests are temporarily unavailable while the
+          secure save path is reviewed. Existing connections below are unaffected.
+        </p>
+      ) : null}
       {info ? <p className="claim-sub">{info}</p> : null}
 
       <section className="calendar-section">
         <h3>{needsLink ? 'Request unit link' : 'Connect Airbnb / VRBO'}</h3>
         <form className="calendar-add-form" onSubmit={needsLink ? onLinkRequest : onConnect}>
+          <fieldset disabled={!writesEnabled} style={{ border: 0, padding: 0, margin: 0 }}>
           <label>
             Platform
             <select
@@ -147,17 +164,35 @@ export default function Setup() {
               onChange={(e) => setForm((f) => ({ ...f, listing_url: e.target.value }))}
             />
           </label>
+          {!needsLink ? (
+            <label>
+              iCal export URL (kept private — never shown again after saving)
+              <input
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                required
+                placeholder="https://…"
+                value={form.ical_url}
+                onChange={(e) => setForm((f) => ({ ...f, ical_url: e.target.value }))}
+              />
+            </label>
+          ) : (
+            <p className="claim-sub">Connect your iCal feed after staff link your unit.</p>
+          )}
           <label>
-            iCal export URL {needsLink ? '(optional)' : ''}
+            Reason (recorded in the audit log)
             <input
-              type="url"
-              required={!needsLink}
-              placeholder="https://…"
-              value={form.ical_url}
-              onChange={(e) => setForm((f) => ({ ...f, ical_url: e.target.value }))}
+              type="text"
+              required
+              minLength={3}
+              maxLength={1000}
+              value={form.reason}
+              onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+              placeholder={needsLink ? 'I own unit 101' : 'Sync Airbnb blocks'}
             />
           </label>
-          {status?.help ? (
+          {!needsLink && status?.help ? (
             <p className="claim-sub">
               {form.provider === 'vrbo' ? status.help.vrbo_ical : status.help.airbnb_ical}
             </p>
@@ -211,6 +246,7 @@ export default function Setup() {
               </button>
             </>
           )}
+          </fieldset>
         </form>
       </section>
 
@@ -249,6 +285,7 @@ export default function Setup() {
                     <div className="calendar-feed-meta">
                       <span>{c.provider}</span>
                       <span>{c.entity_slug}</span>
+                      {c.ical_host ? <span>{c.ical_host} …{c.ical_last4}</span> : null}
                       {c.last_sync_status ? <span>{c.last_sync_status}</span> : null}
                     </div>
                   </div>
@@ -256,10 +293,10 @@ export default function Setup() {
                     <button
                       type="button"
                       className="danger-ghost"
-                      disabled={busy === `rm-${c.id}`}
-                      onClick={() => onRemove(c.id)}
+                      disabled={!writesEnabled || busy === `rm-${c.id}`}
+                      onClick={() => setPendingRemove({ id: c.id, label: c.source_label || c.provider, reason: '' })}
                     >
-                      Remove
+                      Disconnect…
                     </button>
                   </div>
                 </li>
@@ -268,6 +305,36 @@ export default function Setup() {
           )}
         </section>
       )}
+
+      {pendingRemove ? (
+        <section className="calendar-section" role="dialog" aria-modal="true" aria-label="Confirm disconnect">
+          <h3>Disconnect {pendingRemove.label}?</h3>
+          <p className="claim-sub">
+            This removes the calendar connection and every date it imported. You can reconnect later.
+          </p>
+          <label>
+            Reason (required)
+            <input
+              type="text"
+              minLength={3}
+              maxLength={1000}
+              value={pendingRemove.reason}
+              onChange={(e) => setPendingRemove((p) => ({ ...p, reason: e.target.value }))}
+            />
+          </label>
+          <div className="calendar-feed-actions">
+            <button type="button" onClick={() => setPendingRemove(null)}>Cancel</button>
+            <button
+              type="button"
+              className="danger-ghost"
+              disabled={pendingRemove.reason.trim().length < 3 || busy === `rm-${pendingRemove.id}`}
+              onClick={onConfirmRemove}
+            >
+              Yes, disconnect
+            </button>
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }

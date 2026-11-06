@@ -103,6 +103,8 @@ function messageFrom(body, response, path) {
   if (body && typeof body === 'object') {
     const candidate = body.error || body.message || body.detail
     if (typeof candidate === 'string' && candidate) return candidate
+    // Shared v1 error shape: { error: { code, message } }
+    if (candidate && typeof candidate === 'object' && typeof candidate.message === 'string') return candidate.message
   }
   if (typeof body === 'string' && body.trim() && !body.trim().startsWith('<')) {
     return body.trim().slice(0, 300)
