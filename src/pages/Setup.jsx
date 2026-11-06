@@ -37,6 +37,8 @@ export default function Setup({ entity, onOpen }) {
       text: 'Install the modules you need, then enter their information and settings. Installing an app does not import your data.', action: 'Open app store' },
     { key: 'calendar', title: '3. Connect your calendars', status: recorded('calendar', data => calendarStatus(data.units || [])),
       text: 'Paste an iCal export link from your booking platform and run Sync now. iCal supplies blocked dates, not guest or payment details.', action: 'Connect calendars' },
+    { key: 'listings', title: '3b. Link Airbnb / VRBO listings', status: 'Request a unit link or add a listing feed',
+      text: 'Connect a listing to your own unit, or ask staff to link a unit to your business. Links are reviewed; nothing is attached automatically.', action: 'Link listings' },
     { key: 'tools', title: '4. Connect your tools', status: recorded('tools', data => data.composio_configured ? `${(data.tools || []).filter(tool => tool.connection?.status === 'connected').length} tools connected` : 'Connection service needs configuration'),
       text: 'Choose supported tools and authorize them. Review each connection before relying on its data; authorization alone is not a verified import.', action: 'Connect tools' },
     { key: 'automations', title: '5. Review your workflows', status: 'Optional — check available workflows',

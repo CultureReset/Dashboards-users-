@@ -125,6 +125,22 @@ export const endpoints = {
     syncNow: (id) => `${BUSINESS}/ical/external/${seg(id)}/sync-now`,
   },
 
+  // Shared v1 universal query (owner base). See gcr-api-clean UNIVERSAL_QUERY_CONTRACT.md.
+  query: {
+    schema: () => `${BUSINESS}/query/schema`,
+    run: () => `${BUSINESS}/query`,
+    mutate: () => `${BUSINESS}/query/mutate`,
+    audit: () => `${BUSINESS}/query/audit`,
+  },
+
+  // Owner Setup — Airbnb/VRBO listing + iCal (owner-only).
+  setup: {
+    status: () => `${BUSINESS}/setup`,
+    connect: () => `${BUSINESS}/setup/connect`,
+    connectId: (id) => `${BUSINESS}/setup/connect/${seg(id)}`,
+    linkRequest: () => `${BUSINESS}/setup/link-request`,
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,
