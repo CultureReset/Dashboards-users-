@@ -1,217 +1,138 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchQueryCatalog, runOwnerQuery, runOwnerMutation } from '../lib/ownerQueryApi'
-import RowEditor from '../components/RowEditor'
-import { getColumns } from '../lib/schemaDiscovery'
+import { fetchQuerySchema, runOwnerQuery, runOwnerMutation } from '../lib/ownerQueryApi'
 
 /**
- * Owner Query — ask by resource (bookings / availability / payments / units / …).
- * No freeform SQL. Writes require an audit reason. Path is provisional
- * (/api/business/query) until Admin commits the shared /api/query route.
+ * Owner Query — shared v1 contract. Resources, fields and writable fields all come
+ * from GET /api/business/query/schema (nothing hardcoded). No SQL. Edits preview a
+ * diff; commit needs a reason and is refused server-side (writes_disabled) until the
+ * atomic mutation+audit follow-up ships.
  */
+const errText = (err) => err?.body?.error?.message || err?.message || 'Request failed'
+
 export default function Query() {
-  const [catalog, setCatalog] = useState([])
+  const [schema, setSchema] = useState(null)
   const [resource, setResource] = useState('')
-  const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
+  const [pageNo, setPageNo] = useState(1)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [values, setValues] = useState({})
   const [reason, setReason] = useState('')
+  const [preview, setPreview] = useState(null)
 
   useEffect(() => {
-    let cancelled = false
-    fetchQueryCatalog()
-      .then((data) => {
-        if (cancelled) return
-        const list = data.catalog || []
-        setCatalog(list)
-        if (!resource && list[0]) setResource(list[0].resource)
-      })
-      .catch((err) => { if (!cancelled) setError(err.message) })
-    return () => { cancelled = true }
+    let off = false
+    fetchQuerySchema().then((s) => {
+      if (off) return
+      setSchema(s)
+      const first = Object.keys(s.resources || {})[0]
+      if (first) setResource(first)
+    }).catch((e) => { if (!off) setError(errText(e)) })
+    return () => { off = true }
   }, [])
 
-  const chips = useMemo(() => {
-    const out = []
-    for (const c of catalog) {
-      out.push(c.resource)
-      for (const intent of c.intents || []) {
-        if (!out.includes(intent)) out.push(intent)
-      }
-    }
-    return out
-  }, [catalog])
+  // The mutation whose name prefix matches this resource (from schema, e.g. booking.update).
+  const mutation = useMemo(() => {
+    if (!schema || !resource) return null
+    const stem = resource.replace(/(es|s)$/, '')
+    const hit = Object.entries(schema.mutations || {}).find(([k, m]) =>
+      (k.startsWith(`${resource}.`) || k.startsWith(`${stem}.`)) && m.op !== 'insert')
+    return hit ? { action: hit[0], ...hit[1] } : null
+  }, [schema, resource])
 
-  const run = useCallback(async (resKey) => {
-    const key = (resKey || resource || question).trim()
-    if (!key) return
-    setBusy(true)
-    setError('')
-    setEditing(null)
+  const fields = schema?.resources?.[resource]?.fields || []
+
+  const run = useCallback(async (res = resource, number = 1) => {
+    if (!res) return
+    setBusy(true); setError(''); setEditing(null); setPreview(null)
     try {
-      // Prefer resource token; plain-language falls back to same field (server aliases).
-      const body = { resource: key, page: 1, page_size: 50 }
-      const data = await runOwnerQuery(body)
-      setResult(data)
-      setResource(data.resource || key)
-    } catch (err) {
-      setError(err.message)
-      setResult(null)
-    } finally {
-      setBusy(false)
-    }
-  }, [resource, question])
+      const data = await runOwnerQuery({ resource: res, page: { number, size: 50 } })
+      setResult(data); setPageNo(number)
+    } catch (e) { setError(errText(e)); setResult(null) } finally { setBusy(false) }
+  }, [resource])
 
-  async function saveEdit(values) {
-    if (!editing || !result?.write_allowed) return
-    if (!reason.trim()) throw new Error('Add a short reason for this change (audit).')
-    await runOwnerMutation({
-      action: 'update',
-      table: result.table,
-      id: editing.id,
-      values,
-      reason: reason.trim(),
-    })
-    setEditing(null)
-    setReason('')
-    await run(result.resource || result.table)
+  const startEdit = (row) => {
+    setEditing(row); setPreview(null); setReason('')
+    setValues(Object.fromEntries((mutation?.fields || []).map((f) => [f, row[f] ?? ''])))
   }
 
-  async function deleteRow() {
-    if (!editing || !result?.write_allowed) return
-    if (!reason.trim()) throw new Error('Add a short reason for this delete (audit).')
-    await runOwnerMutation({
-      action: 'delete',
-      table: result.table,
-      id: editing.id,
-      reason: reason.trim(),
-    })
-    setEditing(null)
-    setReason('')
-    await run(result.resource || result.table)
+  async function submit(mode) {
+    setError('')
+    if (!reason.trim()) { setError('Add a short reason for this change (audit).'); return }
+    try {
+      const out = await runOwnerMutation({
+        action: mutation.action, id: editing.id, values, reason: reason.trim(), mode,
+        expected_version: editing.updated_at,
+        idempotency_key: mode === 'commit' ? `owner-${mutation.action}-${editing.id}-${editing.updated_at}` : undefined,
+      })
+      if (mode === 'preview') setPreview(out)
+      else { setEditing(null); await run(resource, pageNo) }
+    } catch (e) { setError(errText(e)) }
   }
 
-  const columns = result?.columns?.length
-    ? result.columns
-    : getColumns(result?.table || '')
-
+  const cols = fields.filter((f) => f !== 'entity_slug').slice(0, 8)
   return (
     <div className="calendar-page">
       <header className="calendar-header">
         <h2>Query</h2>
-        <p className="claim-sub">
-          Ask about your bookings, availability, payments, units, and more.
-          Answers come from your business data only — no SQL, no other businesses.
-        </p>
+        <p className="claim-sub">Your business data only — no SQL, no other businesses.</p>
       </header>
-
       {error ? <p className="auth-error">{error}</p> : null}
-
       <section className="calendar-section">
-        <form
-          className="calendar-add-form"
-          onSubmit={(e) => { e.preventDefault(); run(question || resource) }}
-        >
-          <label>
-            What do you want to see?
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="units, bookings, availability…"
-            />
-          </label>
-          <div className="calendar-feed-actions" style={{ flexWrap: 'wrap' }}>
-            {chips.slice(0, 16).map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                className={`secondary${resource === chip ? ' active' : ''}`}
-                onClick={() => { setResource(chip); setQuestion(chip); run(chip) }}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-          <button type="submit" className="primary" disabled={busy}>
-            {busy ? 'Loading…' : 'Run'}
-          </button>
-        </form>
+        <div className="calendar-feed-actions" style={{ flexWrap: 'wrap' }}>
+          {Object.keys(schema?.resources || {}).map((r) => (
+            <button key={r} type="button" className={`secondary${resource === r ? ' active' : ''}`}
+              onClick={() => { setResource(r); run(r, 1) }}>{r}</button>
+          ))}
+        </div>
+        <button type="button" className="primary" disabled={busy || !resource} onClick={() => run(resource, 1)}>
+          {busy ? 'Loading…' : 'Run'}
+        </button>
       </section>
-
       {result && (
         <section className="calendar-section">
-          <h3>
-            {result.resource || result.table}
-            <span className="claim-sub"> · {result.total ?? result.rows?.length ?? 0} rows</span>
-          </h3>
-          {!result.rows?.length ? (
-            <p className="claim-sub">No rows for this business.</p>
-          ) : (
+          <h3>{result.resource}<span className="claim-sub"> · {result.page?.total ?? result.rows.length} rows</span></h3>
+          {!result.rows?.length ? <p className="claim-sub">No rows for this business.</p> : (
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    {(columns || []).filter((c) => c.name !== 'entity_slug').slice(0, 8).map((c) => (
-                      <th key={c.name} style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>
-                        {c.name}
-                      </th>
-                    ))}
-                    {result.write_allowed ? <th /> : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.rows.map((row) => (
-                    <tr key={row.id ?? JSON.stringify(row)}>
-                      {(columns || []).filter((c) => c.name !== 'entity_slug').slice(0, 8).map((c) => (
-                        <td key={c.name} style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                          {formatCell(row[c.name])}
-                        </td>
-                      ))}
-                      {result.write_allowed ? (
-                        <td>
-                          <button type="button" className="secondary" onClick={() => setEditing(row)}>
-                            Edit
-                          </button>
-                        </td>
-                      ) : null}
-                    </tr>
-                  ))}
+                <thead><tr>{cols.map((c) => <th key={c} style={{ textAlign: 'left', padding: '6px 8px' }}>{c}</th>)}{mutation ? <th /> : null}</tr></thead>
+                <tbody>{result.rows.map((row, i) => (
+                  <tr key={row.id ?? i}>
+                    {cols.map((c) => <td key={c} style={{ padding: '6px 8px', fontSize: '0.85rem' }}>{fmt(row[c])}</td>)}
+                    {mutation && row.id ? <td><button type="button" className="secondary" onClick={() => startEdit(row)}>Edit</button></td> : null}
+                  </tr>))}
                 </tbody>
               </table>
             </div>
           )}
+          <div className="calendar-feed-actions">
+            <button type="button" className="secondary" disabled={pageNo <= 1} onClick={() => run(resource, pageNo - 1)}>Prev</button>
+            <button type="button" className="secondary" disabled={!result.page?.has_more} onClick={() => run(resource, pageNo + 1)}>Next</button>
+          </div>
         </section>
       )}
-
-      {editing && (
+      {editing && mutation && (
         <section className="calendar-section">
-          <h3>Edit row</h3>
-          <label className="calendar-slug-picker">
-            Reason for change (required)
-            <input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. corrected nightly price"
-              required
-            />
+          <h3>Edit ({mutation.action})</h3>
+          {mutation.fields.map((f) => (
+            <label key={f} className="calendar-slug-picker">{f}
+              <input type="text" value={values[f] ?? ''} onChange={(e) => setValues({ ...values, [f]: e.target.value })} />
+            </label>
+          ))}
+          <label className="calendar-slug-picker">Reason for change (required)
+            <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} required />
           </label>
-          <RowEditor
-            table={result.table}
-            row={editing}
-            onSave={saveEdit}
-            onCancel={() => { setEditing(null); setReason('') }}
-            onDelete={result.write_allowed ? deleteRow : undefined}
-          />
+          <div className="calendar-feed-actions">
+            <button type="button" className="secondary" onClick={() => submit('preview')}>Preview</button>
+            <button type="button" className="primary" disabled={!preview} onClick={() => submit('commit')}>Save</button>
+            <button type="button" className="secondary" onClick={() => setEditing(null)}>Cancel</button>
+          </div>
+          {preview ? <pre style={{ fontSize: '0.8rem' }}>{JSON.stringify(preview.changes, null, 2)}</pre> : null}
         </section>
       )}
     </div>
   )
 }
 
-function formatCell(value) {
-  if (value == null) return '—'
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
-}
+function fmt(v) { return v == null ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v) }

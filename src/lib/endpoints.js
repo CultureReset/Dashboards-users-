@@ -125,12 +125,12 @@ export const endpoints = {
     syncNow: (id) => `${BUSINESS}/ical/external/${seg(id)}/sync-now`,
   },
 
-  // Structured owner query (provisional — remount when Admin commits /api/query).
-  // Body: { version:'v1', resource, filters?, date_range?, fields?, sort?, page? }
-  // Mutations add: action, id?, values?, reason
+  // Shared v1 universal query (owner base). See gcr-api-clean UNIVERSAL_QUERY_CONTRACT.md.
   query: {
-    catalog: () => `${BUSINESS}/query/catalog`,
+    schema: () => `${BUSINESS}/query/schema`,
     run: () => `${BUSINESS}/query`,
+    mutate: () => `${BUSINESS}/query/mutate`,
+    audit: () => `${BUSINESS}/query/audit`,
   },
 
   // Owner Setup — Airbnb/VRBO listing + iCal (owner-only).
