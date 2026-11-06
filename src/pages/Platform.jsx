@@ -37,7 +37,15 @@ export default function Platform() {
 
   useEffect(() => { load() }, [load])
 
-  if (session === undefined) return <p className="claim-sub">Loading…</p>
+  if (session === undefined) {
+    return error ? (
+      <section className="panel">
+        <h2>Platform</h2>
+        <p className="auth-error" role="alert">{error}</p>
+        <button type="button" onClick={() => { setError(''); load() }}>Retry connection</button>
+      </section>
+    ) : <p className="claim-sub">Loading…</p>
+  }
   if (!session) {
     return (
       <form

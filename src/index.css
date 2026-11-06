@@ -418,6 +418,12 @@ input { font: inherit; }
   background: var(--panel);
   border-top: 1px solid var(--border);
   display: flex;
+  overflow: hidden;
+}
+.bottom-nav-tabs {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   overflow-x: auto;
 }
 .bottom-nav-item {
@@ -435,10 +441,17 @@ input { font: inherit; }
 }
 .bottom-nav-item.active { color: var(--accent); font-weight: 700; }
 .bottom-nav-icon { font-size: 1.1rem; }
+.setup-guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin: 20px 0; }
+.setup-guide-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px; background: var(--panel); display: flex; flex-direction: column; align-items: flex-start; }
+.setup-guide-card h3 { margin: 0 0 8px; }
+.setup-guide-card p { line-height: 1.5; }
+.setup-guide-card button { margin-top: auto; }
+.setup-guide-status { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.catalog-advanced { display: flex; align-items: center; gap: 8px; margin: 16px 0; color: var(--muted); }
+.catalog-advanced input { width: auto; }
 /* Add is pinned to the end and always reachable, including with no sections. */
 .bottom-nav-add {
-  position: sticky;
-  right: 0;
+  flex: 0 0 auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
   color: var(--accent);

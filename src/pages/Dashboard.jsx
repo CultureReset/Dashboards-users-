@@ -29,6 +29,7 @@ import Platform from './Platform'
 import Calendar from './Calendar'
 import Setup from './Setup'
 import Query from './Query'
+import ListingConnections from './ListingConnections'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -49,8 +50,9 @@ export default function Dashboard() {
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
-  const [showSetup, setShowSetup] = useState(false)
+  const [showSetup, setShowSetup] = useState(true)
   const [showQuery, setShowQuery] = useState(false)
+  const [showListings, setShowListings] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
@@ -205,6 +207,7 @@ export default function Dashboard() {
   const Custom = rendererFor(active, activeColumns)
 
   const clearOverlays = () => {
+    setShowSetup(false)
     setAdding(false)
     setShowApps(false)
     setShowGhost(false)
@@ -212,7 +215,7 @@ export default function Dashboard() {
     setShowPlatform(false)
     setShowAutomations(false)
     setShowCalendar(false)
-    setShowSetup(false)
+    setShowListings(false)
     setShowQuery(false)
   }
 
@@ -221,7 +224,7 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name}
         sections={sections}
-        activeKey={adding || showCalendar || showSetup || showQuery || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showSetup || showListings || showQuery || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -232,9 +235,20 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && !showSetup && !showQuery && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
+      <MainContent empty={!showSetup && !showListings && !showQuery && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
         {showSetup ? (
-          <Setup />
+          <Setup entity={entity} onOpen={(target) => {
+            clearOverlays()
+            if (target === 'data') setAdding(true)
+            if (target === 'store') setShowStore(true)
+            if (target === 'calendar') setShowCalendar(true)
+            if (target === 'listings') setShowListings(true)
+            if (target === 'tools') setShowApps(true)
+            if (target === 'automations') setShowAutomations(true)
+            if (target === 'ghost') setShowGhost(true)
+          }} />
+        ) : showListings ? (
+          <ListingConnections />
         ) : showQuery ? (
           <Query />
         ) : showCalendar ? (
@@ -255,6 +269,7 @@ export default function Dashboard() {
           <MerchStoreOwnerSettings slug={gcrSlug} />
         ) : adding ? (
           <AddSection
+            industry={entity?.entity_type}
             allTables={allTables}
             activeKeys={sections.map((s) => s.key)}
             onCancel={() => setAdding(false)}
@@ -290,8 +305,10 @@ export default function Dashboard() {
         )}
       </MainContent>
       <BottomNav
+        onSetup={() => { clearOverlays(); setShowSetup(true) }}
+        setup={showSetup}
         sections={sections}
-        activeKey={showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar || showSetup || showQuery ? null : activeKey}
+        activeKey={showSetup || showListings || showQuery || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -300,8 +317,6 @@ export default function Dashboard() {
         adding={adding}
         onApps={() => { clearOverlays(); setShowApps(true) }}
         apps={showApps}
-        onSetup={() => { clearOverlays(); setShowSetup(true) }}
-        setup={showSetup}
         onQuery={() => { clearOverlays(); setShowQuery(true) }}
         query={showQuery}
         onCalendar={() => { clearOverlays(); setShowCalendar(true) }}

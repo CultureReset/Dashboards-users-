@@ -20,7 +20,11 @@ async function request(method, path, body) {
   if (res.status === 204) return null
   const text = await res.text()
   let data = null
-  try { data = text ? JSON.parse(text) : null } catch { data = text }
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    throw new ApiError('Platform returned an invalid response. Check the Paperclip API connection.', res.ok ? 502 : res.status, null)
+  }
   if (!res.ok) {
     const message = (data && (data.error || data.message)) || `Request failed (${res.status})`
     throw new ApiError(typeof message === 'string' ? message : 'Request failed', res.status, data)

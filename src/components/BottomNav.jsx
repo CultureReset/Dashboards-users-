@@ -5,7 +5,9 @@
 // still gets a way in.
 export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding, onApps, apps, onCalendar, calendar, onPlatform, platform, onGhost, ghost, onAutomations, automations, automationsCount, onStore, store, onSetup, setup, onQuery, query }) {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" aria-label="Business navigation">
+      <div className="bottom-nav-tabs">
+      {onSetup && <button type="button" className={`bottom-nav-item${setup ? ' active' : ''}`} onClick={onSetup} aria-current={setup ? 'page' : undefined}><span className="bottom-nav-icon">🏠</span><span className="bottom-nav-label">Setup</span></button>}
       {sections.map((s) => (
         <button
           key={s.key}
@@ -16,15 +18,6 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
           <span className="bottom-nav-label">{s.label}</span>
         </button>
       ))}
-      {onSetup && (
-        <button
-          className={`bottom-nav-item${setup ? ' active' : ''}`}
-          onClick={onSetup}
-        >
-          <span className="bottom-nav-icon">🔧</span>
-          <span className="bottom-nav-label">Setup</span>
-        </button>
-      )}
       {onQuery && (
         <button
           className={`bottom-nav-item${query ? ' active' : ''}`}
@@ -91,6 +84,7 @@ export default function BottomNav({ sections, activeKey, onSelect, onAdd, adding
           <span className="bottom-nav-label">Automations</span>
         </button>
       )}
+      </div>
       {onAdd && (
         <button
           className={`bottom-nav-item bottom-nav-add${adding ? ' active' : ''}`}
