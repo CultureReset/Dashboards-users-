@@ -11,4 +11,4 @@ npm run build && npx vite preview --port <port> &
 node scripts/browser-checks/<script>.cjs
 ```
 
-Each script's header gives its default port and options (`BASE_URL`, `OUT_DIR` for screenshots, `PW_CHROMIUM` to point at an installed Chromium if this repo pins its own Playwright). Exit code is non-zero if a check fails.
+Each script's header gives its default port and options (`BASE_URL`, `OUT_DIR` for screenshots, `PW_CHROMIUM` to point at an installed Chromium if this repo pins its own Playwright). The assertion-style scripts exit non-zero when a check fails. The route-pass scripts (`routes-pass.cjs`, `sections-pass.cjs`) only report what they flagged, so read their summary.
