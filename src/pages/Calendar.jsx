@@ -8,6 +8,7 @@ import {
   regenerateExportUrl,
 } from '../lib/calendar'
 import { fetchAppStore, connectTool, refreshTool } from '../lib/appStore'
+import AvailabilityCalendar from '../components/AvailabilityCalendar'
 
 /**
  * Owner Calendar — manage iCal import/export for every linked unit, and a
@@ -168,9 +169,9 @@ export default function Calendar() {
       <header className="calendar-header">
         <h2>Calendar</h2>
         <p className="claim-sub">
-          Import blocked dates from Airbnb, VRBO, and other iCal feeds. Export your GCR
-          calendar so those platforms stay in sync. Counts still come from booking emails —
-          iCal is block-only (yes/no).
+          See what's open, booked and closed, and close dates yourself. Below, connect Airbnb,
+          VRBO and other calendars so they stay in sync. iCal only carries closed dates (yes/no);
+          counts come from booking emails.
         </p>
       </header>
 
@@ -189,6 +190,8 @@ export default function Calendar() {
           </select>
         </label>
       )}
+
+      <AvailabilityCalendar />
 
       <section className="calendar-section">
         <h3>Your units</h3>
@@ -346,15 +349,12 @@ export default function Calendar() {
             <div>
               <strong>Google Calendar</strong>
               <p className="claim-sub">
-                {apps && !apps.composio_configured
-                  ? 'OAuth is not switched on yet (Composio). This is a stub until connecting is enabled.'
-                  : 'Google Calendar is not in the App Store catalogue yet. Stub — use iCal import/export above, or open Tools when Google is listed.'}
+                One-click Google Calendar sync is coming soon. For now, paste your
+                Google Calendar's secret iCal address into “Add iCal import link” above
+                and your dates stay in sync.
               </p>
-              <span className="chip">Stub</span>
+              <span className="chip">Coming soon</span>
             </div>
-            <button type="button" className="secondary" disabled>
-              Coming soon
-            </button>
           </div>
         )}
       </section>

@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { api } from '../lib/apiClient'
 import { endpoints } from '../lib/endpoints'
 import { INDUSTRIES } from '../lib/industries'
+import { LOGIN_DOMAIN } from '../lib/config'
 
 // Setting up an invited business.
 //
@@ -149,7 +150,16 @@ export default function AcceptInvite({ token, onDone }) {
         <p className="claim-sub">
           Choose a password and this listing is yours to manage.
         </p>
-        <p className="claim-status">Signing in as {invite.email}</p>
+        {invite.email.toLowerCase().endsWith(`@${LOGIN_DOMAIN}`) ? (
+          // Phone-only businesses are filed under an internal address nobody has
+          // seen. Show the thing they will actually type on the sign-in screen.
+          <p className="claim-status">
+            Your business login is <strong>{invite.entity_slug}</strong>. You&apos;ll use it
+            with this password to sign in.
+          </p>
+        ) : (
+          <p className="claim-status">Signing in as {invite.email}</p>
+        )}
 
         <label>
           Password
