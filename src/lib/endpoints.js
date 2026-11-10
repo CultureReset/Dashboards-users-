@@ -115,6 +115,14 @@ export const endpoints = {
   // ----------------------------------------------------------- calendar / iCal ---
   // Owner-scoped. Slug from session (or ?slug= among owned). Sync-now is fixed
   // on the API to run in-process — never the admin-only email-parser hop.
+  // The owner's month view: availability, bookings, and the dates they close.
+  calendar: {
+    month: () => `${BUSINESS}/calendar`,
+    block: () => `${BUSINESS}/calendar/block`,
+    blockId: (id) => `${BUSINESS}/calendar/block/${seg(id)}`,
+    capacity: () => `${BUSINESS}/calendar/capacity`,
+  },
+
   ical: {
     overview: () => `${BUSINESS}/ical`,
     feedUrl: () => `${BUSINESS}/ical/feed-url`,

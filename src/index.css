@@ -1063,3 +1063,48 @@ button.danger-ghost {
   border-radius: 10px; padding: 8px 12px; font: inherit; font-weight: 600; cursor: pointer;
 }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Owner availability calendar ─────────────────────────────────────────── */
+.avail { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.avail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.avail-nav { display: flex; align-items: center; gap: 8px; }
+.avail-nav h3 { margin: 0; min-width: 9.5em; text-align: center; font-size: 1.05rem; }
+.avail-nav button, .avail-head > button { min-width: 44px; min-height: 44px; }
+.avail-notice { background: var(--accent-bg); border-radius: 10px; padding: 10px 12px; margin: 0 0 12px; font-size: .92rem; }
+.avail-capacity { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+.avail-capacity label { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; font-size: .85rem; color: var(--muted); }
+.avail-capacity input { min-height: 44px; }
+.avail-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0; margin: 0 0 10px; font-size: .8rem; color: var(--muted); }
+.avail-legend li { display: flex; align-items: center; gap: 6px; }
+.avail-swatch { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; font-size: .7rem; border: 1px solid var(--border); }
+.avail-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.avail-grid.is-loading { opacity: .55; }
+.avail-dow { text-align: center; font-size: .72rem; color: var(--muted); padding: 2px 0; }
+.avail-day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 52px; padding: 5px 6px; border-radius: 9px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.avail-num { font-weight: 700; font-size: .9rem; }
+.avail-glyph { font-size: .75rem; opacity: .85; align-self: flex-end; }
+.avail-count { display: none; font-size: .68rem; color: var(--muted); }
+.avail-available { background: var(--accent-bg); }
+.avail-limited { background: rgba(214, 158, 46, .22); }
+.avail-full { background: rgba(179, 38, 30, .16); }
+.avail-booked { background: rgba(59, 130, 246, .2); }
+.avail-blocked { background: repeating-linear-gradient(135deg, rgba(100,116,139,.28) 0 6px, rgba(100,116,139,.12) 6px 12px); }
+.avail-unknown { background: var(--input-bg); border-style: dashed; color: var(--muted); }
+.avail-day.is-past { opacity: .5; }
+.avail-day.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+.avail-day.is-selected { outline: 3px solid var(--accent); outline-offset: -1px; }
+.avail-day:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.avail-hint { margin: 10px 0 0; }
+.avail-panel { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; display: grid; gap: 10px; }
+.avail-block { display: grid; gap: 8px; }
+.avail-block label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--muted); }
+.avail-block input { min-height: 44px; }
+.avail-block button, .avail-panel > button { min-height: 44px; }
+.avail-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.avail-events { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.avail-events li { display: grid; gap: 2px; }
+.avail-message { margin: 10px 0 0; font-weight: 600; }
+@media (min-width: 720px) {
+  .avail-day { min-height: 74px; padding: 8px; }
+  .avail-count { display: block; }
+}
