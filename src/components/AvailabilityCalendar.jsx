@@ -55,6 +55,11 @@ export default function AvailabilityCalendar() {
     setError('')
     try {
       const payload = await fetchCalendarMonth(month)
+      // A malformed answer (an empty body, an old API without this endpoint) must
+      // become an error message, never a crash that blanks the whole dashboard.
+      if (!payload || !Array.isArray(payload.days) || typeof payload.from !== 'string') {
+        throw new Error('The calendar came back in a shape we did not expect.')
+      }
       setData(payload)
       setCapacity(payload.daily_capacity == null ? '' : String(payload.daily_capacity))
     } catch (err) {
@@ -81,7 +86,7 @@ export default function AvailabilityCalendar() {
     }
   }
 
-  const events = useMemo(() => data?.events || [], [data])
+  const events = useMemo(() => (Array.isArray(data?.events) ? data.events : []), [data])
   const inRange = useMemo(() => {
     if (!range) return []
     return events.filter((e) => e.start <= range.end && e.last_day >= range.start)
