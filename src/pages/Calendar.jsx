@@ -8,6 +8,7 @@ import {
   regenerateExportUrl,
 } from '../lib/calendar'
 import { fetchAppStore, connectTool, refreshTool } from '../lib/appStore'
+import AvailabilityCalendar from '../components/AvailabilityCalendar'
 
 /**
  * Owner Calendar — manage iCal import/export for every linked unit, and a
@@ -168,9 +169,9 @@ export default function Calendar() {
       <header className="calendar-header">
         <h2>Calendar</h2>
         <p className="claim-sub">
-          Import blocked dates from Airbnb, VRBO, and other iCal feeds. Export your GCR
-          calendar so those platforms stay in sync. Counts still come from booking emails —
-          iCal is block-only (yes/no).
+          See what's open, booked and closed, and close dates yourself. Below, connect Airbnb,
+          VRBO and other calendars so they stay in sync. iCal only carries closed dates (yes/no);
+          counts come from booking emails.
         </p>
       </header>
 
@@ -189,6 +190,8 @@ export default function Calendar() {
           </select>
         </label>
       )}
+
+      <AvailabilityCalendar />
 
       <section className="calendar-section">
         <h3>Your units</h3>
