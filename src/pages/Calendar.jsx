@@ -346,15 +346,12 @@ export default function Calendar() {
             <div>
               <strong>Google Calendar</strong>
               <p className="claim-sub">
-                {apps && !apps.composio_configured
-                  ? 'OAuth is not switched on yet (Composio). This is a stub until connecting is enabled.'
-                  : 'Google Calendar is not in the App Store catalogue yet. Stub — use iCal import/export above, or open Tools when Google is listed.'}
+                One-click Google Calendar sync is coming soon. For now, paste your
+                Google Calendar's secret iCal address into “Add iCal import link” above
+                and your dates stay in sync.
               </p>
-              <span className="chip">Stub</span>
+              <span className="chip">Coming soon</span>
             </div>
-            <button type="button" className="secondary" disabled>
-              Coming soon
-            </button>
           </div>
         )}
       </section>
