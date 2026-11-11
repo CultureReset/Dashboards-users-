@@ -1,315 +1,183 @@
-# Business dashboard
+# Business Dashboard
 
-**This is the dashboard a business owner logs into — one business, identified by
-its slug.** It is not the operator console. The operator console, where you see
-every business at once, is `Admin-dashboard-main`.
+The dashboard a business owner signs in to on Gulf Coast Radar and CyberCheck. One login, one business. It is built phone-first, with a bottom bar and no sidebar, and it is live at `https://dashboards-users.vercel.app`.
 
-Copied here from `admin-dashboard-` so the name says what it is; that repo's
-name (`admin-dashboard-`, package `dashboard-shell`) read as an admin tool and
-sat one hyphen away from `Admin-dashboard-main`, which is a different product.
-Treat this copy as the one to work on.
+The dashboard has no fixed list of features. It asks the API which tables exist, loads the rows that belong to the signed-in business, and turns every table that has data into a section. A restaurant gets Menu, Hours and Happy Hour. A fishing charter gets Trips, Species, Meeting Points and Weather Rules. Same code, different data. Add a table to the database and it shows up for every business that has rows in it, with no deploy.
 
-Both talk to the same backend, `gcr-api-clean`. Production:
-`dashboards-users.vercel.app`. It is built phone-first: a bottom bar, no sidebar.
-
-In the Ghost system this is a cloud-side screen: a static React app that only
-calls `gcr-api-clean`. It never talks to a Ghost box directly; "My Ghost" queues
-a request at the API, the box pulls it over its own outbound link and posts the
-answer back (`src/pages/Ghost.jsx`).
+The operator console, where you see every business at once, is a separate app: [Admin-dashboard-main](https://github.com/CultureReset/Admin-dashboard-main). Both use the same backend, [gcr-api-clean](https://github.com/CultureReset/gcr-api-clean).
 
 | Store | My Ghost |
 | --- | --- |
 | ![Store: an update is ready, another app is available](docs/images/store.png) | ![My Ghost: the business's box, online, with a command bar](docs/images/my-ghost.png) |
 
-*Captured against a test backend with sample data (one installed app with an
-update waiting, one free app available, one online box).*
+## Features
 
-**Store** shows what the operator made available to this business (free, in its
-plan, or granted), lets it install, switch off, configure and remove apps, and
-pull updates. An update that asks for more access is never applied without the
-owner saying yes. **My Ghost** is the business's own box, reachable from anywhere
-through the relay: enrol a box (the page shows a one-time token to put in
-`~/.config/ghost/ghost.env` as `NEXTGENT_NODE_TOKEN`), see it online, tell it
-what to do, see whether it needs a YES text and the verified result; the example
-phrases it suggests come from the box itself. **Automations** lists what the
-operator pushed to this business. **Tools** connects third-party accounts
-(Composio) through `/api/connections`.
+- **Sections from data.** Every table with an `entity_slug` column and rows for this business becomes an editable section. Edit forms are built from the table's columns.
+- **Add.** A catalog of every table the business could use but isn't yet, grouped and searchable. Pick one, fill in the form, and it becomes a live section.
+- **Setup guide.** A checklist built from the business's own data: calendars, tools and installed apps, with recommended sections for its industry (`src/lib/setupGuide.js`).
+- **Modules.** The tabs come from the modules enabled for the business (`GET /api/owner/modules`) merged with every table that has data, so an enabled module with no rows still gets a tab and an empty-state panel.
+- **Calendar.** A month view of availability and bookings where the owner can close dates and set capacity, plus iCal import per unit, sync on demand, and this business's own iCal export URL.
+- **Song Request and Merch Store.** Owner settings for the two built-in apps (`src/apps/`), and their guest popups on the business's public link page.
+- **Store.** Apps the operator made available (free, in the plan, or granted): install, switch off, configure, remove, and pull updates. An update that asks for more access is never applied without the owner's yes.
+- **My Ghost.** Enrol the business's on-site box, see whether it is online, and send it requests through the relay. The box pulls requests over its own outbound connection, so nothing needs to reach into the business's network.
+- **Automations.** What the operator pushed to this business, at the version it was given: switch on or off, fill in settings, run now, update, copy the webhook URL, and read run history.
+- **Tools.** Connect third-party accounts through `/api/connections`.
+- **Platform.** A Paperclip store tab. Calls go to this site's `/api/paperclip` and are forwarded to the Paperclip server.
 
-![Where this repo sits in the whole system](docs/images/where-it-fits.png)
-
----
-
-Every business gets sections built from its own data. Nothing is hardcoded per
-business or per industry.
-
-A business is identified by its **slug** (`flora-bama-yacht-club`). Everything
-about it lives in tables carrying an `entity_slug` column. The dashboard has no
-list of features: it asks the database what tables exist, pulls the rows
-belonging to that slug, and turns every table that has data into a section. A
-restaurant ends up with Menu, Hours, Happy Hour. A charter ends up with Trips,
-Species, Meeting Points, Weather Rules. Same code, different data.
-
-Add a table to the database and it appears in every business that has data in
-it. Drop it and the section disappears. No deploy, no code change.
-
-The business decides what goes in their dashboard. The **Add** tab lists every
-slug table the schema supports that they aren't using yet — grouped, searchable,
-including tables nobody has written any code for. Pick one, fill in the form
-built from that table's columns, and it becomes a live section. A business with
-nothing entered starts from that catalog rather than an empty screen.
-
-
-
-<!-- branches:start -->
-## Branches
-
-*Read from GitHub on 2026-09-29. 12 branches.*
-
-- **Default branch on GitHub:** `claude/dashboard-inventory-purposes-m5wtba`. It does **not** yet have this README or the audit fixes; those are on `claude/repo-code-analysis-y4n1k7`, which contains every commit of `claude/dashboard-inventory-purposes-m5wtba` and more, so it can be fast-forwarded without losing anything.
-- **`claude/repo-code-analysis-y4n1k7`** is where the README audit, the screenshots and the fixes were made.
-- **7 other branches hold commits that `claude/repo-code-analysis-y4n1k7` does not have.** The newest is `claude/modular-booking-platform-wdq0kk` (last commit 2026-09-13, 2 commits not in the work branch). Check those before assuming the work branch is the whole story.
-
-<details><summary>All 12 branches</summary>
-
-| Branch | Last commit | Not in the work branch | Last commit message |
-| --- | --- | --- | --- |
-| `claude/repo-code-analysis-y4n1k7` (work branch) | 2026-09-29 | - | this README and the audit fixes |
-| `claude/modular-booking-platform-wdq0kk` | 2026-09-13 | 2 | Dashboard: adaptive wording, nightly rates, and channel sync |
-| `claude/admin-dashboard-automation-builder-s0j5ht` | 2026-09-13 | 0 | Add the Automations tab: what the operator pushed to this business |
-| `claude/admin-dashboard-repo-review-47q2vc` | 2026-09-13 | 2 | Add Pages: where a business says its Facebook page is |
-| `claude/new-session-66c2e9` | 2026-08-26 | 3 | feat(settings): Add the Settings page |
-| `claude/dashboard-folder-structure-wqsm9i` | 2026-08-24 | 5 | Add session audit: every change with the command to verify it |
-| `claude/repo-inventory-audit-5zw4yw` | 2026-08-13 | 1 | Let a business fix its own availability |
-| `claude/gcr-api-claim-docs-g4e42t` | 2026-08-05 | 3 | Correct the tableMap entry count |
-| `build/nextgent-control-surface` | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `claude/dashboard-inventory-purposes-m5wtba` (default) | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `main` | 2026-08-04 | 0 | Trigger a production deployment from main |
-| `claude/new-session-1e1dj0` | 2026-08-04 | 1 | Make the App Store search find things |
-
-</details>
-
-<!-- branches:end -->
-
-## Run it
+## Getting started
 
 ```bash
+git clone https://github.com/CultureReset/Dashboards-users-.git
+cd Dashboards-users-
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build into dist/
-npm run check    # discovery + table-mapping checks, no network needed
-npm run lint     # oxlint
+npm run dev        # http://localhost:5173
 ```
 
-Deploy `dist/` anywhere static. Settings (all optional, copy `.env.example` to
-`.env.local`): `VITE_GCR_API_BASE` (defaults to `https://gcr-api-clean.vercel.app`),
-`VITE_LOGIN_DOMAIN` (defaults to `biz.gulfcoastradar.com`) and
-`VITE_REQUEST_TIMEOUT_MS` (defaults to 30000). This
-app holds **no database key and never talks to the database**: every read and
-every write goes through `gcr-api-clean`, which decides which business you are
-from your session, never from anything the browser sends.
+A plain checkout points at the live API. To use a local gcr-api-clean, create `.env.local`:
 
-## Where the data comes from
+```bash
+VITE_GCR_API_BASE=http://localhost:3000
+```
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server. Proxies `/api/paperclip` to `PAPERCLIP_DEV_SERVER` (default `http://localhost:3100`). |
+| `npm run build` | Production build into `dist/`. |
+| `npm run preview` | Serve the build locally. |
+| `npm run check` | Section discovery, table mapping and contact-masking checks. No network needed. |
+| `node scripts/test-setup.mjs` | Setup-guide checks. |
+| `node scripts/test-paperclip-proxy.mjs` | Paperclip proxy checks. |
+| `npm run lint` | oxlint. |
+
+```console
+$ npm run check
+  ok    somebody else's phone is masked
+  ok    an invented contact column is caught
+  ok    a plain phone column on a list row is masked
+  ok    the business's own phone stays readable
+  ok    a non-contact column is untouched
+
+All checks passed
+```
+
+## Configuration
+
+All values are optional. Defaults live in `src/lib/config.js`.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_GCR_API_BASE` | `https://gcr-api-clean.vercel.app` | The only API the browser calls. |
+| `VITE_LOGIN_DOMAIN` | `biz.gulfcoastradar.com` | A business's login maps to `<slug>@<domain>`. Must match `scripts/provision-accounts.mjs --domain` and the API's login domain. |
+| `VITE_REQUEST_TIMEOUT_MS` | `30000` | Abandon an API call after this long. |
+| `PAPERCLIP_SERVER_URL` | none | Server-side, on Vercel. Where `api/paperclip.js` forwards `/api/paperclip/*`. Without it the proxy returns 503. |
+| `PAPERCLIP_DEV_SERVER` | `http://localhost:3100` | Local dev proxy target for the same path. |
+
+The app holds no database key and never talks to the database. Every read and write goes through gcr-api-clean, which decides which business you are from your session, never from anything the browser sends. Never put a service key in a `VITE_` variable: those are compiled into the browser bundle.
+
+## How it works
+
+### Where the data comes from
 
 | What | Endpoint |
 | --- | --- |
 | Who you are, what you own, admin or not | `GET /api/business/me` |
-| Which tables can be sections, and their columns | `GET /api/business/schema` |
-| Every section that has rows, in one call | `GET /api/business/sections` |
-| Create / update / delete a row | `POST/PATCH/DELETE /api/business/:table[/:id]` |
-| Sign up and sign in by phone code | `/api/business-auth/*` |
-| The business's public listing payload (`Dashboard.jsx`) | `GET /api/gcr/entity/:slug` |
-| Industry list, read live | `GET /api/business/industries` |
-| Invite links | `GET /api/auth/invite/:token`, `POST /api/auth/accept-invite` |
+| Tables that can be sections, and their columns | `GET /api/business/schema` |
+| Every section with rows, in one call | `GET /api/business/sections` |
+| Create, update or delete a row | `POST`, `PATCH`, `DELETE /api/business/:table[/:id]` |
+| iCal overview, feeds, export URL | `/api/business/ical`, `/ical/feed-url`, `/ical/regenerate`, `/ical/external[/:id[/sync-now]]` |
+| Email and password sign-in, refresh, sign-out, password reset | `/api/business-auth/password`, `/refresh`, `/signout`, `/forgot-password`, `/reset-password` |
+| Self-serve sign-up | `POST /api/auth/business-signup`, with `/api/business-auth/similar` to warn about duplicates |
+| Admin "Open dashboard" pass | `/api/business-auth/exchange-impersonation` |
+| Enabled modules | `GET /api/owner/modules` |
+| Owner month calendar | `/api/business/calendar`, `/calendar/block[/:id]`, `/calendar/capacity` |
+| Public listing payload | `GET /api/gcr/entity/:slug` |
+| Industry list | `GET /api/business/industries` |
+| Invites | `GET /api/auth/invite/:token`, `POST /api/auth/accept-invite` |
 | Claim a business | `GET /api/gcr/entities?search=`, `POST /api/gcr/claim` |
-| Tools (Composio connections) | `/api/connections` (`GET`, `:toolId/connect`, `:toolId/refresh`, `DELETE :toolId`) |
-| Store | `/api/store` (`GET`, `:id/install`, `:id/update`, `:id/disable`, `:id/enable`, `DELETE`, `PATCH :id/config`) |
-| My Ghost | `/api/nodes` (enrol, list, send a request, read the answer) |
+| Tools | `/api/connections` |
+| Store | `/api/store` (`:id/install`, `:id/update`, `:id/disable`, `:id/enable`, `PATCH :id/config`, `DELETE`) |
+| My Ghost | `/api/nodes` |
 | Automations | `/api/business/automations` |
 
-Hosts live in `src/lib/config.js`; every path lives once in `src/lib/endpoints.js`.
+Every path is defined once in `src/lib/endpoints.js`.
 
-### The API renames tables
+### Writes never send a slug
 
-`buildFullEntity()` in gcr-api-clean reshapes some tables before sending them —
-`entity_hours` arrives as `hours`, `entity_offer_fee` as `fees`. `src/lib/tableMap.js`
-maps those names back, which is what lets an API-supplied section be edited (the
-write has to name a real table). Anything not in the map is assumed to already be
-a real table name, so a table added tomorrow still works untouched.
+All writes go through `src/lib/writeEntityData.js`, which sends the table and the row but no business id. The API takes the business from the session and puts it in the `WHERE` clause itself. What a business may write is decided by the API's allow-list, not by this app.
 
-## The files that matter
+### Renamed tables
 
-**Engine — `src/lib/`**
+The API reshapes some tables in the listing payload: `entity_hours` arrives as `hours`, `entity_offer_fee` as `fees`. `src/lib/tableMap.js` maps those names back so the section can be edited. Anything not in the map is treated as a real table name, so a new table works untouched.
 
-| File | What it does |
-|---|---|
-| `schemaDiscovery.js` | Asks `GET /api/business/schema` which tables carry an `entity_slug` and what their columns are, so edit forms build themselves. |
-| `entityTables.js` | Loads every section that has rows with one call to `GET /api/business/sections` and caches it for five minutes. |
-| `discoverSections.js` | Turns raw results into sections. Merges the API payload with the swept tables, labels and icons them. |
-| `sectionCatalog.js` | The other half — everything the business *could* add but isn't using yet. Internal tables (AI indexes, access control, audit/log/analytics tables, other people's Trip Swipe data, SMS/message tables, backups) are hidden everywhere. Tables that other people write to (bookings, orders, customers, requests, leads and the like) still show as sections once they have rows but are never offered under Add. |
-| `tableMap.js` | API payload key ↔ real table name. |
-| `gcrApi.js` | The gcr-api-clean calls for entity search and claim. |
-| `writeEntityData.js` | **Every write goes through here.** It sends no slug: the API takes the business from the session and puts it in the WHERE clause itself. |
-| `AuthContext.jsx` | Sign in, session, access. Resolves which business you are from `entity_owners`, admin status from `platform_admins` — both server-side. |
-| `config.js` | The API host, the sign-in login domain and the request timeout. No database host or key. |
-| `apiClient.js` / `endpoints.js` | The fetch wrapper (session token, typed errors) and every API path, once. |
-| `authStore.js` | Where the session lives (`localStorage`), token renewal, and the slug an admin is acting on. |
-| `shapes.js` | Works out from a table's columns and rows whether it is a progress bar, a price list or a fan-submitted inbox, and masks other people's contact details. |
-| `appStore.js` / `automations.js` / `industries.js` / `useTheme.js` | Calls and helpers for Tools, Automations, the industry list and the light/dark/auto theme. |
+### Decisions made from the shape of the data
 
-**Screens — `src/pages/`** — `Login`, `SignUp`, `AcceptInvite`, `Claim`, `Dashboard`, `BusinessPicker` (admin only), `Store`, `Ghost` (My Ghost), `Automations`, `AppStore` (Tools, the Composio connections).
+`src/lib/shapes.js` decides how to render a table by looking at its columns and rows, not its name:
 
-**Layout — `src/components/`** — `TopBar`, `BottomNav` (one tab per discovered
-section plus a permanent Add tab; mobile-first, no sidebar), `MainContent`,
-`AddSection` (the catalog), `RowEditor` (builds a form from a table's columns),
-`AppStoreView` (the Tools list).
+| Decision | Rule |
+| --- | --- |
+| Which sections exist | Tables with rows for this business |
+| What you can add | Every slug table you aren't using yet |
+| Progress bar | The row has a raised and target numeric pair |
+| Price list | Rows have a kind, a label and an amount |
+| Held back from Add | Rows carry someone else's identity, or the table collects submissions |
+| Contact masking | The field name matches a contact convention |
 
-**Sections — `src/sections/`** — `GenericSection` renders *any* table by
-inspecting the shape of its rows. `registry.jsx` maps a handful of purpose-built
-renderers; it does **not** define which sections exist — discovery does.
+A `merch_crowdfund` table invented tomorrow gets a progress bar. A `sponsor_tiers` table gets the grouped price layout. A `wish_wall` table with a `patron_phone` column is treated as fan-submitted: it shows as a section once it has rows, is never offered under Add, and masks the phone numbers. `npm run check` feeds the detectors invented tables like these and asserts the result.
+
+Internal tables (indexes, access control, audit and analytics logs, message tables, backups) are hidden everywhere by `src/lib/sectionCatalog.js`.
+
+## Signing in
+
+A login reaches a dashboard only when the API links it to a business in `entity_owners`. Admins are listed in `platform_admins`. Sign-in is by email and password (`Login.jsx`), with a forgot-password email whose link returns to `ResetPassword.jsx`. Ways to get an account:
+
+- **Sign up** (`SignUp.jsx`): business name, industry, email and password. The API creates the listing, the login and the ownership link in one call, and warns first if similar listings already exist. A retry after a partial failure only signs in; it never registers twice.
+- **Invite link** with `?token=` (`AcceptInvite.jsx`), sent by an admin.
+- **Claim** an existing listing from the sign-in screen. An admin reviews the claim before access is granted.
+- **Provisioned accounts**, created in bulk by the scripts below.
+
+Admins can open any business with `?business=<slug>`, which shows an "Admin view" banner; with no `?business=`, an admin lands on a searchable picker. The operator console's "Open dashboard" button sends `?pass=…&business=<slug>`, and the dashboard exchanges that one-time pass for a session.
+
+Each business also has a public link-style page at `?page=link&slug=<slug>`. It needs no sign-in, and its buttons come from the business's installed apps.
+
+### Provisioning logins
+
+The scripts read the service key from the shell, never from a `VITE_` variable. Always dry-run first.
+
+```bash
+SUPABASE_SERVICE_KEY=... node scripts/provision-accounts.mjs --dry-run --limit=5
+SUPABASE_SERVICE_KEY=... node scripts/make-setup-links.mjs
+```
+
+`provision-accounts.mjs` writes `business-credentials.csv` and `make-setup-links.mjs` writes `setup-links.csv`. Both are gitignored. Treat them as secrets.
 
 ## Artist module
 
-Artists are businesses like any other — same slug, same discovery, same editor.
-Most of the module already exists in the database (`artist_profiles`, `songs`,
-`song_requests`, `shoutouts`, `artist_goals`, `song_cooperatives`, `tip_links`,
-`artist_shows`, `artist_follows`, `artist_booking_requests`).
+Artists are businesses like any other, with the same discovery and editor. `sql/artist_module.sql` proposes the pricing an artist controls (price per song, custom-song price, shoutout and tip tiers, crowdfund targets, tip links, requests open), with `artist_price_tiers` as one table behind every paid button. The file is marked as a proposal and has not been applied. `src/lib/artistModule.js` only supplies friendlier labels and icons; delete it and the artist dashboard still works. The fan-facing artist pages live in [gcr-unified](https://github.com/CultureReset/gcr-unified).
 
-What did not exist is the part the artist needs to control: **what anything
-costs.** `sql/artist_module.sql` adds it (the file's own header calls it a
-proposal: "NEVER RUN") —
+## Project layout
 
-| Thing | Where the artist sets it |
-|---|---|
-| Price per song | `songs.price` (falls back to `artist_profiles.default_min_request_amount`) |
-| Custom-song price | `artist_profiles.custom_song_price` |
-| Shoutout tiers | `artist_price_tiers` where `kind = 'shoutout'` |
-| Tip buttons | `artist_price_tiers` where `kind = 'tip'` |
-| Crowdfund amounts | `artist_price_tiers` where `kind = 'crowdfund'` |
-| Crowdfund targets | `artist_goals`, `song_cooperatives` |
-| Cash App / Venmo / PayPal | `tip_links` (platform, handle, deep-link prefix) |
-| Requests open right now | `artist_profiles.requests_open` |
-
-`artist_price_tiers` is one table behind every money button on the fan pages, so
-a new kind of paid thing is a row — not a schema change and not a deploy.
-
-**Nothing about this is hardwired.** `src/lib/artistModule.js` contains only
-nicer words — labels, icons, and a name pattern for catalog grouping. Delete it
-and the artist dashboard still works; it just says "Artist Price Tiers" instead
-of "Prices". Every decision that matters is made from the live schema and the
-shape of the rows, in `src/lib/shapes.js`:
-
-| Decision | How it's made |
-|---|---|
-| Which sections exist | Tables with rows for this slug |
-| What you can add | Every slug table you aren't using yet |
-| Progress bar or not | Row has a raised/target numeric pair |
-| Price layout or not | Rows have a kind + label + amount |
-| Held back from Add | Row carries somebody else's identity, or the name says it collects submissions |
-| Contact masking | Field name matches a contact convention |
-
-A `merch_crowdfund` table invented tomorrow gets a progress bar. A
-`sponsor_tiers` table gets the grouped price layout. A `wish_wall` table with a
-`patron_phone` column is recognised as fan-submitted and held out of the Add
-catalog with its phone numbers masked. None of those names is used in the code: the only
-mentions in `src/` are two example comments in `src/lib/shapes.js`. `npm run check`
-(`scripts/check-discovery.mjs`) feeds the detectors tables invented like these and
-asserts they get the right treatment.
-
-Fan-submitted tables still show as sections once they have rows (that's the
-artist's queue); they're just never offered as something to *add*, because the
-artist isn't the author.
-
-**The fan-facing pages live in `gcr-unified`, not here** — `/artist/:slug` and
-`/artist/:slug/live`. They currently hardcode their amounts; once this SQL is
-run they should read `artist_price_tiers` and `tip_links` instead. See
-`docs/PORT_REVIEW.md`.
-
-## Access
-
-Which business you are, and whether you are an admin, is decided by
-`gcr-api-clean` from your session: `entity_owners` links a login to a business,
-`platform_admins` lists admins. The database functions `owns_entity` and
-`is_platform_admin` from `sql/ownership_and_write_access.sql` exist on the live
-database. `sql/entity_sections.sql` is **not** applied and is no longer needed
-(the API does that sweep).
-
-**A login only reaches a dashboard once it has a row in `entity_owners`.** As of
-2026-09-29 that table has no rows on the live database, so no business owner can
-sign in to a business yet. Claims, invites and `sql/seed_first_owner.sql` are the
-ways to create the first ones.
-
-Provision logins with `scripts/provision-accounts.mjs` (dry-run first; it needs
-the service key in the environment, and writes credentials to
-`business-credentials.csv`, which is gitignored and should be treated as secret):
-
-```bash
-SUPABASE_SERVICE_KEY=<service_role key> node scripts/provision-accounts.mjs --dry-run --limit=5
+```
+src/
+  lib/          Engine: discovery, catalog, shapes, module nav, table map, API client,
+                endpoints, auth, calendar, setup guide, paperclip
+  pages/        Login, ResetPassword, SignUp, AcceptInvite, Claim, Dashboard, BusinessPicker,
+                Setup, Calendar, Store, Ghost, Automations, AppStore (Tools), Platform, PublicLinkPage
+  components/   TopBar, BottomNav, MainContent, AddSection, RowEditor, AvailabilityCalendar,
+                EmptyModulePanel, AppStoreView
+  sections/     GenericSection renders any table; registry.jsx maps purpose-built renderers
+  apps/         song-request and merch-store: owner settings and guest popups
+api/paperclip.js  Vercel edge function that forwards /api/paperclip/* to PAPERCLIP_SERVER_URL
+scripts/        check-discovery.mjs, test-setup.mjs, test-paperclip*.mjs, provision-accounts.mjs,
+                make-setup-links.mjs, reconciliation tools
+sql/            Ownership and write-access functions, artist module proposal, first-owner seed
+docs/           PORT_REVIEW.md, everything.html (architecture and spec), screenshots
 ```
 
-`scripts/make-setup-links.mjs` (same key) writes one-time password-setup links to
-`setup-links.csv`, also gitignored. `scripts/reconcile-tables.mjs` and
-`scripts/build-reconciliation-page.mjs` read `docs/reconciliation/`, which is not
-in this repo, so they cannot run as checked in.
+## Deployment
 
-Ways in, as built: a texted six-digit code (`Login.jsx`), a business login and
-password for provisioned or invited accounts, an invite link (`?token=`,
-`AcceptInvite.jsx`), a claim, or a new sign-up (`SignUp.jsx`: phone, code,
-business name, industry; the listing stays hidden until reviewed).
+Build with `npm run build` and serve `dist/`. On Vercel, `vercel.json` rewrites `/api/paperclip/*` to the `api/paperclip.js` edge function and every other non-asset path to `index.html`. Set `PAPERCLIP_SERVER_URL` in the project for the Platform tab.
 
-**Admin deep link** — from CyberCheck admin, link each business row to
-`https://<dashboard-host>/?business=<slug>`. That opens that business's
-dashboard with an "Admin view" banner. With no `?business=`, admins land on the
-searchable picker.
+## Further reading
 
-## Automations
-
-The operator builds automations and scripts in `Admin-dashboard-main` and
-pushes them here — a "cloud update" for dashboards. The **Automations** tab
-(`src/pages/Automations.jsx`) shows what was pushed to this business, at the
-version it was given: switch each one on or off, fill in the settings it asks
-for, run it now, pull a newer version when one is waiting, copy or replace the webhook
-URL that runs it, and open its run history to see what every step did.
-
-Nothing is built on this side. Everything goes through
-`/api/business/automations` on gcr-api-clean, scoped by the session like the
-rest of `/api/business`. The two tables behind it (`entity_automations`,
-`automation_runs`) carry `entity_slug` but are held back from section discovery
-by the API, so they never appear as editable sections or in the Add catalog.
-
-## Claims
-
-A business without a login uses **Claim your business** on the sign-in screen.
-That searches `GET /api/gcr/entities` and posts to `POST /api/gcr/claim`, which
-writes a `business_claims` row with status `new`. It grants nothing on its own —
-an admin reviews it through `GET /api/admin/gcr/claims` and
-`PATCH /api/admin/gcr/claims/:id`. Those two only list the claims and set their
-status and notes; the login and the `entity_owners` row are created by a separate
-admin step (for example `POST /api/admin/link-user`). The `admin.html` GCR Claims
-panel in cybercheck-login that this flow was written against is not in this
-workspace, so its behaviour is not checked here.
-
-## Status
-
-**Verified:** builds clean; `npm run check` passes; section discovery, table
-mapping and the add catalog tested against realistic restaurant and charter
-payloads. The Store, My Ghost and Automations tabs were driven in a real browser
-(Chromium) against a test backend running the real `gcr-api-clean` store routes.
-
-**Deployed** to production. **Not yet proven end to end on the live stack:** a
-real business signing in, because no login is linked to a business yet (see
-Access).
-
-**Note on writes:** the Add catalog offers every table the schema supports, but
-what a business may actually write is decided by the API (`lib/businessTables.js`
-in gcr-api-clean holds the allow-list). See `docs/PORT_REVIEW.md`.
-
-`docs/everything.html` is the full record — the architecture write-up, the
-extracted product spec, the module-source analysis, and the reconciliation of
-the 244-table design against the 563-table live database. Open it in a browser;
-it needs no server and no network.
-
-`docs/PORT_REVIEW.md` lists what this port was missing and what to fix first. It
-was written before the switch to `gcr-api-clean` and parts are out of date: it still
-describes a browser Supabase client and anon key (none in `src/` now) and lists
-Composio connections and any app concept as "not built at all", although
-`src/pages/AppStore.jsx` and `src/pages/Store.jsx` now exist.
+- `docs/everything.html`: architecture, product spec and the table reconciliation. Open it in a browser; it needs no server.
+- `docs/PORT_REVIEW.md`: notes from the original port. Parts predate the move to gcr-api-clean.
