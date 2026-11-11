@@ -6,9 +6,9 @@ The dashboard has no fixed list of features. It asks the API which tables exist,
 
 The operator console, where you see every business at once, is a separate app: [Admin-dashboard-main](https://github.com/CultureReset/Admin-dashboard-main). Both use the same backend, [gcr-api-clean](https://github.com/CultureReset/gcr-api-clean).
 
-![Offerings for a live charter business, opened from the operator console](docs/screenshots/owner-offerings.png)
+![Offerings for a charter business, opened from the operator console](docs/screenshots/owner-offerings.png)
 
-*A live charter business's Offerings section in production. The dark bar at the top appears because an operator opened this dashboard with "View as" from the operator console; the section tabs along the bottom are generated from the business's own tables.*
+*A real charter business's Offerings section. The dark bar at the top appears because an operator opened this dashboard with "View as" from the operator console; the section tabs along the bottom are generated from the business's own tables.*
 
 | Store | My Ghost |
 | --- | --- |
