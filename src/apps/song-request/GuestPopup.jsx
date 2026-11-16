@@ -63,14 +63,14 @@ export default function GuestPopup({ slug, open, onClose, surface = 'popup' }) {
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <h2 style={{ margin: 0 }}>Request a Song</h2>
-          {surface === 'popup' ? <button type="button" onClick={onClose}>Close</button> : null}
+          {surface === 'popup' ? <button type="button" className="guest-close" onClick={onClose}>Close</button> : null}
         </div>
 
         {!catalog && !error ? <p>Loading…</p> : null}
-        {error ? <p>{error}</p> : null}
+        {error ? <p role="alert" style={{ color: '#fca5a5' }}>{error}</p> : null}
 
         {catalog && !result ? (
-          <form onSubmit={submit} style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+          <form className="guest-form" onSubmit={submit} style={{ display: 'grid', gap: 10, marginTop: 12 }}>
             <p style={{ margin: 0, opacity: 0.8 }}>
               {catalog.accepting === false
                 ? 'Requests are closed right now.'
@@ -103,7 +103,7 @@ export default function GuestPopup({ slug, open, onClose, surface = 'popup' }) {
               Message (optional)
               <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} />
             </label>
-            <button type="submit" disabled={busy || catalog.accepting === false}>
+            <button type="submit" className="primary" disabled={busy || catalog.accepting === false}>
               {busy ? 'Creating…' : `Request · $${catalog.price}`}
             </button>
           </form>
@@ -114,10 +114,10 @@ export default function GuestPopup({ slug, open, onClose, surface = 'popup' }) {
             <p><strong>Code:</strong> {result.req_code}</p>
             <p>Pay <strong>${result.amount}</strong> and put <strong>{result.req_code}</strong> in the note.</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {result.payment?.cashapp_url ? <a href={result.payment.cashapp_url} target="_blank" rel="noreferrer">Pay with Cash App</a> : null}
-              {result.payment?.venmo_url ? <a href={result.payment.venmo_url} target="_blank" rel="noreferrer">Pay with Venmo</a> : null}
+              {result.payment?.cashapp_url ? <a style={{ color: '#5eead4' }} href={result.payment.cashapp_url} target="_blank" rel="noreferrer">Pay with Cash App</a> : null}
+              {result.payment?.venmo_url ? <a style={{ color: '#5eead4' }} href={result.payment.venmo_url} target="_blank" rel="noreferrer">Pay with Venmo</a> : null}
             </div>
-            <button type="button" onClick={onClose}>Done</button>
+            <button type="button" className="primary" onClick={onClose}>Done</button>
           </div>
         ) : null}
       </div>

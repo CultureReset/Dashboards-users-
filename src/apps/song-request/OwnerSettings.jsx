@@ -12,6 +12,11 @@ export default function OwnerSettings({ slug }) {
   const [songDraft, setSongDraft] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const edit = (patch) => {
+    setSaved(false)
+    setSettings((prev) => ({ ...prev, ...patch }))
+  }
 
   const load = useCallback(async () => {
     if (!slug) return
@@ -37,13 +42,15 @@ export default function OwnerSettings({ slug }) {
     setSaving(true)
     try {
       const next = await songRequestApi.saveSettings(slug, {
-        request_price: Number(settings.request_price) || 10,
+        // 0 is a real price (free requests); only an empty box falls back.
+        request_price: settings.request_price === '' || settings.request_price == null ? 10 : Number(settings.request_price),
         accepting: !!settings.accepting,
         cashapp_handle: settings.cashapp_handle || '',
         venmo_handle: settings.venmo_handle || '',
       })
       setSettings((prev) => ({ ...prev, ...next }))
       setError('')
+      setSaved(true)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -91,7 +98,7 @@ export default function OwnerSettings({ slug }) {
   }
 
   if (!settings) {
-    return <div className="panel">{error || 'Loading song request…'}</div>
+    return <div className="panel">{error ? <p className="auth-error" role="alert">{error}</p> : <p className="claim-sub">Loading song request…</p>}</div>
   }
 
   const groups = {
@@ -103,7 +110,7 @@ export default function OwnerSettings({ slug }) {
   return (
     <div className="panel song-request-owner">
       <h2>Song Request</h2>
-      {error ? <p className="claim-status">{error}</p> : null}
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       <form onSubmit={saveSettings} className="stack" style={{ display: 'grid', gap: 12, maxWidth: 420 }}>
         <label>
@@ -113,14 +120,14 @@ export default function OwnerSettings({ slug }) {
             min="0"
             step="1"
             value={settings.request_price ?? 10}
-            onChange={(e) => setSettings({ ...settings, request_price: e.target.value })}
+            onChange={(e) => edit({ request_price: e.target.value })}
           />
         </label>
         <label>
           <input
             type="checkbox"
             checked={settings.accepting !== false}
-            onChange={(e) => setSettings({ ...settings, accepting: e.target.checked })}
+            onChange={(e) => edit({ accepting: e.target.checked })}
           />{' '}
           Accepting requests
         </label>
@@ -128,7 +135,7 @@ export default function OwnerSettings({ slug }) {
           Cash App handle
           <input
             value={settings.cashapp_handle || ''}
-            onChange={(e) => setSettings({ ...settings, cashapp_handle: e.target.value })}
+            onChange={(e) => edit({ cashapp_handle: e.target.value })}
             placeholder="cashtag"
           />
         </label>
@@ -136,19 +143,21 @@ export default function OwnerSettings({ slug }) {
           Venmo handle
           <input
             value={settings.venmo_handle || ''}
-            onChange={(e) => setSettings({ ...settings, venmo_handle: e.target.value })}
+            onChange={(e) => edit({ venmo_handle: e.target.value })}
             placeholder="username"
           />
         </label>
-        <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save settings'}</button>
+        <button type="submit" className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save settings'}</button>
+        {saved ? <p className="claim-sub" role="status">Saved.</p> : null}
       </form>
 
       <h3 style={{ marginTop: 24 }}>Song list</h3>
       <form onSubmit={addSong} style={{ display: 'flex', gap: 8, maxWidth: 420 }}>
         <input value={songDraft} onChange={(e) => setSongDraft(e.target.value)} placeholder="Add a song title" />
-        <button type="submit">Add</button>
+        <button type="submit" disabled={saving || !songDraft.trim()}>Add</button>
       </form>
       <ul>
+        {!songs.length ? <li style={{ opacity: 0.6 }}>No songs yet — guests can still type their own.</li> : null}
         {songs.map((s) => (
           <li key={s.id || s.title}>
             {s.title}{' '}

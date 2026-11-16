@@ -9,6 +9,11 @@ export default function OwnerSettings({ slug }) {
   const [draft, setDraft] = useState({ name: '', price: '', photo_url: '', sizes: '', stock_qty: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const edit = (patch) => {
+    setSaved(false)
+    setSettings((prev) => ({ ...prev, ...patch }))
+  }
 
   const load = useCallback(async () => {
     if (!slug) return
@@ -39,6 +44,8 @@ export default function OwnerSettings({ slug }) {
         venmo_handle: settings.venmo_handle || '',
       })
       setSettings((prev) => ({ ...prev, ...next }))
+      setError('')
+      setSaved(true)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -86,19 +93,19 @@ export default function OwnerSettings({ slug }) {
     }
   }
 
-  if (!settings) return <div className="panel">{error || 'Loading merch store…'}</div>
+  if (!settings) return <div className="panel">{error ? <p className="auth-error" role="alert">{error}</p> : <p className="claim-sub">Loading merch store…</p>}</div>
 
   return (
     <div className="panel merch-store-owner">
       <h2>Merch Store</h2>
-      {error ? <p className="claim-status">{error}</p> : null}
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       <form onSubmit={saveSettings} style={{ display: 'grid', gap: 12, maxWidth: 420 }}>
         <label>
           <input
             type="checkbox"
             checked={settings.store_open !== false}
-            onChange={(e) => setSettings({ ...settings, store_open: e.target.checked })}
+            onChange={(e) => edit({ store_open: e.target.checked })}
           />{' '}
           Store open
         </label>
@@ -106,17 +113,18 @@ export default function OwnerSettings({ slug }) {
           Cash App handle
           <input
             value={settings.cashapp_handle || ''}
-            onChange={(e) => setSettings({ ...settings, cashapp_handle: e.target.value })}
+            onChange={(e) => edit({ cashapp_handle: e.target.value })}
           />
         </label>
         <label>
           Venmo handle
           <input
             value={settings.venmo_handle || ''}
-            onChange={(e) => setSettings({ ...settings, venmo_handle: e.target.value })}
+            onChange={(e) => edit({ venmo_handle: e.target.value })}
           />
         </label>
-        <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save settings'}</button>
+        <button type="submit" className="primary" disabled={saving}>{saving ? 'Saving…' : 'Save settings'}</button>
+        {saved ? <p className="claim-sub" role="status">Saved.</p> : null}
       </form>
 
       <h3 style={{ marginTop: 24 }}>Products</h3>
@@ -126,9 +134,10 @@ export default function OwnerSettings({ slug }) {
         <input placeholder="Photo URL" value={draft.photo_url} onChange={(e) => setDraft({ ...draft, photo_url: e.target.value })} />
         <input placeholder="Sizes (S, M, L)" value={draft.sizes} onChange={(e) => setDraft({ ...draft, sizes: e.target.value })} />
         <input placeholder="Stock" type="number" value={draft.stock_qty} onChange={(e) => setDraft({ ...draft, stock_qty: e.target.value })} />
-        <button type="submit">Add product</button>
+        <button type="submit" disabled={saving}>Add product</button>
       </form>
       <ul>
+        {!products.length ? <li style={{ opacity: 0.6 }}>No products yet</li> : null}
         {products.map((p) => (
           <li key={p.id}>
             {p.photo_url ? <img src={p.photo_url} alt="" width={40} height={40} style={{ objectFit: 'cover', borderRadius: 8, verticalAlign: 'middle', marginRight: 8 }} /> : null}
