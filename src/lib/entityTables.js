@@ -40,21 +40,17 @@ function writeTableCache(slug, rows) {
 }
 
 /**
- * @param {string} slug   Which business the caller believes it is showing. The
- *                        server resolves this from the session regardless; it
- *                        is used here only to key the cache. Admins viewing
- *                        another business pass it through as `?slug=`.
+ * @param {string} slug   Which business the caller believes it is showing. Used
+ *                        only to key the cache; it is never sent.
  * @param {string[]} tables    Kept for the progress callback's denominator.
  * @param {{ onFound?: (table: string, rows: object[]) => void,
  *           onProgress?: (done: number, total: number) => void }} handlers
  * @returns {Promise<Record<string, object[]>>}
  */
 export async function fetchTablesForSlug(slug, tables = [], { onFound, onProgress } = {}) {
-  const { sections = {} } = await api.get(endpoints.business.sections(), {
-    // Only honoured for an account platform_admins vouches for; for everyone
-    // else the server uses the session's own slug and ignores this entirely.
-    query: { slug },
-  })
+  // No slug in the request: the API resolves the business from the session.
+  // An admin's chosen business rides along from apiClient's acting slug.
+  const { sections = {} } = await api.get(endpoints.business.sections())
 
   for (const [table, rows] of Object.entries(sections)) onFound?.(table, rows)
 

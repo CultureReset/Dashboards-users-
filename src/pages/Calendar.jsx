@@ -25,10 +25,15 @@ export default function Calendar() {
   const [copied, setCopied] = useState('')
   const [apps, setApps] = useState(null)
 
+  // The API resolves the business from the session. A unit slug is only sent
+  // for a multi-unit owner acting on a unit other than the active one, and the
+  // API checks it against their own linked units.
+  const unitScope = (slug) => (slug && slug !== gcrSlug ? slug : undefined)
+
   const load = useCallback(async () => {
     try {
       setError('')
-      const overview = await fetchCalendar(gcrSlug || undefined)
+      const overview = await fetchCalendar()
       setData(overview)
       setForm((f) => ({
         ...f,
@@ -73,7 +78,7 @@ export default function Calendar() {
           source_label: form.label.trim() || 'External Calendar',
           provider: form.provider.trim() || undefined,
         },
-        form.slug || undefined,
+        unitScope(form.slug),
       )
       setForm((f) => ({ ...f, label: '', url: '', provider: '' }))
       await load()
@@ -88,7 +93,7 @@ export default function Calendar() {
     setBusy(`rm-${feedId}`)
     setError('')
     try {
-      await removeIcalFeed(feedId, unitSlug)
+      await removeIcalFeed(feedId, unitScope(unitSlug))
       await load()
     } catch (err) {
       setError(err.message)
@@ -101,7 +106,7 @@ export default function Calendar() {
     setBusy(`sync-${feedId}`)
     setError('')
     try {
-      await syncIcalFeed(feedId, unitSlug)
+      await syncIcalFeed(feedId, unitScope(unitSlug))
       await load()
     } catch (err) {
       setError(err.message)
@@ -124,7 +129,7 @@ export default function Calendar() {
     setBusy(`rot-${unitSlug}`)
     setError('')
     try {
-      await regenerateExportUrl(unitSlug)
+      await regenerateExportUrl(unitScope(unitSlug))
       await load()
     } catch (err) {
       setError(err.message)
