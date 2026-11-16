@@ -107,6 +107,21 @@ check('entity_photos does not become a second Photos section',
   !mergedKeys.includes('entity_photos'))
 check('the API version of hours survives the merge',
   mergeEntitySources(restaurant, swept).hours[0].id === 1)
+// The public payload selects hours and tags without ids. Swept rows have them,
+// and without them every Edit button on the section is disabled.
+const idless = mergeEntitySources(
+  { slug: 'x', hours: [{ day_of_week: 1, opens_at: '09:00' }], tags: [{ tag_name: 'patio' }] },
+  {
+    entity_hours: [
+      { id: 7, day_of_week: 1, opens_at: '09:00', is_current: true },
+      { id: 6, day_of_week: 1, opens_at: '08:00', is_current: false },
+    ],
+  },
+)
+check('id-less API hours are replaced by the swept rows, which can be edited',
+  idless.hours.length === 1 && idless.hours[0].id === 7, JSON.stringify(idless.hours))
+check('id-less API rows with nothing swept are left alone',
+  idless.tags.length === 1 && idless.tags[0].tag_name === 'patio')
 check('an unanticipated table still becomes its own section',
   mergedKeys.includes('song_requests'), `got: ${mergedKeys.join(', ')}`)
 check('customer-submitted content IS shown — it is the business\'s data',

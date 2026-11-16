@@ -79,7 +79,8 @@ const GROUPS = [
   // Artist first: its pattern is more specific than the keyword buckets below,
   // which would otherwise pull `songs` into "About & content".
   [ARTIST_GROUP, isArtistTable],
-  ['Food & drink', /menu|drink|food|dish|beverage|happy_hour|side|dessert|wine|beer|cocktail/],
+  // (?<!service_)menu: a service_menu is a price list of services, not food.
+  ['Food & drink', /(?<!service_)menu|drink|food|dish|beverage|happy_hour|side|dessert|wine|beer|cocktail/],
   ['Hours & availability', /hour|schedule|availability|calendar|season|closure|holiday/],
   ['Photos & media', /photo|image|media|gallery|video|logo|banner/],
   ['Events & specials', /event|special|announcement|promotion|deal|live_music|artist/],
