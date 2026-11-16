@@ -82,6 +82,14 @@ export const endpoints = {
     item: (id) => `/api/store/${seg(id)}`,
   },
 
+  // ---------------------------------------------------- owner modules ---
+  // GET /api/owner/modules (routes/owner-modules.js, ownerRequired). Read by
+  // modulesApi.js to give enabled-but-empty modules a tab. No owner POST:
+  // Store installs project onto entity_modules server-side.
+  modules: {
+    list: () => '/api/owner/modules',
+  },
+
   connections: {
     list: () => '/api/connections',
     connect: (toolId) => `/api/connections/${seg(toolId)}/connect`,
