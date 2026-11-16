@@ -107,6 +107,20 @@ export default function Ghost() {
     }
   }
 
+  async function revoke(target) {
+    if (!confirm(`Unlink ${target.name}? Its token stops working and it can no longer be reached from here.`)) return
+    setBusy(true)
+    try {
+      await api.del(endpoints.nodes.revoke(target.id))
+      setSelected(null)
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const node = nodes?.find((n) => n.id === selected)
   const nodeOnline = !!node && online(node)
 
@@ -132,7 +146,13 @@ export default function Ghost() {
         Your box at the business. Tell it what to do from anywhere; your data stays there.
       </p>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
+      {nodes === null && !error && <p className="claim-sub">Loading your boxes…</p>}
+      {nodes?.length === 0 && !error && (
+        <p className="claim-sub">
+          No box is linked yet. Name it below and tap Enrol to get its one-time token.
+        </p>
+      )}
 
       {enrolled && (
         <div className="panel ghost-enrolled">
@@ -165,14 +185,17 @@ export default function Ghost() {
           placeholder="Name the box (optional)"
           maxLength={80}
         />
-        <button onClick={enrol} disabled={busy}>+ Enrol a box</button>
+        <button type="button" onClick={enrol} disabled={busy}>+ Enrol a box</button>
       </div>
 
       {node && (
         <>
           <p className="claim-status">
             {node.name}: version {node.version || '—'} · {online(node) ? 'online' : 'offline'} ·
-            core {node.health?.core || 'unknown'}
+            core {node.health?.core || 'unknown'}{' '}
+            <button type="button" className="danger-ghost" onClick={() => revoke(node)} disabled={busy}>
+              Unlink
+            </button>
           </p>
 
           <form onSubmit={send} className="ghost-command">

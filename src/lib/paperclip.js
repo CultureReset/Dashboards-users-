@@ -11,12 +11,12 @@ export class ApiError extends Error {
 }
 
 async function request(method, path, body) {
-  const res = await fetch(`/api/paperclip${path}`, {
-    method,
-    credentials: 'include',
-    headers: body === undefined ? {} : { 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  const init = { method, credentials: 'include', headers: {} }
+  if (body !== undefined) {
+    init.headers['content-type'] = 'application/json'
+    init.body = JSON.stringify(body)
+  }
+  const res = await fetch(`/api/paperclip${path}`, init)
   if (res.status === 204) return null
   const text = await res.text()
   let data = null

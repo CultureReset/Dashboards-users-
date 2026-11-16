@@ -90,6 +90,7 @@ export default function Calendar() {
   }
 
   async function onRemove(unitSlug, feedId) {
+    if (!confirm('Remove this calendar feed? The dates it closed will open up again.')) return
     setBusy(`rm-${feedId}`)
     setError('')
     try {
@@ -155,7 +156,8 @@ export default function Calendar() {
         setApps(await fetchAppStore())
       }
     } catch (err) {
-      setError(err.hint ? `${err.message} ${err.hint}` : err.message)
+      const hint = err.hint || err.body?.hint
+      setError(hint ? `${err.message} ${hint}` : err.message)
     } finally {
       setBusy('')
     }

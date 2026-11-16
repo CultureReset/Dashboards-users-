@@ -71,6 +71,16 @@ function AutomationCard({ automation: a, onChanged }) {
   const [runs, setRuns] = useState(null)
   const [lastResult, setLastResult] = useState(null)
   const [hookUrl, setHookUrl] = useState(a.hook_url)
+  const [copied, setCopied] = useState(false)
+  const copyHook = async () => {
+    try {
+      await navigator.clipboard.writeText(hookUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      setError('Could not copy — select the address and copy it by hand.')
+    }
+  }
 
   useEffect(() => { setConfig(a.config || {}); setDirty(false) }, [a.config])
 
@@ -166,7 +176,7 @@ function AutomationCard({ automation: a, onChanged }) {
           <p className="auto-help">POST anything to this address and the automation runs with it.</p>
           <code className="auto-code">{hookUrl}</code>
           <div className="section-tools" style={{ marginTop: 8, paddingTop: 0, borderTop: 0 }}>
-            <button type="button" onClick={() => navigator.clipboard?.writeText(hookUrl)}>Copy</button>
+            <button type="button" onClick={copyHook}>{copied ? 'Copied' : 'Copy'}</button>
             <button type="button" onClick={rotate} disabled={!!busy}>New URL</button>
           </div>
         </div>
@@ -266,7 +276,7 @@ function StepList({ steps = [], output }) {
         <div key={`${s.id}-${i}`} className="auto-step">
           <StatusDot status={s.status === 'dry_run' ? 'ok' : s.status} />
           <span className="auto-step-name">{s.name || s.id}</span>
-          <span className="auto-step-status">{s.status.replace('_', ' ')}</span>
+          <span className="auto-step-status">{String(s.status || '').replace('_', ' ')}</span>
           {s.error && <span className="auto-err">{s.error}</span>}
         </div>
       ))}

@@ -68,7 +68,8 @@ export default function AppStore() {
       }
       if (status === 'connected') await load()
     } catch (err) {
-      setError(err.hint ? `${err.message} ${err.hint}` : err.message)
+      const hint = err.hint || err.body?.hint
+      setError(hint ? `${err.message} ${hint}` : err.message)
       setQueue(null)
     }
   }

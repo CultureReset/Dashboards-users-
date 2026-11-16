@@ -67,6 +67,9 @@ export default function Claim({ onBack }) {
     try {
       await submitClaim({
         business_name: picked ? picked.name : query.trim(),
+        // Ties the claim to the exact listing; the API looks it up and takes
+        // the name from it. Reviewed by an admin — this grants nothing.
+        entity_slug: picked?.slug || undefined,
         category: picked?.entity_type || null,
         website: picked?.website_url || null,
         contact_name: form.contact_name,

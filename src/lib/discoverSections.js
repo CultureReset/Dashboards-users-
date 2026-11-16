@@ -161,7 +161,7 @@ const NESTED_IN_PARENT = new Set([
  * joined/nested (menu sections with their items, offerings with price tiers).
  */
 export function mergeEntitySources(entity, tableRows = {}) {
-  const merged = { ...(entity || {}) }
+  const merged = { ...entity }
   for (const [table, rows] of Object.entries(tableRows)) {
     if (NESTED_IN_PARENT.has(table)) continue
     // Machinery swept straight out of the database. Verified against a live

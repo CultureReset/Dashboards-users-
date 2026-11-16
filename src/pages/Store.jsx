@@ -49,6 +49,7 @@ export default function Store({ onChanged } = {}) {
   }
 
   async function act(item, verb) {
+    if (verb === 'uninstall' && !confirm(`Remove ${item.name} from your business?`)) return
     setBusy(item.id)
     try {
       if (verb === 'uninstall') await api.del(endpoints.store.item(item.id))
