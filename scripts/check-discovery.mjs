@@ -19,6 +19,10 @@ import { tableFor, API_KEY_TO_TABLE } from '../src/lib/tableMap.js'
 import { buildCatalog } from '../src/lib/sectionCatalog.js'
 import { kindOf, toField, fromField, buildPayload } from '../src/lib/rowForm.js'
 import { humanize, groupOf, groupColumns, kindOf as profileKind, toForm, parseField, diffProfile, serverFieldErrors, describeError } from '../src/lib/businessProfile.js'
+import {
+  MAX_BYTES, MSG, validateFile, formatSize, cleanPhotoUrl, sortPhotos,
+  makeItem, queueReducer, nextToUpload, queueSummary, describePhotoError,
+} from '../src/lib/photoUpload.js'
 import { endpoints } from '../src/lib/endpoints.js'
 import { controlFor } from '../src/lib/factControl.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
@@ -446,6 +450,49 @@ console.log('\nFact questions pick their control from the registry')
   check('a boolean-stored fact is yes/no', controlFor({ choices: [] }, { index_column: 'v_bool' }) === 'yesno')
   check('a numeric-stored fact is a number', controlFor({ choices: [] }, { index_column: 'v_num' }) === 'number')
   check('anything else is text', controlFor({ choices: [] }, undefined) === 'text')
+}
+
+console.log('\nPhoto upload: file checks and queue')
+{
+  const f = (type, size, name = 'a') => ({ type, size, name })
+  check('a JPG is accepted', validateFile(f('image/jpeg', 1000)) === null)
+  check('PNG, WebP, GIF and AVIF are accepted', ['image/png', 'image/webp', 'image/gif', 'image/avif'].every((t) => validateFile(f(t, 1)) === null))
+  check('a PDF is refused with the API wording', validateFile(f('application/pdf', 10)) === 'That file is not a photo we can use. Use a JPG, PNG, WebP, GIF or AVIF.')
+  check('an iPhone HEIC is refused, as the API would', validateFile(f('image/heic', 10)) === MSG.type)
+  check('a file with no type is refused', validateFile(f('', 10)) === MSG.type)
+  check('exactly 10 MB is accepted', validateFile(f('image/png', MAX_BYTES)) === null)
+  check('one byte over 10 MB is refused with the API wording', validateFile(f('image/png', MAX_BYTES + 1)) === 'That photo is too large (10 MB limit).')
+  check('an empty file is refused', validateFile(f('image/png', 0)) === 'That file is empty.')
+  check('no file is refused', validateFile(null) === 'Choose a photo to upload.')
+  check('sizes read as people say them', formatSize(512) === '512 B' && formatSize(2048) === '2 KB' && formatSize(5.5 * 1024 * 1024) === '5.5 MB')
+  check('a link must be http(s)', cleanPhotoUrl(' https://x.test/a.jpg ') === 'https://x.test/a.jpg' && cleanPhotoUrl('javascript:alert(1)') === null && cleanPhotoUrl('nope') === null && cleanPhotoUrl('') === null)
+  check('photos sort by sort_order then id', sortPhotos([{ id: 10, sort_order: 1 }, { id: 2, sort_order: 1 }, { id: 5, sort_order: 0 }]).map((p) => p.id).join() === '5,2,10')
+
+  const good = (id) => makeItem(f('image/png', 10, `p${id}.png`), id)
+  const bad = makeItem(f('text/plain', 10, 'n.txt'), 9)
+  check('a bad file is rejected up front and never queued to send', bad.status === 'rejected' && bad.error === MSG.type)
+  let q = queueReducer([], { type: 'add', items: [good(1), good(2), good(3), bad] })
+  check('good files start queued, in order', q.map((i) => i.status).join() === 'queued,queued,queued,rejected')
+  check('only the first is picked, and only one at a time', nextToUpload(q).id === 1)
+  q = queueReducer(q, { type: 'start', id: 1 })
+  check('nothing else starts while one is uploading', nextToUpload(q) === null)
+  q = queueReducer(q, { type: 'done', id: 1 })
+  check('the next one follows a finished upload', nextToUpload(q).id === 2)
+  q = queueReducer(queueReducer(q, { type: 'start', id: 2 }), { type: 'fail', id: 2, error: 'Could not save that photo. Please try again.' })
+  check('a failure keeps the API message and does not block the queue', q[1].status === 'failed' && q[1].error.startsWith('Could not save') && nextToUpload(q).id === 3)
+  q = queueReducer(queueReducer(q, { type: 'start', id: 3 }), { type: 'done', id: 3 })
+  check('Retry puts only the failed file back in the queue', nextToUpload(queueReducer(q, { type: 'retry', id: 2 })).id === 2)
+  check('Retry does nothing for a rejected file', queueReducer(q, { type: 'retry', id: 9 }).find((i) => i.id === 9).status === 'rejected')
+  const s = queueSummary(q)
+  check('the summary counts each state', s.done === 2 && s.failed === 1 && s.rejected === 1 && !s.busy)
+  check('clear finished keeps the failed one for Retry', queueReducer(q, { type: 'clearFinished' }).map((i) => i.id).join() === '2')
+  check('dismiss removes one entry', queueReducer(q, { type: 'dismiss', id: 2 }).length === 3)
+
+  check('upload and cover paths carry no slug', endpoints.business.photoUpload() === '/api/business/photos/upload' && endpoints.business.photoCover('a/b') === '/api/business/photos/a%2Fb/cover')
+  check('the API message is shown as written', describePhotoError({ status: 400, message: 'That file is empty.', body: { error: 'That file is empty.' } }) === 'That file is empty.')
+  check('a bodyless 500 gets a plain retry message', describePhotoError({ status: 500, message: 'Request failed (500 )', body: null }) === MSG.failed)
+  check('a host 413 reads as the size limit', describePhotoError({ status: 413, message: 'Request Entity Too Large' }) === MSG.tooBig)
+  check('offline reads as offline', /connection/.test(describePhotoError({ isNetworkError: true, status: 0 })))
 }
 
 console.log(failures ? `\n${failures} failed\n` : '\nAll checks passed\n')

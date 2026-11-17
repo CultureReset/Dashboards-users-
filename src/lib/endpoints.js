@@ -67,6 +67,10 @@ export const endpoints = {
     industries: () => `${BUSINESS}/industries`,
     /** The business's own entity row: GET { profile, editable }, PATCH changed fields. No slug. */
     profile: () => `${BUSINESS}/profile`,
+    /** multipart/form-data, field `image`. 201 { photo }. The slug is the session's. */
+    photoUpload: () => `${BUSINESS}/photos/upload`,
+    /** Make this photo the cover and hero image. { cover, hero_image_url }. No body. */
+    photoCover: (id) => `${BUSINESS}/photos/${seg(id)}/cover`,
   },
 
   // ------------------------------------------------------- the App Store ---
