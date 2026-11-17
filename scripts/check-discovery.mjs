@@ -422,6 +422,7 @@ console.log('\nBusiness profile: fields come from the API list, only changes are
   check('null shows as empty, a boolean as true/false', form.subtitle === '' && form.serves_beer === 'true' && form.pet_friendly === '')
   check('an untouched form sends nothing', Object.keys(diffProfile(editable, profile, form).values).length === 0)
   check('whitespace and empty-vs-null are not changes', Object.keys(diffProfile(editable, profile, { ...form, name: ' Flora-Bama ', subtitle: '  ' }).values).length === 0)
+  check('stored text with a trailing space is not a change', Object.keys(diffProfile(editable, { ...profile, description: 'Hi ' }, toForm({ ...profile, description: 'Hi ' }, editable)).values).length === 0)
   check('an edit sends only that field', JSON.stringify(diffProfile(editable, profile, { ...form, phone: '555-1212' }).values) === '{"phone":"555-1212"}')
   check('clearing a field sends null', JSON.stringify(diffProfile(editable, profile, { ...form, city: '' }).values) === '{"city":null}')
   check('a toggle sends a real boolean, Not set sends null', JSON.stringify(diffProfile(editable, profile, { ...form, pet_friendly: 'true', serves_beer: '' }).values) === '{"serves_beer":null,"pet_friendly":true}')

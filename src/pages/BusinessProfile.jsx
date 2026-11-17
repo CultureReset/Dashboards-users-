@@ -64,7 +64,8 @@ export default function BusinessProfile({ onDirtyChange, onSaved }) {
 
   const ready = state.status === 'ready'
   const { values, errors: clientErrors } = useMemo(() => (ready ? diffProfile(state.editable, state.profile, form) : { values: {}, errors: {} }), [ready, state, form])
-  const changed = Object.keys(values).length
+  const invalid = Object.keys(clientErrors).length
+  const changed = Object.keys(values).length + invalid // an edit that does not parse is still an unsaved edit
   const dirty = changed > 0
   const groups = useMemo(() => (ready ? groupColumns(state.editable) : []), [ready, state])
 
@@ -105,7 +106,7 @@ export default function BusinessProfile({ onDirtyChange, onSaved }) {
       setState((s) => ({ ...s, profile }))
       setForm(toForm(profile, state.editable))
       setServerErrors({})
-      const n = res?.changed?.length ?? changed
+      const n = res?.changed?.length ?? Object.keys(values).length
       setNotice({ kind: 'ok', text: `Saved ${n} ${n === 1 ? 'change' : 'changes'}.` })
       onSaved?.(profile)
     } catch (err) {

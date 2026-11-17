@@ -95,7 +95,8 @@ export function diffProfile(editable, profile, form) {
     const next = parseField(col, form[col.name])
     if (next.error) { errors[col.name] = next.error; continue }
     const before = profile?.[col.name]
-    const prev = before === undefined || before === '' ? null : before
+    // Stored text with stray spaces is compared trimmed, so opening and saving never reports a change nobody made.
+    const prev = before === undefined || before === null || (typeof before === 'string' && before.trim() === '') ? null : typeof before === 'string' ? before.trim() : before
     const same = col.type === 'number' || col.type === 'integer'
       ? (prev === null ? null : Number(prev)) === next.value
       : prev === next.value
