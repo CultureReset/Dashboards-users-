@@ -12,6 +12,7 @@ import {
 import { fetchOwnerModules } from '../lib/modulesApi'
 import { TABLE_TO_API_KEY, tableFor } from '../lib/tableMap'
 import { rendererFor } from '../sections/registry'
+import PhotosSection from '../sections/PhotosSection'
 import GenericSection from '../sections/GenericSection'
 import EditableSection from '../sections/EditableSection'
 import EmptyModulePanel from '../components/EmptyModulePanel'
@@ -308,6 +309,10 @@ export default function Dashboard() {
           <SongRequestOwnerSettings slug={gcrSlug} />
         ) : activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop' ? (
           <MerchStoreOwnerSettings slug={gcrSlug} />
+        ) : active && tableFor(active.key) === 'entity_photos' ? (
+          // Photos manage themselves (upload, cover, captions) and must show
+          // even with no rows yet, so an empty business can add its first one.
+          <PhotosSection key="photos" />
         ) : active?.empty ? (
           <EmptyModulePanel
             section={active}
