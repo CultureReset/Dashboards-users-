@@ -141,6 +141,16 @@ export const endpoints = {
     syncNow: (id) => `${BUSINESS}/ical/external/${seg(id)}/sync-now`,
   },
 
+  // ------------------------------------------------------------- facts ---
+  // The fill-in queue: what guests ask that is still unknown about this
+  // business (routes/facts-curation.js ownerRouter, ownerRequired). The
+  // registry (public, no slug) says how each answer is stored.
+  facts: {
+    questions: () => `${BUSINESS}/facts/questions`,
+    answers: () => `${BUSINESS}/facts/answers`,
+    registry: () => '/api/facts',
+  },
+
   // ------------------------------------------------------ public listings ---
   gcr: {
     entity: (slug) => `${GCR}/entity/${seg(slug)}`,

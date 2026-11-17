@@ -714,6 +714,11 @@ input, select, textarea { font: inherit; }
   color: var(--text);
   width: 100%;
 }
+.editor-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; resize: vertical; }
+.editor-field input[aria-invalid="true"],
+.editor-field select[aria-invalid="true"],
+.editor-field textarea[aria-invalid="true"] { border-color: var(--danger); }
+.editor-error { color: var(--danger); font-size: 0.75rem; }
 .editor-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .editor-actions button {
   background: var(--panel);
@@ -1181,3 +1186,26 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   background: rgba(255, 255, 255, 0.1); color: inherit; border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.85rem;
 }
+
+/* Questions guests ask (pages/Facts.jsx) */
+.facts-group { border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px 14px; margin: 0 0 16px; background: var(--panel); min-width: 0; }
+.facts-group legend { font-weight: 700; padding: 0 6px; }
+.facts-question { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.facts-question:last-child { border-bottom: 0; }
+.facts-question label { font-size: 0.92rem; }
+.facts-question select,
+.facts-question input { padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); width: 100%; min-width: 0; }
+.facts-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.facts-choices button,
+.facts-inline button { min-height: 40px; }
+.facts-inline { display: flex; gap: 8px; align-items: center; }
+.facts-inline button { white-space: nowrap; flex: none; }
+.facts-save { position: sticky; bottom: 72px; display: flex; justify-content: flex-end; padding: 8px 0; }
+@media (max-width: 480px) { .facts-save button { width: 100%; } }
+
+/* Rates per unit (components/UnitRates.jsx) */
+.unit-rates { display: flex; flex-direction: column; gap: 12px; }
+.unit-rates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 12px; }
+.unit-rates-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; min-height: 40px; }
+.unit-rates .primary { align-self: flex-start; }
+@media (max-width: 480px) { .unit-rates .primary { align-self: stretch; } }

@@ -27,6 +27,7 @@ import { MerchStoreOwnerSettings } from '../apps/merch-store'
 import Automations from './Automations'
 import Platform from './Platform'
 import Calendar from './Calendar'
+import Facts from './Facts'
 import Setup from './Setup'
 import { fetchAutomations } from '../lib/automations'
 
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const [showPlatform, setShowPlatform] = useState(false)
   const [showAutomations, setShowAutomations] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showFacts, setShowFacts] = useState(false)
   const [showSetup, setShowSetup] = useState(true)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
@@ -209,6 +211,7 @@ export default function Dashboard() {
     setShowPlatform(false)
     setShowAutomations(false)
     setShowCalendar(false)
+    setShowFacts(false)
   }
 
   return (
@@ -216,7 +219,7 @@ export default function Dashboard() {
       <TopBar
         businessName={entity?.name || businessName}
         sections={sections}
-        activeKey={showSetup || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showSetup || adding || showCalendar || showFacts || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -239,19 +242,22 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
+      <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && !showFacts && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
         {showSetup ? (
           <Setup entity={entity || { slug: gcrSlug, name: businessName }} onOpen={(target) => {
             clearOverlays()
             if (target === 'data') setAdding(true)
             if (target === 'store') setShowStore(true)
             if (target === 'calendar') setShowCalendar(true)
+            if (target === 'facts') setShowFacts(true)
             if (target === 'tools') setShowApps(true)
             if (target === 'automations') setShowAutomations(true)
             if (target === 'ghost') setShowGhost(true)
           }} />
         ) : showCalendar ? (
           <Calendar />
+        ) : showFacts ? (
+          <Facts />
         ) : showPlatform ? (
           <Platform />
         ) : showStore ? (
@@ -307,7 +313,7 @@ export default function Dashboard() {
         onSetup={() => { clearOverlays(); setShowSetup(true) }}
         setup={showSetup}
         sections={sections}
-        activeKey={showSetup || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar ? null : activeKey}
+        activeKey={showSetup || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar || showFacts ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -318,6 +324,8 @@ export default function Dashboard() {
         apps={showApps}
         onCalendar={() => { clearOverlays(); setShowCalendar(true) }}
         calendar={showCalendar}
+        onFacts={() => { clearOverlays(); setShowFacts(true) }}
+        facts={showFacts}
         onPlatform={() => { clearOverlays(); setShowPlatform(true) }}
         platform={showPlatform}
         onStore={() => { clearOverlays(); setShowStore(true) }}
