@@ -65,6 +65,8 @@ export const endpoints = {
     remove: (table, id) => `${BUSINESS}/${seg(table)}/${seg(id)}`,
     /** Distinct entity_type values, read live rather than hardcoded. */
     industries: () => `${BUSINESS}/industries`,
+    /** The business's own entity row: GET { profile, editable }, PATCH changed fields. No slug. */
+    profile: () => `${BUSINESS}/profile`,
   },
 
   // ------------------------------------------------------- the App Store ---

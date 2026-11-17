@@ -18,6 +18,7 @@ The operator console, where you see every business at once, is a separate app: [
 
 - **Sections from data.** Every table with an `entity_slug` column and rows for this business becomes an editable section. Edit forms are built from the table's columns.
 - **Add.** A catalog of every table the business could use but isn't yet, grouped and searchable. Pick one, fill in the form, and it becomes a live section.
+- **Business profile.** The owner's own listing row (name, contact, links, address, pricing, yes/no features, policies), edited from the column list `GET /api/business/profile` returns and saved with `PATCH` of only the changed fields (`src/pages/BusinessProfile.jsx`, `src/lib/businessProfile.js`). Guest pages can take about 2 minutes to show a change.
 - **Setup guide.** A checklist built from the business's own data: calendars, tools and installed apps, with recommended sections for its industry (`src/lib/setupGuide.js`).
 - **Modules.** The tabs come from the modules enabled for the business (`GET /api/owner/modules`) merged with every table that has data, so an enabled module with no rows still gets a tab and an empty-state panel.
 - **Calendar.** A month view of availability and bookings where the owner can close dates and set capacity, plus iCal import per unit, sync on demand, and this business's own iCal export URL.

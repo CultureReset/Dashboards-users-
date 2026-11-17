@@ -18,6 +18,8 @@ import { mergeEntitySources, discoverSections } from '../src/lib/discoverSection
 import { tableFor, API_KEY_TO_TABLE } from '../src/lib/tableMap.js'
 import { buildCatalog } from '../src/lib/sectionCatalog.js'
 import { kindOf, toField, fromField, buildPayload } from '../src/lib/rowForm.js'
+import { humanize, groupOf, groupColumns, kindOf as profileKind, toForm, parseField, diffProfile, serverFieldErrors, describeError } from '../src/lib/businessProfile.js'
+import { endpoints } from '../src/lib/endpoints.js'
 import { controlFor } from '../src/lib/factControl.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
 import {
@@ -387,6 +389,55 @@ console.log('\nEdit form round-trips (lists, JSON, only changed fields)')
   check('an edit sends only the changed field', JSON.stringify(edited.values) === '{"nightly_price":120}', JSON.stringify(edited))
   check('a bad field blocks the save', !!buildPayload(cols, { ...fields, amenities: '{' }, original).errors?.amenities)
   check('a new row skips empty fields', JSON.stringify(buildPayload([num, int], { nightly_price: '9', min_nights: '' }, null).values) === '{"nightly_price":9}')
+}
+
+console.log('\nBusiness profile: fields come from the API list, only changes are sent')
+{
+  const ApiError = class { constructor(message, { status = 0 } = {}) { this.message = message; this.status = status } } // same fields as apiClient's ApiError, which needs a browser
+  const col = (name, type = 'string', format = 'text') => ({ name, type, format })
+  const editable = [
+    col('name'), col('subtitle'), col('description'), col('phone'), col('email'), col('website'), col('menu_url'),
+    col('instagram_url'), col('address_line1'), col('city'), col('zip'), col('price_range'), col('happy_hour_start', 'string', 'time without time zone'),
+    col('happy_hour_notes'), col('serves_beer', 'boolean', 'boolean'), col('outdoor_seating', 'boolean', 'boolean'), col('pet_friendly', 'boolean', 'boolean'),
+    col('bedrooms', 'integer', 'integer'), col('bathrooms', 'number', 'numeric'), col('waiver_text'), col('deposit_amount', 'number', 'numeric'),
+    col('cancellation_policy'), col('brand_new_column'),
+  ]
+  const profile = { name: 'Flora-Bama', subtitle: null, phone: '251-980-5118', serves_beer: true, pet_friendly: null, bedrooms: 2, bathrooms: 1.5, city: 'Orange Beach', description: 'Hi' }
+  check('labels are humanized', humanize('serves_beer') === 'Serves beer' && humanize('wheelchair_accessible') === 'Wheelchair accessible')
+  check('url and zip keep their capitals', humanize('menu_url') === 'Menu URL' && humanize('zip') === 'ZIP')
+  const g = Object.fromEntries(editable.map((c) => [c.name, groupOf(c)]))
+  check('name and description are basics', g.name === 'basics' && g.description === 'basics')
+  check('phone and email are contact', g.phone === 'contact' && g.email === 'contact')
+  check('website and *_url are links', g.website === 'links' && g.menu_url === 'links' && g.instagram_url === 'links')
+  check('address columns are address', g.address_line1 === 'address' && g.city === 'address' && g.zip === 'address')
+  check('price_range is pricing', g.price_range === 'pricing')
+  check('happy hour fields are hours', g.happy_hour_start === 'hours' && g.happy_hour_notes === 'hours')
+  check('waiver, deposit and cancellation are policies', g.waiver_text === 'policies' && g.deposit_amount === 'policies' && g.cancellation_policy === 'policies')
+  check('yes/no flags are features', g.serves_beer === 'features' && g.outdoor_seating === 'features')
+  check('an unknown column lands in other, not nowhere', g.brand_new_column === 'other' && g.bedrooms === 'other')
+  check('every editable column is rendered exactly once', groupColumns(editable).flatMap((x) => x.columns).length === editable.length)
+  check('empty groups are dropped', groupColumns([col('name')]).length === 1)
+  check('control follows type and name', profileKind(col('serves_beer', 'boolean')) === 'boolean' && profileKind(col('bedrooms', 'integer')) === 'integer' && profileKind(col('waiver_text')) === 'textarea' && profileKind(col('menu_url')) === 'url' && profileKind(col('email')) === 'email' && profileKind(col('phone')) === 'tel' && profileKind(col('happy_hour_start', 'string', 'time without time zone')) === 'time')
+  const form = toForm(profile, editable)
+  check('null shows as empty, a boolean as true/false', form.subtitle === '' && form.serves_beer === 'true' && form.pet_friendly === '')
+  check('an untouched form sends nothing', Object.keys(diffProfile(editable, profile, form).values).length === 0)
+  check('whitespace and empty-vs-null are not changes', Object.keys(diffProfile(editable, profile, { ...form, name: ' Flora-Bama ', subtitle: '  ' }).values).length === 0)
+  check('stored text with a trailing space is not a change', Object.keys(diffProfile(editable, { ...profile, description: 'Hi ' }, toForm({ ...profile, description: 'Hi ' }, editable)).values).length === 0)
+  check('an edit sends only that field', JSON.stringify(diffProfile(editable, profile, { ...form, phone: '555-1212' }).values) === '{"phone":"555-1212"}')
+  check('clearing a field sends null', JSON.stringify(diffProfile(editable, profile, { ...form, city: '' }).values) === '{"city":null}')
+  check('a toggle sends a real boolean, Not set sends null', JSON.stringify(diffProfile(editable, profile, { ...form, pet_friendly: 'true', serves_beer: '' }).values) === '{"serves_beer":null,"pet_friendly":true}')
+  check('numbers are sent as numbers, 1.50 is no change for 1.5', JSON.stringify(diffProfile(editable, profile, { ...form, bedrooms: '3', bathrooms: '1.50' }).values) === '{"bedrooms":3}')
+  check('text in a number field is an error and not sent', diffProfile(editable, profile, { ...form, bathrooms: 'lots' }).errors.bathrooms === 'Must be a number.')
+  check('a fraction in a whole-number field is an error', parseField(col('bedrooms', 'integer'), '2.5').error === 'Must be a whole number.')
+  check('over-long text is refused before sending', !!parseField(col('description'), 'x'.repeat(5001)).error && !parseField(col('description'), 'x'.repeat(5000)).error)
+  check('the slug is never in the profile call', endpoints.business.profile() === '/api/business/profile' && !/slug/.test(endpoints.business.profile()))
+  const { shown, other } = serverFieldErrors({ fields: { phone: 'Bad phone', ghost_col: 'Nope' } }, editable)
+  check('server field errors map to rendered fields', shown.phone === 'Bad phone' && !('ghost_col' in shown))
+  check('a server error for a field we do not show is still reported', other.length === 1 && other[0].includes('Nope'))
+  check('a 404 says the feature is not live yet', describeError(new ApiError('Endpoint not found: /api/business/profile', { status: 404 })).kind === 'missing')
+  check('a 404 for the business is not "not deployed"', describeError(new ApiError('Business not found.', { status: 404 })).kind === 'error')
+  check('a 500 keeps the owner reassured', /try again/i.test(describeError(new ApiError('boom', { status: 500 })).text))
+  check('offline reads as offline', describeError(new ApiError('x', { status: 0 })).kind === 'network')
 }
 
 console.log('\nFact questions pick their control from the registry')
