@@ -17,6 +17,8 @@
 import { mergeEntitySources, discoverSections } from '../src/lib/discoverSections.js'
 import { tableFor, API_KEY_TO_TABLE } from '../src/lib/tableMap.js'
 import { buildCatalog } from '../src/lib/sectionCatalog.js'
+import { kindOf, toField, fromField, buildPayload } from '../src/lib/rowForm.js'
+import { controlFor } from '../src/lib/factControl.js'
 import { detectProgress, detectPriceList, detectInbox, isContactField, maskContact } from '../src/lib/shapes.js'
 import {
   CATALOG_KEY_TO_SECTION,
@@ -359,6 +361,40 @@ console.log('\nOwner nav polish (visibility, dedupe, hide empty)')
   check('keeps photos', keys.includes('photos'), keys.join(','))
   check('dedupes Offerings to one tab', polished.filter((s) => s.label === 'Offerings').length === 1, keys.join(','))
   check('prefers richer Offerings data', polished.find((s) => s.label === 'Offerings')?.key === 'offerings', keys.join(','))
+}
+
+console.log('\nEdit form round-trips (lists, JSON, only changed fields)')
+{
+  const arr = { name: 'photo_urls', type: 'array', format: 'text[]' }
+  const json = { name: 'amenities', type: 'string', format: 'jsonb' }
+  const int = { name: 'min_nights', type: 'integer', format: 'integer' }
+  const num = { name: 'nightly_price', type: 'number', format: 'numeric' }
+  check('text[] column is an array field', kindOf(arr) === 'array')
+  check('jsonb column is a json field', kindOf(json) === 'json')
+  check('array shows one value per line', toField(arr, ['a', 'b']) === 'a\nb')
+  check('jsonb never shows [object Object]', !String(toField(json, [{ k: 1 }])).includes('[object'))
+  check('array parses back from lines', JSON.stringify(fromField(arr, 'a\n b \n\nc').value) === '["a","b","c"]')
+  check('jsonb parses back to the same value', JSON.stringify(fromField(json, toField(json, [{ k: 1 }])).value) === '[{"k":1}]')
+  check('invalid JSON is an error, not a string', !!fromField(json, '[oops').error)
+  check('whole number column rejects 1.5', !!fromField(int, '1.5').error)
+  check('number column rejects text', !!fromField(num, 'abc').error)
+  check('empty means null', fromField(num, '').value === null)
+  const cols = [arr, json, int, num]
+  const original = { photo_urls: ['a'], amenities: [{ k: 1 }], min_nights: 2, nightly_price: 100 }
+  const fields = Object.fromEntries(cols.map((c) => [c.name, toField(c, original[c.name])]))
+  check('an unchanged form sends nothing', Object.keys(buildPayload(cols, fields, original).values).length === 0)
+  const edited = buildPayload(cols, { ...fields, nightly_price: '120' }, original)
+  check('an edit sends only the changed field', JSON.stringify(edited.values) === '{"nightly_price":120}', JSON.stringify(edited))
+  check('a bad field blocks the save', !!buildPayload(cols, { ...fields, amenities: '{' }, original).errors?.amenities)
+  check('a new row skips empty fields', JSON.stringify(buildPayload([num, int], { nightly_price: '9', min_nights: '' }, null).values) === '{"nightly_price":9}')
+}
+
+console.log('\nFact questions pick their control from the registry')
+{
+  check('a fact with choices is a select', controlFor({ choices: [{ value: 'a' }] }, {}) === 'choice')
+  check('a boolean-stored fact is yes/no', controlFor({ choices: [] }, { index_column: 'v_bool' }) === 'yesno')
+  check('a numeric-stored fact is a number', controlFor({ choices: [] }, { index_column: 'v_num' }) === 'number')
+  check('anything else is text', controlFor({ choices: [] }, undefined) === 'text')
 }
 
 console.log(failures ? `\n${failures} failed\n` : '\nAll checks passed\n')

@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { getColumns, isEditableColumn } from '../lib/schemaDiscovery'
 import { labelFor } from '../lib/discoverSections'
+import { kindOf, toField, isMultiline, buildPayload } from '../lib/rowForm'
 
 // A form that builds itself from a table's columns. Nothing here knows about
 // menus or hours or charters — give it any table and it renders the right
 // inputs, so tables added to the database later are editable with no new code.
+// Lists and JSON columns get their own boxes (lib/rowForm.js) so they round-trip.
 
-function inputFor(col, value, onChange) {
+function inputFor(col, value, onChange, invalid) {
   const common = {
-    id: col.name,
+    id: `field-${col.name}`,
     value: value ?? '',
     onChange: (e) => onChange(col.name, e.target.value),
+    'aria-invalid': invalid ? 'true' : undefined,
   }
 
   if (col.enum) {
@@ -26,7 +29,9 @@ function inputFor(col, value, onChange) {
     )
   }
 
-  if (col.type === 'boolean') {
+  const kind = kindOf(col)
+
+  if (kind === 'boolean') {
     return (
       <select {...common}>
         <option value="">—</option>
@@ -36,9 +41,13 @@ function inputFor(col, value, onChange) {
     )
   }
 
-  if (col.type === 'integer' || col.type === 'number') {
-    return <input type="number" step="any" {...common} />
+  if (kind === 'integer') return <input type="number" step="1" inputMode="numeric" {...common} />
+  if (kind === 'number') return <input type="number" step="any" inputMode="decimal" {...common} />
+
+  if (kind === 'array') {
+    return <textarea rows={4} className="editor-mono" placeholder="One per line" {...common} />
   }
+  if (kind === 'json') return <textarea rows={5} className="editor-mono" spellCheck={false} {...common} />
 
   if (col.format === 'date') return <input type="date" {...common} />
   if (col.format === 'time' || col.format.startsWith('time')) {
@@ -60,22 +69,35 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
   const columns = getColumns(table).filter(isEditableColumn)
   const [values, setValues] = useState(() => {
     const seed = {}
-    for (const col of columns) seed[col.name] = row?.[col.name] ?? ''
+    for (const col of columns) seed[col.name] = toField(col, row?.[col.name])
     return seed
   })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   function change(name, value) {
     setValues((v) => ({ ...v, [name]: value }))
+    setFieldErrors((e) => (e[name] ? { ...e, [name]: undefined } : e))
   }
 
   async function submit(e) {
     e.preventDefault()
-    setBusy(true)
     setError('')
+    const result = buildPayload(columns, values, row)
+    if (result.errors) {
+      setFieldErrors(result.errors)
+      setError('Fix the highlighted fields and try again.')
+      return
+    }
+    setFieldErrors({})
+    if (row && !Object.keys(result.values).length) {
+      setError('Nothing has changed.')
+      return
+    }
+    setBusy(true)
     try {
-      await onSave(coerce(values, columns))
+      await onSave(result.values)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -84,7 +106,7 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
   }
 
   async function remove() {
-    if (!confirm('Delete this permanently?')) return
+    if (!confirm('Delete this permanently? Guests will stop seeing it.')) return
     setBusy(true)
     setError('')
     try {
@@ -105,15 +127,16 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
   }
 
   return (
-    <form className="editor" onSubmit={submit}>
+    <form className="editor" onSubmit={submit} noValidate>
       {columns.map((col) => (
-        <label key={col.name} className="editor-field">
+        <label key={col.name} className={`editor-field${isMultiline(col) ? ' editor-field-wide' : ''}`}>
           <span>{labelFor(col.name)}</span>
-          {inputFor(col, values[col.name], change)}
+          {inputFor(col, values[col.name], change, !!fieldErrors[col.name])}
+          {fieldErrors[col.name] && <small className="editor-error" role="alert">{fieldErrors[col.name]}</small>}
         </label>
       ))}
 
-      {error && <p className="auth-error">{error}</p>}
+      {error && <p className="auth-error" role="alert">{error}</p>}
 
       <div className="editor-actions">
         <button type="submit" className="primary" disabled={busy}>
@@ -130,24 +153,4 @@ export default function RowEditor({ table, row, onSave, onCancel, onDelete }) {
       </div>
     </form>
   )
-}
-
-// Turn form strings back into the types the database expects.
-function coerce(values, columns) {
-  const out = {}
-  for (const col of columns) {
-    const raw = values[col.name]
-    if (raw === '' || raw === undefined) {
-      out[col.name] = null
-    } else if (col.type === 'boolean') {
-      out[col.name] = raw === 'true'
-    } else if (col.type === 'integer') {
-      out[col.name] = parseInt(raw, 10)
-    } else if (col.type === 'number') {
-      out[col.name] = parseFloat(raw)
-    } else {
-      out[col.name] = raw
-    }
-  }
-  return out
 }

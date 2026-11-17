@@ -9,6 +9,7 @@ import {
 } from '../lib/calendar'
 import { fetchAppStore, connectTool, refreshTool } from '../lib/appStore'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
+import UnitRates from '../components/UnitRates'
 
 /**
  * Owner Calendar — manage iCal import/export for every linked unit, and a
@@ -199,6 +200,8 @@ export default function Calendar() {
       )}
 
       <AvailabilityCalendar />
+
+      <UnitRates key={gcrSlug} />
 
       <section className="calendar-section">
         <h3>Your units</h3>
