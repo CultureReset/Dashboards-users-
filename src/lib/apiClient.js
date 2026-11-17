@@ -209,9 +209,10 @@ export async function request(path, options = {}) {
       timeoutMs,
     })
 
-    // One retry against a renewed token — but only for a body we can send
-    // twice. A FormData stream cannot be replayed.
-    if (response.status === 401 && auth && !formData) {
+    // One retry against a renewed token. Every body here can be sent twice:
+    // JSON is a string and a FormData of Files is re-read from the File
+    // objects, so an upload that outlived the token is not a sign-out.
+    if (response.status === 401 && auth) {
       const renewed = await headersWith(true)
       if (renewed.Authorization) {
         response = await send(url, { method, headers: renewed, payload, signal, timeoutMs })
