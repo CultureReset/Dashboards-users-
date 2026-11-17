@@ -22,6 +22,7 @@ import { humanize, groupOf, groupColumns, kindOf as profileKind, toForm, parseFi
 import {
   MAX_BYTES, MSG, validateFile, formatSize, cleanPhotoUrl, sortPhotos,
   makeItem, queueReducer, nextToUpload, queueSummary, describePhotoError,
+  SHRINK_AT, MAX_DIMENSION, fitWithin, needsShrink, nextQuality, jpegName,
 } from '../src/lib/photoUpload.js'
 import { endpoints } from '../src/lib/endpoints.js'
 import { controlFor } from '../src/lib/factControl.js'
@@ -488,10 +489,32 @@ console.log('\nPhoto upload: file checks and queue')
   check('clear finished keeps the failed one for Retry', queueReducer(q, { type: 'clearFinished' }).map((i) => i.id).join() === '2')
   check('dismiss removes one entry', queueReducer(q, { type: 'dismiss', id: 2 }).length === 3)
 
+  // Shrinking: when, how far, how hard.
+  check('a 10 MB JPEG is accepted to be shrunk', validateFile(f('image/jpeg', 10 * 1024 * 1024)) === null)
+  check('a 60 MB file is still refused with the 10 MB wording', validateFile(f('image/jpeg', 60 * 1024 * 1024)) === 'That photo is too large (10 MB limit).')
+  check('a GIF over 3.5 MB is refused, since it is never re-encoded', validateFile(f('image/gif', SHRINK_AT + 1)) === MSG.gifBig && /smaller GIF/.test(MSG.gifBig))
+  check('a GIF under 3.5 MB is accepted', validateFile(f('image/gif', SHRINK_AT)) === null)
+  check('a small picture is left alone', needsShrink({ type: 'image/png', size: 1000, width: 800, height: 600 }) === false)
+  check('over 3.5 MB is shrunk', needsShrink({ type: 'image/jpeg', size: SHRINK_AT + 1, width: 800, height: 600 }) === true)
+  check('exactly 3.5 MB at a normal size is left alone', needsShrink({ type: 'image/jpeg', size: SHRINK_AT, width: 2560, height: 1000 }) === false)
+  check('a small file with a huge picture is shrunk', needsShrink({ type: 'image/webp', size: 1000, width: 4000, height: 3000 }) === true)
+  check('a GIF is never shrunk, whatever its size', needsShrink({ type: 'image/gif', size: 3e6, width: 9000, height: 9000 }) === false)
+  const d = fitWithin(4000, 3000)
+  check('a landscape photo fits 2560 on the long side, same shape', d.width === MAX_DIMENSION && d.height === 1920)
+  check('a portrait photo fits 2560 on the long side', fitWithin(3000, 4000).height === MAX_DIMENSION && fitWithin(3000, 4000).width === 1920)
+  check('a smaller picture is never enlarged', fitWithin(800, 600).width === 800 && fitWithin(800, 600).height === 600)
+  check('a thin strip never collapses to zero', fitWithin(20000, 1).height === 1)
+  check('quality steps down from 0.85 to a floor of 0.5, then stops', nextQuality(null) === 0.85 && nextQuality(0.85) === 0.75 && nextQuality(0.55) === 0.5 && nextQuality(0.5) === null)
+  check('the re-encoded file is named .jpg', jpegName('IMG_1.HEIC.png') === 'IMG_1.HEIC.jpg' && jpegName('noext') === 'noext.jpg')
+  q = queueReducer([good(1), good(2)], { type: 'shrinking', id: 1 })
+  check('nothing else starts while a file is shrinking', q[0].status === 'shrinking' && nextToUpload(q) === null && queueSummary(q).busy)
+  q = queueReducer(q, { type: 'reject', id: 1, error: MSG.type })
+  check('an undecodable file is rejected, with no Retry, and the next one goes', q[0].status === 'rejected' && queueReducer(q, { type: 'retry', id: 1 })[0].status === 'rejected' && nextToUpload(q).id === 2)
+
   check('upload and cover paths carry no slug', endpoints.business.photoUpload() === '/api/business/photos/upload' && endpoints.business.photoCover('a/b') === '/api/business/photos/a%2Fb/cover')
   check('the API message is shown as written', describePhotoError({ status: 400, message: 'That file is empty.', body: { error: 'That file is empty.' } }) === 'That file is empty.')
   check('a bodyless 500 gets a plain retry message', describePhotoError({ status: 500, message: 'Request failed (500 )', body: null }) === MSG.failed)
-  check('a host 413 reads as the size limit', describePhotoError({ status: 413, message: 'Request Entity Too Large' }) === MSG.tooBig)
+  check('a host 413 says the server cannot take it', describePhotoError({ status: 413, message: 'Request Entity Too Large' }) === 'That photo is too large for the server. Try a smaller photo.')
   check('offline reads as offline', /connection/.test(describePhotoError({ isNetworkError: true, status: 0 })))
 }
 

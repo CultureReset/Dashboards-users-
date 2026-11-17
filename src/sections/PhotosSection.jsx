@@ -7,6 +7,7 @@ import {
   queueReducer,
   queueSummary,
 } from '../lib/photoUpload'
+import { prepareForUpload } from '../lib/shrinkImage'
 import {
   listPhotos,
   uploadPhoto,
@@ -67,16 +68,26 @@ export default function PhotosSection() {
     const next = nextToUpload(queue)
     if (!next || started.current.has(next.id)) return
     started.current.add(next.id)
-    dispatch({ type: 'start', id: next.id })
+    dispatch({ type: 'shrinking', id: next.id })
     ;(async () => {
       try {
-        await uploadPhoto(next.file)
+        let ready
+        try {
+          ready = await prepareForUpload(next.file)
+        } catch (err) {
+          // Could not be read as a picture: retrying the same file would not help.
+          dispatch({ type: 'reject', id: next.id, error: err.message })
+          return
+        }
+        dispatch({ type: 'start', id: next.id })
+        await uploadPhoto(ready)
         dispatch({ type: 'done', id: next.id })
       } catch (err) {
         dispatch({ type: 'fail', id: next.id, error: err.message })
+      } finally {
+        started.current.delete(next.id)
+        refresh()
       }
-      started.current.delete(next.id)
-      refresh()
     })()
   }, [queue, refresh])
 
@@ -178,7 +189,7 @@ export default function PhotosSection() {
           <div className="upload-queue-head">
             <h3>
               {summary.busy
-                ? `Uploading ${summary.done + summary.failed + summary.uploading} of ${summary.total - summary.rejected}`
+                ? `Uploading ${summary.done + summary.failed + summary.shrinking + summary.uploading} of ${summary.total - summary.rejected}`
                 : 'Uploads'}
             </h3>
             {(summary.done > 0 || summary.rejected > 0) && (
@@ -196,6 +207,7 @@ export default function PhotosSection() {
                 </div>
                 <div className="upload-state">
                   {item.status === 'queued' && <span>Waiting</span>}
+                  {item.status === 'shrinking' && <span>Shrinking…</span>}
                   {item.status === 'uploading' && (
                     <>
                       <progress aria-label={`Uploading ${item.name}`} />
