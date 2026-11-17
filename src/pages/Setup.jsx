@@ -34,19 +34,21 @@ export default function Setup({ entity, onOpen }) {
     ? 'Could not check — open to retry'
     : !status[key] ? 'Checking…' : describe(status[key].data)
   const cards = [
-    { key: 'data', title: '1. Add your business information', status: entity?.name || 'Your business workspace',
+    { key: 'profile', title: '1. Check your business profile', status: entity?.name || 'Your business workspace',
+      text: 'Your name, phone, website, address, prices and the yes/no details guests look for. Start here so the basics are right.', action: 'Edit business profile' },
+    { key: 'data', title: '2. Add your business information', status: entity?.name || 'Your business workspace',
       text: 'Add hours, photos, offerings, prices and policies. Start with the recommended sections for your business.', action: 'Add business data' },
-    { key: 'facts', title: '2. Answer what guests ask', status: recorded('facts', data => (data.questions || []).length ? `${(data.questions || []).length} unanswered` : 'All answered'),
+    { key: 'facts', title: '3. Answer what guests ask', status: recorded('facts', data => (data.questions || []).length ? `${(data.questions || []).length} unanswered` : 'All answered'),
       text: 'Pet friendly? Wheelchair accessible? Guests search by these. Answer the ones we do not know yet.', action: 'Answer questions' },
-    { key: 'store', title: '3. Choose your apps', status: recorded('store', data => `${(data.items || []).filter(item => item.installed).length} installed`),
+    { key: 'store', title: '4. Choose your apps', status: recorded('store', data => `${(data.items || []).filter(item => item.installed).length} installed`),
       text: 'Install the modules you need, then enter their information and settings. Installing an app does not import your data.', action: 'Open app store' },
-    { key: 'calendar', title: '4. Connect your calendars', status: recorded('calendar', data => calendarStatus(data.units || [])),
+    { key: 'calendar', title: '5. Connect your calendars', status: recorded('calendar', data => calendarStatus(data.units || [])),
       text: 'Paste an iCal export link from your booking platform and run Sync now. iCal supplies blocked dates, not guest or payment details.', action: 'Connect calendars' },
-    { key: 'tools', title: '5. Connect your tools', status: recorded('tools', data => data.composio_configured ? plural((data.tools || []).filter(tool => tool.connection?.status === 'connected').length, 'tool') + ' connected' : 'Connection service needs configuration'),
+    { key: 'tools', title: '6. Connect your tools', status: recorded('tools', data => data.composio_configured ? plural((data.tools || []).filter(tool => tool.connection?.status === 'connected').length, 'tool') + ' connected' : 'Connection service needs configuration'),
       text: 'Choose supported tools and authorize them. Review each connection before relying on its data; authorization alone is not a verified import.', action: 'Connect tools' },
-    { key: 'automations', title: '6. Review your workflows', status: 'Optional — check available workflows',
+    { key: 'automations', title: '7. Review your workflows', status: 'Optional — check available workflows',
       text: 'Open the workflows assigned to your business, review their settings and permissions, and inspect the result of a supported test.', action: 'Open automations' },
-    { key: 'ghost', title: '7. Connect local execution', status: 'Optional — verify your device connection',
+    { key: 'ghost', title: '8. Connect local execution', status: 'Optional — verify your device connection',
       text: 'Use My Ghost for an enrolled device, or your operator-configured computer connection. Confirm approvals and an action receipt before relying on automation.', action: 'Open My Ghost' },
   ]
   return (

@@ -1209,3 +1209,36 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .unit-rates-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; min-height: 40px; }
 .unit-rates .primary { align-self: flex-start; }
 @media (max-width: 480px) { .unit-rates .primary { align-self: stretch; } }
+
+/* Business profile: grouped fields from the API's editable list. */
+.profile-page { max-width: 860px; }
+.profile-group { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); padding: 4px 16px 16px; margin: 0 0 16px; min-width: 0; }
+.profile-group legend { padding: 0 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.profile-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 8px; }
+.profile-field label span { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.profile-field input, .profile-field textarea { min-height: 44px; font-size: 1rem; }
+.profile-field textarea { resize: vertical; font-family: inherit; }
+.profile-tri { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: 100%; max-width: 320px; }
+.profile-tri[aria-invalid="true"] { border-color: var(--danger); }
+.profile-tri button { flex: 1; min-height: 44px; border: 0; border-right: 1px solid var(--border); background: var(--input-bg); color: var(--muted); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.profile-tri button:last-child { border-right: 0; }
+.profile-tri button.is-on { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.profile-notice { border-radius: 12px; padding: 12px 14px; margin: 14px 0; font-size: 0.9rem; line-height: 1.45; border: 1px solid var(--border); background: var(--panel); }
+.profile-notice.is-ok { border-color: var(--accent); background: var(--accent-bg); }
+.profile-notice.is-error { border-color: var(--danger); color: var(--text); }
+.profile-notice.is-error strong { color: var(--danger); }
+.profile-notice ul { margin: 6px 0 0; padding-left: 18px; }
+.profile-problem { border: 1px solid var(--danger); border-radius: 12px; padding: 14px; margin-top: 12px; }
+.profile-problem p { margin: 0 0 12px; line-height: 1.5; }
+.profile-skeleton { display: grid; gap: 12px; margin-top: 16px; }
+.profile-skeleton span { height: 44px; border-radius: 10px; background: var(--border); opacity: 0.6; animation: profile-pulse 1.2s ease-in-out infinite; }
+@keyframes profile-pulse { 50% { opacity: 0.25; } }
+.profile-savebar { position: sticky; bottom: 68px; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); box-shadow: var(--menu-shadow); }
+.profile-savebar[data-dirty] { border-color: var(--accent); }
+.profile-savebar-text { flex: 1; font-size: 0.85rem; color: var(--muted); }
+.profile-savebar button { min-height: 44px; }
+@media (min-width: 720px) {
+  .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+  .profile-field.is-wide { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { .profile-skeleton span { animation: none; } }

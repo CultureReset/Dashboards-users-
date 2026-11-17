@@ -29,6 +29,7 @@ import Platform from './Platform'
 import Calendar from './Calendar'
 import Facts from './Facts'
 import Setup from './Setup'
+import BusinessProfile from './BusinessProfile'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
@@ -51,6 +52,8 @@ export default function Dashboard() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [showFacts, setShowFacts] = useState(false)
   const [showSetup, setShowSetup] = useState(true)
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileDirty, setProfileDirty] = useState(false)
   const [automationsCount, setAutomationsCount] = useState(0)
   const [ownerModules, setOwnerModules] = useState([])
   const [ownerVisibleTables, setOwnerVisibleTables] = useState(null)
@@ -204,6 +207,7 @@ export default function Dashboard() {
 
   const clearOverlays = () => {
     setShowSetup(false)
+    setShowProfile(false)
     setAdding(false)
     setShowApps(false)
     setShowGhost(false)
@@ -214,12 +218,25 @@ export default function Dashboard() {
     setShowFacts(false)
   }
 
+  // Leaving the profile with unsaved edits asks first. Every way out is a click in the top bar or bottom nav, so one
+  // capture-phase check covers them all; the Profile tab itself is the page you are already on.
+  const guardUnsaved = (event) => {
+    if (!showProfile || !profileDirty) return
+    const nav = event.target.closest?.('.bottom-nav, .topbar, .top-bar')
+    const button = event.target.closest?.('button')
+    if (!nav || !button || button.dataset.keepProfile) return
+    if (!window.confirm('You have unsaved changes to your business profile. Leave without saving?')) {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+  }
+
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-shell" onClickCapture={guardUnsaved}>
       <TopBar
         businessName={entity?.name || businessName}
         sections={sections}
-        activeKey={showSetup || adding || showCalendar || showFacts || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
+        activeKey={showSetup || showProfile || adding || showCalendar || showFacts || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
@@ -242,10 +259,11 @@ export default function Dashboard() {
           Checking your data… {sweep.done}/{sweep.total}
         </div>
       )}
-      <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && !showFacts && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
+      <MainContent empty={!showSetup && !showProfile && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && !showFacts && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
         {showSetup ? (
           <Setup entity={entity || { slug: gcrSlug, name: businessName }} onOpen={(target) => {
             clearOverlays()
+            if (target === 'profile') setShowProfile(true)
             if (target === 'data') setAdding(true)
             if (target === 'store') setShowStore(true)
             if (target === 'calendar') setShowCalendar(true)
@@ -253,6 +271,11 @@ export default function Dashboard() {
             if (target === 'tools') setShowApps(true)
             if (target === 'automations') setShowAutomations(true)
             if (target === 'ghost') setShowGhost(true)
+          }} />
+        ) : showProfile ? (
+          <BusinessProfile onDirtyChange={setProfileDirty} onSaved={(profile) => {
+            // The public listing is cached, so re-fetching it now would show the old name. Reflect the new one directly.
+            if (profile?.name) setEntity((e) => (e ? { ...e, name: profile.name } : e))
           }} />
         ) : showCalendar ? (
           <Calendar />
@@ -312,8 +335,10 @@ export default function Dashboard() {
       <BottomNav
         onSetup={() => { clearOverlays(); setShowSetup(true) }}
         setup={showSetup}
+        onProfile={() => { clearOverlays(); setShowProfile(true) }}
+        profile={showProfile}
         sections={sections}
-        activeKey={showSetup || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar || showFacts ? null : activeKey}
+        activeKey={showSetup || showProfile || showApps || showGhost || showStore || showPlatform || showAutomations || showCalendar || showFacts ? null : activeKey}
         onSelect={(key) => {
           clearOverlays()
           setActiveKey(key)
