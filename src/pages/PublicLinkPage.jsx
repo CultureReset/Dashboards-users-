@@ -15,7 +15,7 @@ export default function PublicLinkPage({ slug: slugProp }) {
 
   useEffect(() => {
     if (!slug) return
-    api.get(`/api/public/link-page/${encodeURIComponent(slug)}`)
+    api.get(`/api/public/link-page/${encodeURIComponent(slug)}`, { auth: false })
       .then(setData)
       .catch((err) => setError(err.message))
   }, [slug])
@@ -26,7 +26,7 @@ export default function PublicLinkPage({ slug: slugProp }) {
 
   return (
     <div className="auth-screen" style={{ alignItems: 'stretch' }}>
-      <div className="auth-card" style={{ width: 'min(420px, 100%)', margin: '24px auto', display: 'grid', gap: 12 }}>
+      <div className="auth-card" style={{ width: 'min(420px, 100%)', margin: '24px auto', alignSelf: 'flex-start' }}>
         {data.hero_image_url ? (
           <img src={data.hero_image_url} alt="" style={{ width: '100%', borderRadius: 16, maxHeight: 180, objectFit: 'cover' }} />
         ) : null}
@@ -36,9 +36,9 @@ export default function PublicLinkPage({ slug: slugProp }) {
           <button
             key={btn.id}
             type="button"
-            className="auth-primary"
+            className="primary"
             onClick={() => setOpenApp(btn.id)}
-            style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'center' }}
+            style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'center', minHeight: 48 }}
           >
             <span aria-hidden>{btn.icon}</span> {btn.name}
           </button>

@@ -14,6 +14,8 @@ test('calendar readiness reflects recorded outcomes, not feed presence', () => {
 test('recommendations adapt to industry without requiring one', () => {
   assert.ok(recommendedTables('restaurant').includes('menu_sections'))
   assert.ok(recommendedTables('fishing_charter').includes('bookable_resources'))
+  // 'activity' is the entity_type sign-up and invites actually store for charters and tours.
+  assert.ok(recommendedTables('activity').includes('bookable_resources'))
   assert.ok(recommendedTables().includes('entity_hours'))
   assert.ok(!recommendedTables('restaurant').includes('entity_credentials'))
 })

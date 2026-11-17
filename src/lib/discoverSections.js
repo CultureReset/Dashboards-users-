@@ -161,7 +161,7 @@ const NESTED_IN_PARENT = new Set([
  * joined/nested (menu sections with their items, offerings with price tiers).
  */
 export function mergeEntitySources(entity, tableRows = {}) {
-  const merged = { ...(entity || {}) }
+  const merged = { ...entity }
   for (const [table, rows] of Object.entries(tableRows)) {
     if (NESTED_IN_PARENT.has(table)) continue
     // Machinery swept straight out of the database. Verified against a live
@@ -172,11 +172,34 @@ export function mergeEntitySources(entity, tableRows = {}) {
     // the name it would have arrived under, or the swept table shows up a
     // second time as its own near-identical section.
     const apiKey = TABLE_TO_API_KEY[table]
-    if (apiKey && hasData(merged[apiKey])) continue
-    if (hasData(merged[table])) continue // API already supplied a richer version
+    const key = apiKey && hasData(merged[apiKey]) ? apiKey : table
+    if (hasData(merged[key])) {
+      // The API already supplied a richer version — unless it left out the row
+      // ids. The public payload selects hours and tags without `id`, which made
+      // every Edit button on those sections dead. The swept rows are the same
+      // table with ids, so they are the ones an owner can edit.
+      const current = editableRows(rows)
+      if (!lacksIds(merged[key]) || !current.length) continue
+      merged[key] = current
+      continue
+    }
     merged[apiKey || table] = rows
   }
   return merged
+}
+
+/** API rows that can't be written back: a list where no row carries an id. */
+function lacksIds(value) {
+  return Array.isArray(value) && value.length > 0 && value.every((row) => row?.id == null)
+}
+
+/**
+ * Swept rows that stand in for an id-less API list. Rows flagged
+ * is_current = false are history the API filters out too.
+ */
+function editableRows(rows) {
+  if (!Array.isArray(rows) || !rows.some((row) => row?.id != null)) return []
+  return rows.filter((row) => row?.is_current !== false)
 }
 
 /**

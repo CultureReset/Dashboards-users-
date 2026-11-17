@@ -3,6 +3,7 @@ import GenericSection from './GenericSection'
 import RowEditor from '../components/RowEditor'
 import { createRow, updateRow, deleteRow } from '../lib/writeEntityData'
 import { tableFor } from '../lib/tableMap'
+import { dayName } from '../lib/format'
 
 // Wraps a discovered section with add / edit / delete. Works for any table,
 // since both the display and the form derive from the data and schema.
@@ -70,5 +71,6 @@ function rowLabel(row, i) {
     row.item_name || row.name || row.title || row.label || row.question ||
     row.event_name || row.special_name || row.section_name
   if (name) return String(name).slice(0, 28)
+  if (row.day_of_week != null) return dayName(row.day_of_week)
   return `#${i + 1}`
 }

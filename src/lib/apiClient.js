@@ -43,6 +43,9 @@ export class ApiError extends Error {
   }
 }
 
+/** Routes mounted behind ownerRequired in gcr-api-clean/server.js. */
+const OWNER_SCOPED = /^\/api\/(business|owner|store|connections|nodes)(\/|$)/
+
 /** Listeners notified when the API rejects our token, so the app can log out. */
 const authFailureListeners = new Set()
 
@@ -162,14 +165,19 @@ export async function request(path, options = {}) {
   } = options
 
   // An admin viewing someone else's business owns nothing, so the server has
-  // no slug to resolve for them. Carry it on every /api/business call rather
+  // no slug to resolve for them. Carry it on every owner-scoped call rather
   // than only the reads that took it as an argument — otherwise an admin can
   // see a business's data and gets a 403 the moment they try to change any of
-  // it. The server ignores this for everyone platform_admins does not vouch
-  // for, so attaching it is never a grant.
+  // it. middleware/ownerAuth.js only honours it for platform_admins, for the
+  // slug an impersonation pass is locked to, or for one of an owner's own
+  // linked units; any other slug is refused, so attaching it is never a grant.
+  //
+  // Store, Tools, My Ghost and the module list sit behind the same
+  // ownerRequired guard as /api/business, so they need it too: without it an
+  // admin got 403 on those tabs, and a multi-unit owner saw the first unit's.
   const acting = getActingSlug()
   const withActing =
-    acting && path.startsWith('/api/business/') && !query?.slug
+    acting && OWNER_SCOPED.test(path) && !query?.slug
       ? { ...query, slug: acting }
       : query
 

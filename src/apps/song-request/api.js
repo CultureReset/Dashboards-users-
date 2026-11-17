@@ -1,10 +1,12 @@
 import { api } from '../../lib/apiClient'
 
+const PUBLIC = { auth: false }
 const base = (slug) => `/api/apps/song-request/${encodeURIComponent(slug)}`
 
 export const songRequestApi = {
-  catalog: (slug) => api.get(`${base(slug)}/catalog`),
-  createRequest: (slug, body) => api.post(`${base(slug)}/request`, body),
+  // Guest-facing: no sign-in, so no token is attached.
+  catalog: (slug) => api.get(`${base(slug)}/catalog`, PUBLIC),
+  createRequest: (slug, body) => api.post(`${base(slug)}/request`, body, PUBLIC),
   queue: (slug) => api.get(`${base(slug)}/queue`),
   settings: (slug) => api.get(`${base(slug)}/settings`),
   saveSettings: (slug, body) => api.patch(`${base(slug)}/settings`, body),

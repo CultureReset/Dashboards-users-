@@ -31,7 +31,11 @@ export default function Platform() {
       if (id) await loadCompany(id)
       setError('')
     } catch (err) {
-      setError(err.message)
+      // 503 is this site's own proxy saying PAPERCLIP_SERVER_URL is not set —
+      // a deployment setting, not something an owner can act on.
+      setError(err.status === 503
+        ? 'The Platform tab is not connected on this site yet. Nothing else in your dashboard is affected.'
+        : err.message)
     }
   }, [loadCompany])
 
@@ -42,9 +46,9 @@ export default function Platform() {
       <section className="panel">
         <h2>Platform</h2>
         <p className="auth-error" role="alert">{error}</p>
-        <button type="button" onClick={() => { setError(''); load() }}>Retry connection</button>
+        <button type="button" className="secondary" onClick={() => { setError(''); load() }}>Retry connection</button>
       </section>
-    ) : <p className="claim-sub">Loading…</p>
+    ) : <section className="panel"><h2>Platform</h2><p className="claim-sub">Loading…</p></section>
   }
   if (!session) {
     return (

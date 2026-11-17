@@ -41,7 +41,7 @@ function inputFor(col, value, onChange) {
   }
 
   if (col.format === 'date') return <input type="date" {...common} />
-  if (col.format === 'time' || /^time/.test(col.format)) {
+  if (col.format === 'time' || col.format.startsWith('time')) {
     return <input type="time" {...common} />
   }
   if (/timestamp/.test(col.format)) {

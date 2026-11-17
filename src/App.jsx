@@ -113,7 +113,14 @@ function Root() {
   }
 
   if (!user) {
-    if (signingUp) return <SignUp onBack={() => setSigningUp(false)} />
+    if (signingUp) {
+      return (
+        <SignUp
+          onBack={() => setSigningUp(false)}
+          onClaim={() => { setSigningUp(false); setClaiming(true) }}
+        />
+      )
+    }
     return claiming ? (
       <Claim onBack={() => setClaiming(false)} />
     ) : (

@@ -31,7 +31,7 @@ import Setup from './Setup'
 import { fetchAutomations } from '../lib/automations'
 
 export default function Dashboard() {
-  const { gcrSlug } = useAuth()
+  const { gcrSlug, businessName } = useAuth()
   const [entity, setEntity] = useState(null)
   const [tableRows, setTableRows] = useState({})
   const [error, setError] = useState('')
@@ -69,7 +69,13 @@ export default function Dashboard() {
         if (!cancelled) setEntity(data)
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message)
+        if (cancelled) return
+        // /api/gcr/entity/:slug is the PUBLIC listing, and it only serves
+        // active listings. A new sign-up stays hidden until it is reviewed, so
+        // a 404 here is normal for them — the owner's own data still comes
+        // from /api/business/sections. Never let it block the dashboard.
+        setEntity(null)
+        setError(err?.status === 404 ? 'hidden' : err.message || 'Could not load your listing.')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -188,14 +194,6 @@ export default function Dashboard() {
     )
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-loading">
-        <span className="auth-error">Couldn't load your business: {error}</span>
-      </div>
-    )
-  }
-
   const active = sections.find((s) => s.key === activeKey)
   // Columns for the table behind this section, so the renderer can be chosen
   // from its shape rather than from its name.
@@ -216,7 +214,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-shell">
       <TopBar
-        businessName={entity?.name}
+        businessName={entity?.name || businessName}
         sections={sections}
         activeKey={showSetup || adding || showCalendar || showApps || showGhost || showStore || showPlatform || showAutomations ? null : activeKey}
         onSelect={(key) => {
@@ -224,6 +222,18 @@ export default function Dashboard() {
           setActiveKey(key)
         }}
       />
+      {error && (
+        <div className="sweep-status listing-status" role="status">
+          {error === 'hidden'
+            ? 'Your listing is hidden from the public site until it is reviewed. You can keep adding your information here.'
+            : `Some of your listing could not be loaded: ${error}`}
+          {error !== 'hidden' && (
+            <button type="button" className="secondary" onClick={() => setReloadKey((k) => k + 1)}>
+              Try again
+            </button>
+          )}
+        </div>
+      )}
       {sweep && (
         <div className="sweep-status">
           Checking your data… {sweep.done}/{sweep.total}
@@ -231,7 +241,7 @@ export default function Dashboard() {
       )}
       <MainContent empty={!showSetup && !adding && !showApps && !showGhost && !showStore && !showPlatform && !showAutomations && !showCalendar && sections.length === 0} onAdd={() => { clearOverlays(); setAdding(true) }}>
         {showSetup ? (
-          <Setup entity={entity} onOpen={(target) => {
+          <Setup entity={entity || { slug: gcrSlug, name: businessName }} onOpen={(target) => {
             clearOverlays()
             if (target === 'data') setAdding(true)
             if (target === 'store') setShowStore(true)
@@ -252,10 +262,6 @@ export default function Dashboard() {
           <Automations onCountChange={setAutomationsCount} />
         ) : showApps ? (
           <AppStore />
-        ) : activeKey === 'song-request' || activeKey === 'song_request' ? (
-          <SongRequestOwnerSettings slug={gcrSlug} />
-        ) : activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop' ? (
-          <MerchStoreOwnerSettings slug={gcrSlug} />
         ) : adding ? (
           <AddSection
             industry={entity?.entity_type}
@@ -269,6 +275,10 @@ export default function Dashboard() {
               refreshAll()
             }}
           />
+        ) : activeKey === 'song-request' || activeKey === 'song_request' ? (
+          <SongRequestOwnerSettings slug={gcrSlug} />
+        ) : activeKey === 'merch-store' || activeKey === 'merch_store' || activeKey === 'shop' ? (
+          <MerchStoreOwnerSettings slug={gcrSlug} />
         ) : active?.empty ? (
           <EmptyModulePanel
             section={active}

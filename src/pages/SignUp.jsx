@@ -23,7 +23,7 @@ import { finishBusinessSignup } from '../lib/signupFlow'
 
 const STEPS = ['account', 'business', 'industry']
 
-export default function SignUp({ onBack }) {
+export default function SignUp({ onBack, onClaim }) {
   const { signIn } = useAuth()
   const [step, setStep] = useState('account')
   const [email, setEmail] = useState('')
@@ -194,6 +194,11 @@ export default function SignUp({ onBack }) {
                     </li>
                   ))}
                 </ul>
+                {onClaim && (
+                  <button type="button" className="auth-switch" onClick={onClaim}>
+                    Claim an existing listing instead
+                  </button>
+                )}
               </div>
             )}
 

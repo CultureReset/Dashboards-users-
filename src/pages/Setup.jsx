@@ -9,6 +9,8 @@ const SOURCES = {
   store: () => api.get(endpoints.store.list()),
 }
 
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+
 export default function Setup({ entity, onOpen }) {
   const [status, setStatus] = useState({})
   const [refresh, setRefresh] = useState(0)
@@ -37,7 +39,7 @@ export default function Setup({ entity, onOpen }) {
       text: 'Install the modules you need, then enter their information and settings. Installing an app does not import your data.', action: 'Open app store' },
     { key: 'calendar', title: '3. Connect your calendars', status: recorded('calendar', data => calendarStatus(data.units || [])),
       text: 'Paste an iCal export link from your booking platform and run Sync now. iCal supplies blocked dates, not guest or payment details.', action: 'Connect calendars' },
-    { key: 'tools', title: '4. Connect your tools', status: recorded('tools', data => data.composio_configured ? `${(data.tools || []).filter(tool => tool.connection?.status === 'connected').length} tools connected` : 'Connection service needs configuration'),
+    { key: 'tools', title: '4. Connect your tools', status: recorded('tools', data => data.composio_configured ? plural((data.tools || []).filter(tool => tool.connection?.status === 'connected').length, 'tool') + ' connected' : 'Connection service needs configuration'),
       text: 'Choose supported tools and authorize them. Review each connection before relying on its data; authorization alone is not a verified import.', action: 'Connect tools' },
     { key: 'automations', title: '5. Review your workflows', status: 'Optional — check available workflows',
       text: 'Open the workflows assigned to your business, review their settings and permissions, and inspect the result of a supported test.', action: 'Open automations' },
@@ -48,7 +50,7 @@ export default function Setup({ entity, onOpen }) {
     <section className="panel setup-page">
       <h2>Set up your business</h2>
       <p className="claim-sub">Your dashboard is the home for your data, apps and connections. Choose what your business needs; you can return here at any time.</p>
-      <button type="button" onClick={() => setRefresh(value => value + 1)}>Refresh setup status</button>
+      <button type="button" className="secondary" onClick={() => setRefresh(value => value + 1)}>Refresh setup status</button>
       <div className="setup-guide-grid">
         {cards.map(card => (
           <article className="setup-guide-card" key={card.key}>
